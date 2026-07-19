@@ -51,7 +51,7 @@ def reset_engine_cache() -> None:
     """Dispose of and clear cached engine/sessionmaker (used by tests)."""
     try:
         get_engine().dispose()
-    except Exception:
+    except Exception:  # nosec B110 - best-effort cleanup during cache reset; failures are intentionally ignored
         pass
     get_engine.cache_clear()
     get_sessionmaker.cache_clear()

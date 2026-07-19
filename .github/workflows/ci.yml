@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install ProducerOS (editable, dev extras)
+        run: python -m pip install --upgrade pip && pip install -e ".[dev]"
+
+      - name: Install Playwright Chromium
+        run: python -m playwright install --with-deps chromium
+
+      - name: ruff format --check
+        run: ruff format --check src tests
+
+      - name: ruff check
+        run: ruff check src tests
+
+      - name: mypy
+        run: mypy src
+
+      - name: Unit + integration + security tests
+        run: pytest tests/unit tests/integration tests/security -q
+
+      - name: e2e tests (Playwright)
+        run: pytest tests/e2e -q
+
+      - name: Migration check (fresh DB upgrades to head cleanly)
+        shell: bash
+        env:
+          PRODUCEROS_DATA_DIR: ${{ runner.temp }}/produceros-ci-migration-check
+        run: |
+          python -m produceros.cli db-upgrade
+          python -m produceros.cli db-current
+          alembic check
+
+      - name: Demo-data smoke test (load then clean, round trip)
+        shell: bash
+        env:
+          PRODUCEROS_DATA_DIR: ${{ runner.temp }}/produceros-ci-demo-check
+        run: |
+          python -m produceros.cli db-upgrade
+          python -m produceros.cli demo-load
+          python -m produceros.cli demo-clean

@@ -1,0 +1,95 @@
+name: Windows Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: windows-build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & smoke test (windows-latest)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install ProducerOS (editable, dev extras)
+        run: python -m pip install --upgrade pip; pip install -e ".[dev]"
+
+      - name: Build with PyInstaller
+        run: .\scripts\build_windows.ps1
+
+      - name: Smoke test the built exe
+        shell: pwsh
+        run: |
+          $env:PRODUCEROS_DATA_DIR = "$env:RUNNER_TEMP\produceros-smoketest"
+          $exe = "dist\ProducerOS\ProducerOS.exe"
+
+          # `run` starts a blocking server, so launch it as a background
+          # job, poll for a real HTTP response, then stop it.
+          $job = Start-Job -ScriptBlock {
+            param($exePath, $dataDir)
+            $env:PRODUCEROS_DATA_DIR = $dataDir
+            & $exePath run --no-browser --port 8420
+          } -ArgumentList (Resolve-Path $exe), $env:PRODUCEROS_DATA_DIR
+
+          $ok = $false
+          for ($i = 0; $i -lt 30; $i++) {
+            Start-Sleep -Seconds 1
+            try {
+              $response = Invoke-WebRequest -Uri "http://127.0.0.1:8420/setup" -UseBasicParsing -TimeoutSec 2
+              if ($response.StatusCode -eq 200) { $ok = $true; break }
+            } catch {
+              continue
+            }
+          }
+
+          Stop-Job $job -ErrorAction SilentlyContinue
+          Receive-Job $job -ErrorAction SilentlyContinue
+          Remove-Job $job -Force -ErrorAction SilentlyContinue
+
+          if (-not $ok) {
+            throw "Built ProducerOS.exe did not respond with 200 on /setup within 30 seconds."
+          }
+          Write-Host "Smoke test passed: /setup returned 200."
+
+      - name: Also smoke test db-upgrade / demo-load / demo-clean / backup-create
+        shell: pwsh
+        run: |
+          $env:PRODUCEROS_DATA_DIR = "$env:RUNNER_TEMP\produceros-smoketest-cli"
+          $exe = Resolve-Path "dist\ProducerOS\ProducerOS.exe"
+          & $exe db-upgrade
+          & $exe demo-load
+          & $exe backup-create
+          & $exe demo-clean
+
+      - name: Generate SBOM (CycloneDX)
+        run: pip install cyclonedx-bom && cyclonedx-py environment -o sbom.json
+
+      - name: Compute checksum
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist\ProducerOS\* -DestinationPath ProducerOS-windows.zip
+          $hash = Get-FileHash -Path ProducerOS-windows.zip -Algorithm SHA256
+          "$($hash.Hash)  ProducerOS-windows.zip" | Out-File -Encoding ascii ProducerOS-windows.zip.sha256
+          Get-Content ProducerOS-windows.zip.sha256
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProducerOS-windows
+          path: |
+            ProducerOS-windows.zip
+            ProducerOS-windows.zip.sha256
+            sbom.json
+          retention-days: 14

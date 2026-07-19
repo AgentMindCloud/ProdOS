@@ -37,7 +37,7 @@ class RedactionFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         try:
             record.msg = redact_secrets(str(record.msg))
-        except Exception:  # pragma: no cover - defensive only
+        except Exception:  # nosec B110 - pragma: no cover - defensive only, must never break logging itself
             pass
         return True
 

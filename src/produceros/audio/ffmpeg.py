@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import shutil
-import subprocess
+import subprocess  # nosec B404 - used only with fixed argv lists below, never shell=True
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -61,7 +61,7 @@ def probe_codec_info(path: str | Path) -> str | None:
     if not status.available or status.ffprobe_path is None:
         return None
     try:
-        result = subprocess.run(  # noqa: S603 - fixed argv, no shell, path validated by caller
+        result = subprocess.run(  # noqa: S603 # nosec B603 - fixed argv, no shell, path validated by caller
             [
                 status.ffprobe_path,
                 "-v", "error",
@@ -98,7 +98,7 @@ def analyze_loudness(path: str | Path) -> LoudnessAnalysis:
         return LoudnessAnalysis(warnings=["FFmpeg not detected; advanced loudness analysis unavailable."])
 
     try:
-        result = subprocess.run(  # noqa: S603 - fixed argv, no shell
+        result = subprocess.run(  # noqa: S603 # nosec B603 - fixed argv, no shell
             [
                 status.ffmpeg_path,
                 "-nostdin", "-hide_banner",

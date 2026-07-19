@@ -1,0 +1,75 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly, independent of any push, so newly-disclosed CVEs in pinned
+    # dependencies get caught even on a quiet repo.
+    - cron: "0 6 * * 1"
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-audit:
+    name: Dependency vulnerability scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip pip-audit
+      - name: pip-audit
+        run: python -m pip install -e . && pip-audit --strict
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  static-analysis:
+    name: Static security scan (bandit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip bandit
+      - name: bandit
+        run: bandit -r src/produceros
+
+  repo-hygiene:
+    name: Repository hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No real audio/media files committed
+        run: |
+          set -euo pipefail
+          matches=$(git ls-files -- '*.wav' '*.aiff' '*.aif' '*.mp3' '*.flac' '*.m4a' '*.ogg' | grep -v '^tests/fixtures/' || true)
+          if [ -n "$matches" ]; then
+            echo "Found audio files outside tests/fixtures/ -- ProducerOS must never ship real music in the repo:"
+            echo "$matches"
+            exit 1
+          fi
+      - name: No committed secret-key or local data-dir artifacts
+        run: |
+          set -euo pipefail
+          matches=$(git ls-files -- 'secret.key' '*.db' '*/produceros.db' || true)
+          if [ -n "$matches" ]; then
+            echo "Found what looks like a runtime secret/database committed to the repo:"
+            echo "$matches"
+            exit 1
+          fi

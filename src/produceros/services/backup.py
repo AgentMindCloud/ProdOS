@@ -141,7 +141,8 @@ def restore_dry_run(backup_path: str | Path) -> RestoreDryRunResult:
         table_counts: dict[str, int] = {}
         for table_name in Base.metadata.tables:
             try:
-                count = conn.execute(f'SELECT COUNT(*) FROM "{table_name}"').fetchone()  # noqa: S608
+                # table_name is our own ORM metadata (Base.metadata.tables), never user input.
+                count = conn.execute(f'SELECT COUNT(*) FROM "{table_name}"').fetchone()  # noqa: S608 # nosec B608
                 table_counts[table_name] = count[0] if count else 0
             except sqlite3.OperationalError:
                 warnings.append(f"Table '{table_name}' missing from backup (may be an older schema version).")

@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    name: Full validation
+    uses: ./.github/workflows/ci.yml
+
+  build-windows:
+    name: Build Windows package
+    needs: validate
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install ProducerOS (editable, dev extras)
+        run: python -m pip install --upgrade pip; pip install -e ".[dev]"
+
+      - name: Build with PyInstaller
+        run: .\scripts\build_windows.ps1
+
+      - name: Generate SBOM (CycloneDX)
+        run: pip install cyclonedx-bom && cyclonedx-py environment -o sbom.json
+
+      - name: Package and checksum
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}"
+          $zipName = "ProducerOS-$version-windows.zip"
+          Compress-Archive -Path dist\ProducerOS\* -DestinationPath $zipName
+          $hash = Get-FileHash -Path $zipName -Algorithm SHA256
+          "$($hash.Hash)  $zipName" | Out-File -Encoding ascii "$zipName.sha256"
+          echo "ZIP_NAME=$zipName" >> $env:GITHUB_ENV
+
+      - name: Upload release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-windows
+          path: |
+            ${{ env.ZIP_NAME }}
+            ${{ env.ZIP_NAME }}.sha256
+            sbom.json
+          retention-days: 90
+
+  publish:
+    name: Publish GitHub release
+    needs: build-windows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download release assets
+        uses: actions/download-artifact@v4
+        with:
+          name: release-windows
+          path: release-assets
+
+      - name: Create release notes
+        run: |
+          cat > release-notes.md <<'EOF'
+          ## ProducerOS ${{ github.ref_name }}
+
+          ### Install
+          1. Download `ProducerOS-${{ github.ref_name }}-windows.zip` below.
+          2. Verify the checksum against the accompanying `.sha256` file.
+          3. Extract the zip -- keep `ProducerOS.exe` and its `_internal\` folder together.
+          4. Run `ProducerOS.exe` (or `scripts\run_desktop.ps1` from a source checkout).
+
+          Database migrations run automatically on first launch. See
+          `docs/INSTALL_WINDOWS.md` for the full walkthrough and
+          `docs/BACKUP_RESTORE.md` before upgrading an existing install.
+
+          ### Verify
+          The attached `sbom.json` (CycloneDX) lists every bundled
+          dependency for this build.
+          EOF
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ProducerOS ${{ github.ref_name }}
+          body_path: release-notes.md
+          files: |
+            release-assets/*

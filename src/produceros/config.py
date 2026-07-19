@@ -26,7 +26,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 APP_NAME = "ProducerOS"
 DEFAULT_PORT = 8420
 DEFAULT_MCP_PORT = 8421
-SECRET_KEY_FILENAME = "secret.key"
+SECRET_KEY_FILENAME = "secret.key"  # nosec B105 - a filename constant, not a credential
 CONFIG_FILENAME = "config.toml"
 
 ALLOWED_SCANNER_EXTENSIONS: tuple[str, ...] = (
