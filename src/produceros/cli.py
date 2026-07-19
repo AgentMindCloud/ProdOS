@@ -24,11 +24,15 @@ logger = get_logger("cli")
 def _alembic_config():
     from alembic.config import Config
 
-    repo_root = Path(__file__).resolve().parents[2]
-    ini_path = repo_root / "alembic.ini"
-    if not ini_path.exists():
-        # Packaged layout: migrations/ ships alongside the executable.
-        ini_path = Path(sys.argv[0]).resolve().parent / "alembic.ini"
+    if getattr(sys, "frozen", False):
+        # Running as a PyInstaller build: bundled datas (alembic.ini,
+        # migrations/) are extracted under sys._MEIPASS, which is a
+        # `_internal/` folder next to the exe for a onedir build or a
+        # temp dir for onefile -- never simply "next to the executable"
+        # as of PyInstaller 6's layout, so use the real extraction root.
+        ini_path = Path(sys._MEIPASS) / "alembic.ini"  # type: ignore[attr-defined]
+    else:
+        ini_path = Path(__file__).resolve().parents[2] / "alembic.ini"
     cfg = Config(str(ini_path))
     cfg.set_main_option("script_location", str(ini_path.parent / "migrations"))
     return cfg
@@ -63,7 +67,6 @@ def _detect_bind_host(bind_mode: str) -> str:
 
 def cmd_run(args: argparse.Namespace) -> None:
     import uvicorn
-
     from alembic import command
 
     settings = get_settings()
@@ -83,7 +86,9 @@ def cmd_run(args: argparse.Namespace) -> None:
 
     if bind_mode == "lan":
         print(f"LAN mode: binding to {host}:{port}. Do not forward this port through your router.")
-        from produceros.services.network import qr_code_data_uri  # noqa: F401  (import validated here; used in-app)
+        from produceros.services.network import (
+            qr_code_data_uri,  # noqa: F401  (import validated here; used in-app)
+        )
     else:
         print(f"Desktop mode: binding to {host}:{port} (localhost only).")
 
@@ -125,6 +130,35 @@ def cmd_backup_create(_args: argparse.Namespace) -> None:
     print(f"Backup created: {record.file_path}")
 
 
+def cmd_restore_dry_run(args: argparse.Namespace) -> None:
+    from produceros.services.backup import restore_dry_run
+
+    result = restore_dry_run(args.backup_path)
+    print(f"OK: {result.ok}")
+    print(f"Integrity check: {result.integrity_check}")
+    if result.table_counts:
+        print("Table counts:")
+        for table, count in sorted(result.table_counts.items()):
+            print(f"  {table}: {count} rows")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    if not result.ok:
+        raise SystemExit(1)
+
+
+def cmd_restore(args: argparse.Namespace) -> None:
+    from produceros.services.backup import restore_backup
+
+    if not args.yes:
+        print("Refusing to restore without --yes -- this replaces your live database.")
+        print(f"Run 'produceros restore-dry-run \"{args.backup_path}\"' first to preview it.")
+        raise SystemExit(1)
+
+    settings = get_settings()
+    restored_path = restore_backup(settings, args.backup_path, confirmed=True)
+    print(f"Restored from '{args.backup_path}'. Live database is now: {restored_path}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="produceros", description="ProducerOS command-line interface.")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -149,6 +183,19 @@ def build_parser() -> argparse.ArgumentParser:
 
     backup_create = subparsers.add_parser("backup-create", help="Create a database backup now.")
     backup_create.set_defaults(func=cmd_backup_create)
+
+    restore_dry_run = subparsers.add_parser(
+        "restore-dry-run", help="Preview a backup file (integrity check, table counts) before restoring it."
+    )
+    restore_dry_run.add_argument("backup_path")
+    restore_dry_run.set_defaults(func=cmd_restore_dry_run)
+
+    restore = subparsers.add_parser(
+        "restore", help="Restore the live database from a backup file. Destructive; requires --yes."
+    )
+    restore.add_argument("backup_path")
+    restore.add_argument("--yes", action="store_true", help="Confirm the destructive restore.")
+    restore.set_defaults(func=cmd_restore)
 
     return parser
 
