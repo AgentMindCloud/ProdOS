@@ -3,11 +3,11 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, ForeignKey, Integer, String, Text
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from produceros.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from produceros.db.base import Base, TimestampMixin, UTCDateTime, UUIDPrimaryKeyMixin
 from produceros.models.enums import AssetType, DeliveryPackageStatus, DeliveryPresetType
 
 
@@ -34,10 +34,10 @@ class DeliveryPackage(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         nullable=False,
     )
     output_directory: Mapped[str | None] = mapped_column(String(1024))
-    manifest_generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    manifest_generated_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     approved_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
-    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    approved_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     notes: Mapped[str | None] = mapped_column(Text)
 
     items: Mapped[list["DeliveryManifestItem"]] = relationship(

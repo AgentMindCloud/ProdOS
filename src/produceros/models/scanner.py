@@ -3,11 +3,11 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, ForeignKey, Integer, String, Text
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from produceros.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from produceros.db.base import Base, TimestampMixin, UTCDateTime, UUIDPrimaryKeyMixin
 from produceros.models.enums import (
     FileOperationStatus,
     FileOperationType,
@@ -29,8 +29,8 @@ class ScannerRoot(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 class ScannerRun(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "scanner_runs"
 
-    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    started_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     status: Mapped[ScannerRunStatus] = mapped_column(
         SAEnum(ScannerRunStatus, native_enum=False, validate_strings=True),
         default=ScannerRunStatus.RUNNING,
@@ -68,7 +68,7 @@ class ScannerFinding(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         default=FindingStatus.NEW,
         nullable=False,
     )
-    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    resolved_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     resolved_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
 
 
@@ -93,6 +93,6 @@ class ApprovedFileOperation(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     dry_run: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     requested_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
     approved_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
-    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    executed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    approved_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    executed_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     result_detail: Mapped[str | None] = mapped_column(Text)

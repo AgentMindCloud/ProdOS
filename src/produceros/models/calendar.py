@@ -3,11 +3,11 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, ForeignKey, String, Text
+from sqlalchemy import Date, ForeignKey, String, Text
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from produceros.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from produceros.db.base import Base, TimestampMixin, UTCDateTime, UUIDPrimaryKeyMixin
 from produceros.models.enums import DeadlineType
 
 
@@ -22,6 +22,6 @@ class Deadline(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     title: Mapped[str] = mapped_column(String(300), nullable=False)
     due_date: Mapped[date] = mapped_column(Date, nullable=False)
-    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    cancelled_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     notes: Mapped[str | None] = mapped_column(Text)

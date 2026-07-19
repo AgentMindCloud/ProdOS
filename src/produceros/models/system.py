@@ -3,11 +3,11 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text, Uuid
+from sqlalchemy import JSON, Boolean, ForeignKey, Integer, String, Text, Uuid
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from produceros.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from produceros.db.base import Base, TimestampMixin, UTCDateTime, UUIDPrimaryKeyMixin
 from produceros.models.enums import BackupType
 
 
@@ -17,7 +17,7 @@ class AuditEvent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     __tablename__ = "audit_events"
 
-    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
     user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
     device_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("paired_devices.id"))
     event_type: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -47,5 +47,5 @@ class BackupRecord(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     size_bytes: Mapped[int | None] = mapped_column(Integer)
     checksum_sha256: Mapped[str | None] = mapped_column(String(64))
     verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    verified_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     notes: Mapped[str | None] = mapped_column(Text)

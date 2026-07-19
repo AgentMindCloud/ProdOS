@@ -3,11 +3,11 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, Text
+from sqlalchemy import Boolean, ForeignKey, Numeric, String, Text
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from produceros.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from produceros.db.base import Base, TimestampMixin, UTCDateTime, UUIDPrimaryKeyMixin
 from produceros.models.enums import ClearanceStatus, ClearanceType, ContributorRole, RightsShareType
 
 
@@ -62,5 +62,5 @@ class Clearance(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         nullable=False,
     )
     rights_holder_contact: Mapped[str | None] = mapped_column(String(300))
-    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    resolved_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     notes: Mapped[str | None] = mapped_column(Text)

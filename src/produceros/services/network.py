@@ -49,6 +49,13 @@ def qr_code_data_uri(data: str) -> str:
     locally -- no external QR-generation service."""
     img = qrcode.make(data)
     buffer = io.BytesIO()
-    img.save(buffer, format="PNG")
+    try:
+        img.save(buffer, format="PNG")
+    except TypeError:
+        # qrcode falls back to qrcode.image.pure.PyPNGImage when Pillow
+        # isn't installed, and PyPNGImage.save() doesn't accept a `format`
+        # kwarg (it always writes PNG) -- Pillow's PilImage.save() does
+        # require it since a BytesIO has no filename to infer from.
+        img.save(buffer)
     encoded = base64.b64encode(buffer.getvalue()).decode("ascii")
     return f"data:image/png;base64,{encoded}"

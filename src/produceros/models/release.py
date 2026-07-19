@@ -3,11 +3,11 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, String, Text, Uuid
+from sqlalchemy import Boolean, Date, ForeignKey, String, Text, Uuid
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from produceros.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from produceros.db.base import Base, TimestampMixin, UTCDateTime, UUIDPrimaryKeyMixin
 from produceros.models.enums import (
     ChecklistCategory,
     ChecklistSeverity,
@@ -78,6 +78,6 @@ class ChecklistResult(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     detail: Mapped[str | None] = mapped_column(Text)
     recommended_action: Mapped[str | None] = mapped_column(Text)
-    evaluated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    evaluated_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
     waived_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
     waived_reason: Mapped[str | None] = mapped_column(Text)

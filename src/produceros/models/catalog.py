@@ -3,12 +3,12 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import JSON, Boolean, Date, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy import UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from produceros.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from produceros.db.base import Base, TimestampMixin, UTCDateTime, UUIDPrimaryKeyMixin
 from produceros.models.enums import (
     ClearanceStatus,
     ExplicitStatus,
@@ -168,6 +168,6 @@ class ProjectVersion(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     # Not a ForeignKey for the same reason as Project's asset pointer fields above.
     fl_project_asset_version_id: Mapped[uuid.UUID | None] = mapped_column(Uuid(as_uuid=True))
     created_by_scan: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
 
     project: Mapped[Project] = relationship(back_populates="versions")

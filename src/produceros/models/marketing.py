@@ -3,11 +3,11 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, ForeignKey, String, Text
+from sqlalchemy import Date, ForeignKey, String, Text
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from produceros.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from produceros.db.base import Base, TimestampMixin, UTCDateTime, UUIDPrimaryKeyMixin
 from produceros.models.enums import (
     CampaignStatus,
     CampaignType,
@@ -78,6 +78,6 @@ class MarketingDraft(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         default=DraftStatus.DRAFT,
         nullable=False,
     )
-    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    generated_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
+    edited_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     template_version: Mapped[str] = mapped_column(String(20), default="1", nullable=False)

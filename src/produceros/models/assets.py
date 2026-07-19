@@ -3,11 +3,11 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import JSON, Boolean, Date, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from produceros.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from produceros.db.base import Base, TimestampMixin, UTCDateTime, UUIDPrimaryKeyMixin
 from produceros.models.enums import (
     ApprovalStatus,
     AssetRegisteredVia,
@@ -51,7 +51,7 @@ class AssetVersion(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     full_path: Mapped[str] = mapped_column(String(2048), nullable=False)
     content_hash: Mapped[str | None] = mapped_column(String(64), index=True)
     size_bytes: Mapped[int | None] = mapped_column(Integer)
-    modified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    modified_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
     parsed_artist: Mapped[str | None] = mapped_column(String(200))
     parsed_track: Mapped[str | None] = mapped_column(String(300))
@@ -121,7 +121,7 @@ class AudioAnalysis(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         SAEnum(MetadataConfidence, native_enum=False, validate_strings=True)
     )
 
-    analyzed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    analyzed_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
     warnings: Mapped[list] = mapped_column(JSON, default=list)
 
     asset_version: Mapped[AssetVersion] = relationship(back_populates="analysis")

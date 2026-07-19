@@ -3,11 +3,11 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import JSON, Date, DateTime, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import JSON, Date, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from produceros.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from produceros.db.base import Base, TimestampMixin, UTCDateTime, UUIDPrimaryKeyMixin
 from produceros.models.enums import AnalyticsMetricType, AnalyticsSourceType, RawOrCalculated
 
 
@@ -37,7 +37,7 @@ class AnalyticsImport(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         default=RawOrCalculated.RAW,
         nullable=False,
     )
-    imported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    imported_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
     imported_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
     original_filename: Mapped[str | None] = mapped_column(String(500))
     row_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
