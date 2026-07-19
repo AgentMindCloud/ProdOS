@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m %}
+{% block title %}Settings -- ProducerOS{% endblock %}
+{% block page_heading %}Settings{% endblock %}
+{% block content %}
+
+<div class="grid grid-cols-2">
+  <div class="panel">
+    <h2>About this installation</h2>
+    <p>Version: {{ app_version }}</p>
+    <p>Environment: {{ app_env }}</p>
+    <p>Data directory: <code>{{ data_dir }}</code></p>
+  </div>
+
+  <div class="panel">
+    <h2>Audio analysis</h2>
+    {% if ffmpeg.available %}
+    {{ m.checklist_badge("passed") }} <span>FFmpeg detected -- loudness/true-peak analysis available.</span>
+    {% else %}
+    {{ m.checklist_badge("warning") }} <span>FFmpeg not detected. Basic metadata (duration, sample rate, bit depth) still works via Mutagen. Install FFmpeg and restart to enable loudness analysis.</span>
+    {% endif %}
+  </div>
+
+  <div class="panel">
+    <h2>Network &amp; LAN mode</h2>
+    <p>Manage LAN mode, pairing, and paired devices.</p>
+    <a class="btn btn-primary" href="/settings/lan">Open LAN settings</a>
+  </div>
+
+  <div class="panel">
+    <h2>Local MCP server</h2>
+    <p>Status: {% if mcp_enabled %}{{ m.checklist_badge("passed") }} Enabled ({{ mcp_bind }}:{{ mcp_port }}){% else %}<span class="badge badge-neutral">Disabled</span>{% endif %}</p>
+    <p class="text-faint">Enable or disable in <code>config.toml</code> under <code>[mcp] enabled = true/false</code>, then restart ProducerOS. See docs/MCP.md.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Scanner</h2>
+    <p>Manage scanner roots and review findings.</p>
+    <a class="btn btn-primary" href="/scanner">Open Scanner</a>
+  </div>
+
+  <div class="panel">
+    <h2>Backup &amp; restore</h2>
+    <a class="btn btn-primary" href="/backup">Open Backup &amp; Restore</a>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Visible project stages</h2>
+  <p class="text-faint">Default system stage identifiers are always preserved even if hidden here.</p>
+  <form method="post" action="/settings/project-states">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="grid grid-cols-4">
+      {% for s in all_states %}
+      <label class="checkbox-row">
+        <input type="checkbox" name="states" value="{{ s }}" {% if s in visible_states %}checked{% endif %}>
+        {{ s.replace("_"," ") }}
+      </label>
+      {% endfor %}
+    </div>
+    <button type="submit" class="btn btn-primary" style="margin-top:1rem;">Save visibility</button>
+  </form>
+</div>
+{% endblock %}

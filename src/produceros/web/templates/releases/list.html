@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m %}
+{% block title %}Releases -- ProducerOS{% endblock %}
+{% block page_heading %}Releases{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center" style="margin-bottom:1rem;">
+  <div></div>
+  <a class="btn btn-primary" href="/releases/new"><svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-plus"/></svg> New release</a>
+</div>
+<div class="panel">
+  {% for r in releases %}
+  <div class="record-card flex justify-between items-center">
+    <div>
+      <a href="/releases/{{ r.id }}"><strong>{{ r.title }}</strong></a>
+      <div class="text-faint">{{ r.release_type.value.replace("_"," ") }} {% if r.release_date %}&middot; {{ r.release_date }}{% endif %}</div>
+    </div>
+    {{ m.readiness_badge(r.readiness_status) }}
+  </div>
+  {% else %}<p class="empty-state">No releases yet. <a href="/releases/new">Start one</a>.</p>{% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+# ProducerOS configuration file.
+#
+# Copy this file to `config.toml` in your ProducerOS data directory to override
+# defaults. ProducerOS runs with zero configuration out of the box; every
+# value below is optional and shown at its default.
+#
+# Precedence (highest wins): environment variables (PRODUCEROS_*) > config.toml > defaults.
+# Never store real secrets in this file -- it is safe to version-control because
+# it ships with no secrets. The application generates its own secret key on
+# first run and stores it outside the repository, in the data directory.
+
+[server]
+bind_mode = "desktop"       # "desktop" (127.0.0.1) or "lan" (private network only)
+port = 8420
+open_browser = true
+
+[database]
+# SQLite file lives under the data directory by default: <data_dir>/produceros.db
+wal_mode = true
+
+[security]
+session_minutes = 720
+login_rate_limit_per_minute = 5
+pairing_rate_limit_per_minute = 5
+pairing_code_ttl_minutes = 10
+
+[audio]
+# Optional. Leave blank to auto-detect ffmpeg/ffprobe on PATH.
+ffmpeg_path = ""
+ffprobe_path = ""
+
+[scanner]
+# Windows example roots -- edit through Settings > Scanner in the running app,
+# or list them here. Paths outside these roots are never scanned.
+roots = []
+allowed_extensions = [
+    ".flp", ".zip", ".wav", ".aiff", ".aif", ".mp3", ".flac", ".ogg", ".m4a",
+    ".png", ".jpg", ".jpeg", ".webp", ".mp4", ".mov", ".pdf", ".txt", ".csv",
+]
+max_file_size_mb = 4096
+
+[mcp]
+enabled = false
+bind = "127.0.0.1"
+port = 8421
+
+[logging]
+level = "INFO"

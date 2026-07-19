@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m %}
+{% block title %}Projects -- ProducerOS{% endblock %}
+{% block page_heading %}Projects{% endblock %}
+{% block content %}
+
+<div class="flex justify-between items-center gap-1" style="margin-bottom:1rem; flex-wrap:wrap;">
+  <button class="btn filter-toggle" data-filter-toggle type="button">
+    <svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-filter"/></svg> Filters
+  </button>
+  <a class="btn btn-primary" href="/projects/new">
+    <svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-plus"/></svg> New project
+  </a>
+</div>
+
+<div class="filter-drawer" data-filter-drawer>
+  <div class="filter-drawer-panel panel">
+    <div class="panel-title-row">
+      <h2>Filters</h2>
+      <button class="btn btn-sm" data-filter-close type="button" aria-label="Close filters">
+        <svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-close"/></svg>
+      </button>
+    </div>
+    <form method="get" action="/projects" class="grid grid-cols-3">
+      <div class="field">
+        <label for="search">Search</label>
+        <input type="search" id="search" name="search" value="{{ filters.search }}" placeholder="Title or code">
+      </div>
+      <div class="field">
+        <label for="state">Stage</label>
+        <select id="state" name="state">
+          <option value="">All stages</option>
+          {% for s in states %}<option value="{{ s }}" {% if filters.state == s %}selected{% endif %}>{{ s.replace("_"," ") }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="artist_id">Artist</label>
+        <select id="artist_id" name="artist_id">
+          <option value="">All artists</option>
+          {% for a in artists %}<option value="{{ a.id }}" {% if filters.artist_id == a.id|string %}selected{% endif %}>{{ a.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field" style="align-self:end;">
+        <button type="submit" class="btn btn-primary btn-block">Apply</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead><tr><th>Title</th><th>Artist</th><th>Stage</th><th>BPM/Key</th><th>Updated</th></tr></thead>
+    <tbody>
+      {% for p in projects %}
+      <tr>
+        <td><a href="/projects/{{ p.id }}">{{ p.final_title or p.working_title }}</a><br><small>{{ p.internal_code }}</small></td>
+        <td>{{ p.artist.name if p.artist else "--" }}</td>
+        <td>{{ m.stage_pill(p.state.value) }}</td>
+        <td>{{ p.bpm or "--" }} {{ p.musical_key or "" }}</td>
+        <td>{{ p.updated_at.strftime("%Y-%m-%d") }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+  {% for p in projects %}
+  <div class="record-card">
+    <div class="record-card-row"><a href="/projects/{{ p.id }}"><strong>{{ p.final_title or p.working_title }}</strong></a></div>
+    <div class="record-card-row"><span class="k">Code</span><span>{{ p.internal_code }}</span></div>
+    <div class="record-card-row"><span class="k">Artist</span><span>{{ p.artist.name if p.artist else "--" }}</span></div>
+    <div class="record-card-row"><span class="k">Stage</span>{{ m.stage_pill(p.state.value) }}</div>
+    <div class="record-card-row"><span class="k">BPM/Key</span><span>{{ p.bpm or "--" }} {{ p.musical_key or "" }}</span></div>
+  </div>
+  {% endfor %}
+
+  {% if not projects %}
+  <p class="empty-state">No projects match these filters. <a href="/projects/new">Create one</a>.</p>
+  {% endif %}
+</div>
+{% endblock %}

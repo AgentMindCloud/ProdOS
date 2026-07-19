@@ -1,0 +1,45 @@
+{% macro checklist_badge(status) -%}
+  {%- if status == "passed" -%}
+    <span class="badge badge-success"><svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-check"/></svg>Passed</span>
+  {%- elif status == "warning" -%}
+    <span class="badge badge-warning"><svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-warning"/></svg>Warning</span>
+  {%- elif status == "blocking" -%}
+    <span class="badge badge-blocking"><svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-blocking"/></svg>Blocking</span>
+  {%- elif status == "waived" -%}
+    <span class="badge badge-neutral">Waived / N/A</span>
+  {%- elif status == "failed" -%}
+    <span class="badge badge-blocking">Failed</span>
+  {%- else -%}
+    <span class="badge badge-neutral">{{ status }}</span>
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro readiness_badge(status) -%}
+  {%- if status == "ready" -%}
+    <span class="badge badge-success"><svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-check"/></svg>Ready</span>
+  {%- elif status == "warning" -%}
+    <span class="badge badge-warning"><svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-warning"/></svg>Needs attention</span>
+  {%- elif status == "blocking" -%}
+    <span class="badge badge-blocking"><svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-blocking"/></svg>Blocking issues</span>
+  {%- else -%}
+    <span class="badge badge-neutral">Not started</span>
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro stage_pill(state) -%}
+  <span class="stage-pill">{{ state.replace("_", " ") }}</span>
+{%- endmacro %}
+
+{% macro approval_badge(status) -%}
+  {%- if status == "approved" -%}
+    <span class="badge badge-success"><svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-check"/></svg>Approved</span>
+  {%- elif status == "rejected" -%}
+    <span class="badge badge-blocking">Rejected</span>
+  {%- else -%}
+    <span class="badge badge-warning">Pending</span>
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro csrf_field(csrf_token) -%}
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+{%- endmacro %}

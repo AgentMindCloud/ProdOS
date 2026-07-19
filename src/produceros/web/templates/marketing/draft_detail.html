@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ draft.title }} -- ProducerOS{% endblock %}
+{% block page_heading %}{{ draft.title }}{% endblock %}
+{% block content %}
+<div class="panel content-narrow">
+  <p><span class="badge badge-neutral">Draft -- edit before using</span></p>
+  <form method="post" action="/marketing/drafts/{{ draft.id }}/edit">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field">
+      <label for="body">Content</label>
+      <textarea id="body" name="body" rows="16" style="min-height:320px; font-family: ui-monospace, monospace;">{{ draft.body }}</textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Save edits</button>
+  </form>
+  <div class="btn-group" style="margin-top:1rem;">
+    <a class="btn" href="/marketing/drafts/{{ draft.id }}/export">Export as Markdown</a>
+    <form method="post" action="/marketing/drafts/{{ draft.id }}/archive" style="display:inline;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn">Archive</button>
+    </form>
+    <a class="btn" href="/marketing">Back to Marketing</a>
+  </div>
+</div>
+{% endblock %}

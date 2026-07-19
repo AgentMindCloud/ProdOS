@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Deliveries -- ProducerOS{% endblock %}
+{% block page_heading %}Delivery Packages{% endblock %}
+{% block content %}
+<div class="panel">
+  <h2>New delivery package</h2>
+  <form method="post" action="/delivery/packages/new" class="grid grid-cols-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field"><label for="project_id">Project</label>
+      <select id="project_id" name="project_id" required><option value="">Select&hellip;</option>{% for p in projects %}<option value="{{ p.id }}">{{ p.working_title }}</option>{% endfor %}</select>
+    </div>
+    <div class="field"><label for="preset_id">Preset</label>
+      <select id="preset_id" name="preset_id" required>{% for pr in presets %}<option value="{{ pr.id }}">{{ pr.name }}</option>{% endfor %}</select>
+    </div>
+    <div class="field"><label for="name">Package name (optional)</label><input type="text" id="name" name="name"></div>
+    <div class="field"><label for="output_directory">Output folder</label><input type="text" id="output_directory" name="output_directory" placeholder="D:\Music\Deliveries\ClientX" required></div>
+    <div class="field" style="grid-column:1/-1;"><button type="submit" class="btn btn-primary">Create package (draft)</button></div>
+  </form>
+</div>
+<div class="panel">
+  <h2>Packages</h2>
+  {% for pkg in packages %}
+  <div class="record-card flex justify-between items-center">
+    <a href="/delivery/packages/{{ pkg.id }}">{{ pkg.name }}</a>
+    <span class="badge badge-neutral">{{ pkg.status.value.replace("_"," ") }}</span>
+  </div>
+  {% else %}<p class="empty-state">No delivery packages yet.</p>{% endfor %}
+</div>
+{% endblock %}

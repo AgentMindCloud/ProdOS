@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m %}
+{% block title %}Scanner -- ProducerOS{% endblock %}
+{% block page_heading %}Scanner{% endblock %}
+{% block content %}
+<div class="panel">
+  <p>ProducerOS scans your configured folders and reports what it finds. It never deletes, renames, moves, or uploads anything on its own -- every change requires your explicit approval.</p>
+  <h2>Scanner roots</h2>
+  <form method="post" action="/scanner/roots/new" class="grid grid-cols-3" style="align-items:end;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field"><label for="path">Folder path</label><input type="text" id="path" name="path" placeholder="D:\Music\Projects" required></div>
+    <div class="field"><label for="label">Label (optional)</label><input type="text" id="label" name="label" placeholder="Projects"></div>
+    <div class="field"><button type="submit" class="btn btn-primary">Add root</button></div>
+  </form>
+  {% for root in roots %}
+  <div class="record-card flex justify-between items-center">
+    <span>{{ root.label or root.path }} <span class="text-faint">{{ root.path }}</span></span>
+    {% if root.is_active %}
+    <form method="post" action="/scanner/roots/{{ root.id }}/deactivate">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn btn-sm">Deactivate</button>
+    </form>
+    {% else %}<span class="badge badge-neutral">Inactive</span>{% endif %}
+  </div>
+  {% else %}<p class="empty-state">No scanner roots configured yet. Add a folder above, e.g. <code>D:\Music\Projects</code>.</p>{% endfor %}
+
+  <form method="post" action="/scanner/scan" style="margin-top:1rem;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="btn btn-primary" {% if not roots %}disabled{% endif %}>Run scan now (read-only)</button>
+  </form>
+</div>
+
+<div class="panel">
+  <h2>Recent scans</h2>
+  {% for run in runs %}
+  <div class="record-card flex justify-between items-center">
+    <span>{{ run.started_at.strftime("%Y-%m-%d %H:%M") }} -- {{ run.files_scanned }} files, {{ run.findings_count }} findings</span>
+    {{ m.checklist_badge("passed" if run.status.value == "completed" else "blocking") }}
+  </div>
+  {% else %}<p class="empty-state">No scans run yet.</p>{% endfor %}
+</div>
+
+<div class="panel">
+  <h2>Findings awaiting review</h2>
+  {% for f in findings %}
+  <div class="record-card">
+    <div class="flex justify-between items-center">
+      <span class="badge badge-warning">{{ f.finding_type.value.replace("_"," ") }}</span>
+    </div>
+    <p style="margin: 0.5rem 0;">{{ f.path }}</p>
+    <p class="text-faint" style="margin:0 0 0.5rem;">{{ f.detail }}</p>
+    <div class="flex gap-1" style="flex-wrap:wrap;">
+      {% if f.finding_type.value in new_version_types %}
+      <form method="post" action="/scanner/findings/{{ f.id }}/approve" class="flex gap-1" style="flex-wrap:wrap;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <select name="project_id" required>
+          <option value="">Assign to project&hellip;</option>
+          {% for p in projects %}<option value="{{ p.id }}">{{ p.working_title }}</option>{% endfor %}
+        </select>
+        <select name="asset_type">
+          {% for t in asset_types %}<option value="{{ t.value }}">{{ t.value.replace("_"," ").title() }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="btn btn-sm btn-primary">Approve &amp; register</button>
+      </form>
+      {% endif %}
+      <form method="post" action="/scanner/findings/{{ f.id }}/reject">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="btn btn-sm">Dismiss</button>
+      </form>
+    </div>
+  </div>
+  {% else %}<p class="empty-state">No open findings. Run a scan to check for new or changed files.</p>{% endfor %}
+</div>
+{% endblock %}

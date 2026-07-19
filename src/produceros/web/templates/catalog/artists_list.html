@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Artists -- ProducerOS{% endblock %}
+{% block page_heading %}Artists{% endblock %}
+{% block content %}
+<div class="panel">
+  <div class="panel-title-row"><h2>Add artist</h2></div>
+  <form method="post" action="/artists/new" class="flex gap-1" style="align-items:flex-end;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field mb-0" style="flex:1;">
+      <label for="name">Artist name</label>
+      <input type="text" id="name" name="name" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Add</button>
+  </form>
+</div>
+<div class="panel">
+  <h2>All artists</h2>
+  {% if artists %}
+  <ul style="list-style:none; padding:0; margin:0;">
+    {% for artist in artists %}
+    <li style="padding:0.6rem 0; border-bottom:1px solid var(--border);">
+      <a href="/projects?artist_id={{ artist.id }}">{{ artist.name }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty-state">No artists yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

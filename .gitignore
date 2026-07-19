@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.env
+
+# ProducerOS runtime data (never commit local data)
+data/
+*.db
+*.db-wal
+*.db-shm
+/instance/
+backups/
+logs/
+*.log
+
+# Packaging output
+packaging/pyinstaller/build/
+packaging/pyinstaller/dist/
+*.spec.bak
+release-artifacts/
+
+# Test / tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+coverage.xml
+node_modules/
+.playwright-cache/
+test-results/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Secrets (never commit)
+config.toml
+.env
+secret.key
+*.pem

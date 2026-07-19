@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Marketing -- ProducerOS{% endblock %}
+{% block page_heading %}Marketing{% endblock %}
+{% block content %}
+<div class="panel">
+  <p>Generate local, editable drafts from your confirmed project data. Nothing here invents numbers, quotes, or achievements -- and nothing is ever sent or published automatically.</p>
+  <h2>Generate a draft</h2>
+  <form method="post" action="/marketing/drafts/generate" class="grid grid-cols-3" style="align-items:end;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field"><label for="d_project">Project</label>
+      <select id="d_project" name="project_id" required>
+        <option value="">Select a project&hellip;</option>
+        {% for p in projects %}<option value="{{ p.id }}">{{ p.working_title }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field"><label for="d_type">Draft type</label>
+      <select id="d_type" name="draft_type">
+        {% for t in draft_types %}<option value="{{ t.value }}">{{ t.value.replace("_"," ").title() }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field"><button type="submit" class="btn btn-primary">Generate draft</button></div>
+  </form>
+</div>
+
+<div class="grid grid-cols-2">
+  <div class="panel">
+    <h2>Campaigns</h2>
+    <form method="post" action="/marketing/campaigns/new" class="grid grid-cols-2" style="align-items:end;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="field"><label for="c_name">Name</label><input type="text" id="c_name" name="name" required></div>
+      <div class="field"><label for="c_type">Type</label>
+        <select id="c_type" name="campaign_type">{% for t in campaign_types %}<option value="{{ t.value }}">{{ t.value.replace("_"," ").title() }}</option>{% endfor %}</select>
+      </div>
+      <div class="field" style="grid-column:1/-1;"><label for="c_project">Project (optional)</label>
+        <select id="c_project" name="project_id"><option value="">None</option>{% for p in projects %}<option value="{{ p.id }}">{{ p.working_title }}</option>{% endfor %}</select>
+      </div>
+      <div class="field" style="grid-column:1/-1;"><button type="submit" class="btn btn-primary btn-block">Create campaign</button></div>
+    </form>
+    {% for c in campaigns %}
+    <div class="record-card">{{ c.name }} <span class="badge badge-neutral">{{ c.status.value }}</span></div>
+    {% else %}<p class="empty-state">No campaigns yet.</p>{% endfor %}
+  </div>
+
+  <div class="panel">
+    <h2>Content assets</h2>
+    <form method="post" action="/marketing/content-assets/new" class="grid grid-cols-2" style="align-items:end;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="field"><label for="ca_title">Title</label><input type="text" id="ca_title" name="title" required></div>
+      <div class="field"><label for="ca_type">Type</label>
+        <select id="ca_type" name="content_type">{% for t in content_types %}<option value="{{ t.value }}">{{ t.value.replace("_"," ").title() }}</option>{% endfor %}</select>
+      </div>
+      <div class="field" style="grid-column:1/-1;"><label for="ca_project">Project (optional)</label>
+        <select id="ca_project" name="project_id"><option value="">None</option>{% for p in projects %}<option value="{{ p.id }}">{{ p.working_title }}</option>{% endfor %}</select>
+      </div>
+      <div class="field" style="grid-column:1/-1;"><button type="submit" class="btn btn-primary btn-block">Add content asset</button></div>
+    </form>
+    {% for a in content_assets %}
+    <div class="record-card">{{ a.title }} <span class="badge badge-neutral">{{ a.status.value }}</span></div>
+    {% else %}<p class="empty-state">No content assets tracked yet.</p>{% endfor %}
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Drafts</h2>
+  {% for d in drafts %}
+  <div class="record-card flex justify-between items-center">
+    <a href="/marketing/drafts/{{ d.id }}">{{ d.title }}</a>
+    <span class="badge badge-neutral">{{ d.status.value }}</span>
+  </div>
+  {% else %}<p class="empty-state">No drafts generated yet.</p>{% endfor %}
+</div>
+{% endblock %}

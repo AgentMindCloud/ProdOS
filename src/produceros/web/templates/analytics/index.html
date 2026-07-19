@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Analytics -- ProducerOS{% endblock %}
+{% block page_heading %}Analytics{% endblock %}
+{% block content %}
+<div class="panel">
+  <p>All numbers here come from CSVs you export from wherever you track them, or manual entry. ProducerOS never calls any platform API and never predicts hits.</p>
+  <form method="get" action="/analytics" class="flex gap-1" style="align-items:end;">
+    <div class="field mb-0" style="flex:1;"><label for="project_id">Project</label>
+      <select id="project_id" name="project_id" onchange="this.form.submit()">
+        <option value="">All projects</option>
+        {% for p in projects %}<option value="{{ p.id }}" {% if selected_project_id == p.id|string %}selected{% endif %}>{{ p.working_title }}</option>{% endfor %}
+      </select>
+    </div>
+  </form>
+</div>
+
+<div class="grid grid-cols-2">
+  <div class="panel">
+    <h2>Import CSV</h2>
+    <p><a href="/analytics/csv-template">Download CSV template</a></p>
+    <form method="post" action="/analytics/import" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="field"><label for="csv_file">CSV file</label><input type="file" id="csv_file" name="csv_file" accept=".csv" required></div>
+      <div class="field"><label for="source_name">Source name</label><input type="text" id="source_name" name="source_name" placeholder="e.g. Spotify for Artists"></div>
+      <div class="grid grid-cols-2">
+        <div class="field"><label for="period_start">Period start</label><input type="date" id="period_start" name="period_start" required></div>
+        <div class="field"><label for="period_end">Period end</label><input type="date" id="period_end" name="period_end" required></div>
+      </div>
+      <div class="field"><label for="i_project">Project (optional)</label>
+        <select id="i_project" name="project_id"><option value="">None</option>{% for p in projects %}<option value="{{ p.id }}">{{ p.working_title }}</option>{% endfor %}</select>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Import</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h2>Manual entry</h2>
+    <form method="post" action="/analytics/manual-entry">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="field"><label for="metric_type">Metric</label>
+        <select id="metric_type" name="metric_type">{% for t in metric_types %}<option value="{{ t.value }}">{{ t.value.replace("_"," ") }}</option>{% endfor %}</select>
+      </div>
+      <div class="grid grid-cols-2">
+        <div class="field"><label for="value">Value</label><input type="number" id="value" name="value" step="0.01" required></div>
+        <div class="field"><label for="channel">Channel (optional)</label><input type="text" id="channel" name="channel" placeholder="Spotify"></div>
+      </div>
+      <div class="grid grid-cols-2">
+        <div class="field"><label for="ma_period_start">Period start</label><input type="date" id="ma_period_start" name="period_start" required></div>
+        <div class="field"><label for="ma_period_end">Period end</label><input type="date" id="ma_period_end" name="period_end" required></div>
+      </div>
+      <div class="field"><label for="m_project">Project (optional)</label>
+        <select id="m_project" name="project_id"><option value="">None</option>{% for p in projects %}<option value="{{ p.id }}">{{ p.working_title }}</option>{% endfor %}</select>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Record</button>
+    </form>
+  </div>
+</div>
+
+<div class="grid grid-cols-2">
+  <div class="panel">
+    <h2>Release summary</h2>
+    {% if summary %}
+    <ul style="list-style:none; padding:0;">
+      {% for m in summary %}<li style="display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid var(--border);"><span>{{ m.metric_type.replace("_"," ") }}</span><strong>{{ "%.2f"|format(m.total) }}</strong></li>{% endfor %}
+    </ul>
+    {% else %}<p class="empty-state">Select a project to see its summary.</p>{% endif %}
+  </div>
+  <div class="panel">
+    <h2>Channel summary</h2>
+    {% if channels %}
+    <ul style="list-style:none; padding:0;">
+      {% for channel, total in channels.items() %}<li style="display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid var(--border);"><span>{{ channel }}</span><strong>{{ "%.2f"|format(total) }}</strong></li>{% endfor %}
+    </ul>
+    {% else %}<p class="empty-state">No channel data yet.</p>{% endif %}
+  </div>
+  <div class="panel">
+    <h2>Content performance ranking</h2>
+    {% if ranking %}
+    <ol>{% for name, total in ranking %}<li>{{ name }} -- {{ "%.2f"|format(total) }}</li>{% endfor %}</ol>
+    {% else %}<p class="empty-state">No content-level data yet.</p>{% endif %}
+  </div>
+  <div class="panel">
+    <h2>Cost / revenue</h2>
+    <p>Total spend: <strong>{{ "%.2f"|format(cost_total) }}</strong></p>
+    <p>Total revenue: <strong>{{ "%.2f"|format(revenue_total) }}</strong></p>
+  </div>
+</div>
+{% endblock %}

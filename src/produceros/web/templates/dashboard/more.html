@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}More -- ProducerOS{% endblock %}
+{% block page_heading %}More{% endblock %}
+{% block content %}
+<div class="panel">
+  <ul style="list-style:none; padding:0; margin:0;">
+    {% for href, icon, label in [("/marketing","icon-marketing","Marketing"), ("/scanner","icon-scanner","Scanner"), ("/delivery","icon-deliveries","Deliveries"), ("/analytics","icon-analytics","Analytics"), ("/backup", "icon-offline", "Backup & Restore"), ("/settings","icon-settings","Settings")] %}
+    <li>
+      <a href="{{ href }}" class="flex items-center gap-1" style="padding: 1rem 0.25rem; border-bottom: 1px solid var(--border); min-height: var(--touch); text-decoration:none; color: var(--text);">
+        <svg class="icon icon-lg" aria-hidden="true"><use href="/static/svg/icons.svg#{{ icon }}"/></svg>
+        {{ label }}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

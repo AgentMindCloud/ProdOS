@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m %}
+{% block title %}{{ package.name }} -- ProducerOS{% endblock %}
+{% block page_heading %}{{ package.name }}{% endblock %}
+{% block content %}
+{% if error %}<div class="form-error-summary" role="alert">{{ error }}</div>{% endif %}
+
+<div class="panel">
+  <p>Status: <span class="badge badge-neutral">{{ package.status.value.replace("_"," ") }}</span></p>
+  <p>Output folder: <code>{{ package.output_directory }}</code></p>
+
+  <h3>Completeness check ({{ preset.name }})</h3>
+  <ul style="list-style:none; padding:0;">
+    {% for c in completeness %}
+    <li style="padding:0.3rem 0;">
+      {{ c.asset_type.value.replace("_"," ").title() }}
+      {% if c.present %}{{ m.checklist_badge("passed") }}{% else %}{{ m.checklist_badge("blocking") }}{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+
+  <div class="btn-group" style="margin-top:1rem;">
+    <form method="post" action="/delivery/packages/{{ package.id }}/generate-manifest">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn">Generate manifest (dry run)</button>
+    </form>
+    {% if package.status.value == "dry_run" %}
+    <form method="post" action="/delivery/packages/{{ package.id }}/approve">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn btn-primary">Approve for copying</button>
+    </form>
+    {% endif %}
+    {% if package.status.value == "approved" %}
+    <form method="post" action="/delivery/packages/{{ package.id }}/execute" data-confirm="Copy all files to the output folder now? This cannot be undone.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn btn-primary">Copy files now</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Manifest items</h2>
+  {% for item in package.items %}
+  <div class="record-card flex justify-between items-center">
+    <span>{{ item.role_in_package }} &rarr; {{ item.destination_relative_path }}</span>
+    {% if item.copied %}{{ m.checklist_badge("passed") }}{% else %}<span class="badge badge-neutral">Pending</span>{% endif %}
+  </div>
+  {% else %}<p class="empty-state">No manifest generated yet.</p>{% endfor %}
+</div>
+{% endblock %}

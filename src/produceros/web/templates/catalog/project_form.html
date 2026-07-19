@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}New Project -- ProducerOS{% endblock %}
+{% block page_heading %}New Project{% endblock %}
+{% block content %}
+<div class="panel content-narrow">
+  <form method="post" action="/projects/new">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field">
+      <label for="working_title">Working title</label>
+      <input type="text" id="working_title" name="working_title" required autofocus>
+    </div>
+    <div class="field">
+      <label for="artist_id">Artist</label>
+      <select id="artist_id" name="artist_id">
+        <option value="">Unassigned</option>
+        {% for a in artists %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}
+      </select>
+      <div class="field-hint">No artist yet? <a href="/artists">Add one first</a>, or leave unassigned and set it later.</div>
+    </div>
+    <div class="grid grid-cols-3">
+      <div class="field">
+        <label for="genre">Genre</label>
+        <input type="text" id="genre" name="genre">
+      </div>
+      <div class="field">
+        <label for="bpm">BPM</label>
+        <input type="number" id="bpm" name="bpm" step="0.1" min="0" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label for="musical_key">Key</label>
+        <input type="text" id="musical_key" name="musical_key" placeholder="e.g. Am">
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-block">Create project</button>
+  </form>
+</div>
+{% endblock %}

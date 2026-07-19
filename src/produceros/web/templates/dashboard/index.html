@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m %}
+{% block title %}Dashboard -- ProducerOS{% endblock %}
+{% block page_heading %}Dashboard{% endblock %}
+
+{% block content %}
+<div data-dashboard-summary>
+  <div class="grid grid-cols-4" style="margin-bottom: 1.5rem;">
+    <div class="stat-tile">
+      <div class="value">{{ summary.active_project_count }}</div>
+      <div class="label">Active projects</div>
+    </div>
+    <div class="stat-tile">
+      <div class="value">{{ summary.releases_needing_attention|length }}</div>
+      <div class="label">Releases needing attention</div>
+    </div>
+    <div class="stat-tile">
+      <div class="value">{{ summary.upcoming_deadlines|length }}</div>
+      <div class="label">Deadlines (next 14 days)</div>
+    </div>
+    <div class="stat-tile">
+      <div class="value">{{ summary.unconfirmed_rights_projects|length }}</div>
+      <div class="label">Unconfirmed rights</div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2">
+    <div class="panel">
+      <div class="panel-title-row"><h2>Active projects</h2><a class="btn btn-sm" href="/projects">View all</a></div>
+      {% if summary.active_projects %}
+      <ul style="list-style:none; padding:0; margin:0;">
+        {% for p in summary.active_projects %}
+        <li style="display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid var(--border);">
+          <a href="/projects/{{ p.id }}">{{ p.final_title or p.working_title }}</a>
+          {{ m.stage_pill(p.state.value) }}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="empty-state">No active projects yet. <a href="/projects/new">Create your first project</a>.</p>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-title-row"><h2>Projects by stage</h2></div>
+      <ul style="list-style:none; padding:0; margin:0;">
+        {% for stage, count in summary.projects_by_stage.items() %}
+        <li style="display:flex; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--border);">
+          {{ m.stage_pill(stage) }}
+          <span>{{ count }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title-row"><h2>Releases requiring attention</h2><a class="btn btn-sm" href="/releases">View all</a></div>
+      {% if summary.releases_needing_attention %}
+      <ul style="list-style:none; padding:0; margin:0;">
+        {% for r in summary.releases_needing_attention %}
+        <li style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid var(--border);">
+          <a href="/releases/{{ r.id }}">{{ r.title }}</a>
+          {{ m.readiness_badge(r.readiness_status) }}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="empty-state">Nothing blocking right now.</p>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-title-row"><h2>Upcoming deadlines</h2><a class="btn btn-sm" href="/calendar">Calendar</a></div>
+      {% if summary.upcoming_deadlines %}
+      <ul style="list-style:none; padding:0; margin:0;">
+        {% for d in summary.upcoming_deadlines %}
+        <li style="display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid var(--border);">
+          <span>{{ d.title }}</span>
+          <span class="text-faint">{{ d.due_date.strftime("%b %d") }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="empty-state">Nothing due in the next 14 days.</p>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-title-row"><h2>Unconfirmed rights</h2><a class="btn btn-sm" href="/projects">Review</a></div>
+      {% if summary.unconfirmed_rights_projects %}
+      <ul style="list-style:none; padding:0; margin:0;">
+        {% for p in summary.unconfirmed_rights_projects %}
+        <li style="padding:0.5rem 0; border-bottom:1px solid var(--border);">
+          <a href="/projects/{{ p.id }}#rights">{{ p.working_title }}</a>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="empty-state">All active projects have confirmed rights shares.</p>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-title-row"><h2>Recent versions</h2><a class="btn btn-sm" href="/scanner">Scanner</a></div>
+      {% if summary.recent_versions %}
+      <ul style="list-style:none; padding:0; margin:0;">
+        {% for v in summary.recent_versions %}
+        <li style="padding:0.4rem 0; border-bottom:1px solid var(--border);">
+          {{ v.original_filename }} <span class="text-faint">v{{ v.version_number }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="empty-state">No asset versions registered yet.</p>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-title-row"><h2>Recent scanner findings</h2><a class="btn btn-sm" href="/scanner">Review</a></div>
+      {% if summary.recent_findings %}
+      <ul style="list-style:none; padding:0; margin:0;">
+        {% for f in summary.recent_findings %}
+        <li style="padding:0.4rem 0; border-bottom:1px solid var(--border);">
+          <span class="badge badge-warning">{{ f.finding_type.value.replace("_"," ") }}</span>
+          <span class="text-faint">{{ f.path.split("/")[-1] }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="empty-state">No unresolved scanner findings.</p>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-title-row"><h2>Marketing tasks</h2><a class="btn btn-sm" href="/marketing">Marketing</a></div>
+      {% if summary.marketing_tasks %}
+      <ul style="list-style:none; padding:0; margin:0;">
+        {% for d in summary.marketing_tasks %}
+        <li style="padding:0.4rem 0; border-bottom:1px solid var(--border);">
+          <a href="/marketing/drafts/{{ d.id }}">{{ d.title }}</a>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="empty-state">No open marketing drafts.</p>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-title-row"><h2>Recent analytics</h2><a class="btn btn-sm" href="/analytics">Analytics</a></div>
+      {% if summary.recent_analytics_imports %}
+      <ul style="list-style:none; padding:0; margin:0;">
+        {% for imp in summary.recent_analytics_imports %}
+        <li style="padding:0.4rem 0; border-bottom:1px solid var(--border);">
+          {{ imp.reporting_period_start }} to {{ imp.reporting_period_end }} -- {{ imp.row_count }} rows
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="empty-state">No analytics imported yet.</p>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-title-row"><h2>Backup status</h2><a class="btn btn-sm" href="/backup">Backup</a></div>
+      {% if summary.last_backup %}
+      <p>Last backup: {{ summary.last_backup.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</p>
+      <p>{% if summary.last_backup.verified %}{{ m.checklist_badge("passed") }} Verified{% else %}{{ m.checklist_badge("warning") }} Not yet verified{% endif %}</p>
+      {% else %}
+      <p class="empty-state">No backups yet. <a href="/backup">Create one now</a>.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

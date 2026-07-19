@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}New Release -- ProducerOS{% endblock %}
+{% block page_heading %}New Release{% endblock %}
+{% block content %}
+<div class="panel content-narrow">
+  <form method="post" action="/releases/new">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field">
+      <label for="project_id">Project</label>
+      <select id="project_id" name="project_id" required>
+        <option value="">Select a project&hellip;</option>
+        {% for p in projects %}<option value="{{ p.id }}" {% if project_id and project_id == p.id|string %}selected{% endif %}>{{ p.working_title }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="title">Release title</label>
+      <input type="text" id="title" name="title" required>
+    </div>
+    <div class="field">
+      <label for="release_type">Release type</label>
+      <select id="release_type" name="release_type" required>
+        {% for t in release_types %}<option value="{{ t.value }}">{{ t.value.replace("_"," ").title() }}</option>{% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary btn-block">Create &amp; run readiness check</button>
+  </form>
+</div>
+{% endblock %}

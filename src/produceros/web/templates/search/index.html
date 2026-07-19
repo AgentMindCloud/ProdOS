@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Search -- ProducerOS{% endblock %}
+{% block page_heading %}Search{% endblock %}
+{% block content %}
+<div class="panel">
+  <form method="get" action="/search" class="flex gap-1">
+    <input type="search" name="q" value="{{ query }}" placeholder="Search projects, artists, releases&hellip;" style="flex:1;" autofocus>
+    <button type="submit" class="btn btn-primary">
+      <svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-search"/></svg> Search
+    </button>
+  </form>
+  {% if query %}
+  <form method="post" action="/search/saved-filters/new" class="flex gap-1" style="margin-top:0.75rem;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="query" value="{{ query }}">
+    <input type="text" name="name" placeholder="Save this search as&hellip;" style="flex:1;">
+    <button type="submit" class="btn btn-sm">Save filter</button>
+  </form>
+  {% endif %}
+</div>
+
+{% if query %}
+<div class="grid grid-cols-3">
+  <div class="panel">
+    <h2>Projects</h2>
+    {% for p in results.projects %}<div class="record-card"><a href="/projects/{{ p.id }}">{{ p.working_title }}</a></div>{% else %}<p class="empty-state">No matches.</p>{% endfor %}
+  </div>
+  <div class="panel">
+    <h2>Artists</h2>
+    {% for a in results.artists %}<div class="record-card"><a href="/projects?artist_id={{ a.id }}">{{ a.name }}</a></div>{% else %}<p class="empty-state">No matches.</p>{% endfor %}
+  </div>
+  <div class="panel">
+    <h2>Releases</h2>
+    {% for r in results.releases %}<div class="record-card"><a href="/releases/{{ r.id }}">{{ r.title }}</a></div>{% else %}<p class="empty-state">No matches.</p>{% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="panel">
+  <h2>Saved filters</h2>
+  {% for f in saved_filters %}
+  <div class="record-card flex justify-between items-center">
+    <a href="/search?q={{ f.query }}">{{ f.name }}</a>
+    <form method="post" action="/search/saved-filters/{{ f.key }}/delete">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn btn-sm">Remove</button>
+    </form>
+  </div>
+  {% else %}<p class="empty-state">No saved filters yet.</p>{% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Sign in -- ProducerOS</title>
+  <meta name="theme-color" content="#171513">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <link rel="icon" href="/static/icons/favicon-32.png" sizes="32x32">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+  <div class="login-shell">
+    <div class="login-card panel">
+      <div class="text-center" style="margin-bottom: 1.5rem;">
+        <img src="/static/icons/icon-192.png" width="56" height="56" alt="" style="border-radius: 14px;">
+        <h1>ProducerOS</h1>
+      </div>
+      {% include "partials/flash.html" %}
+      {% if error %}
+        <div class="form-error-summary" role="alert">{{ error }}</div>
+      {% endif %}
+      <form method="post" action="/login">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" required autocomplete="username" autofocus>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

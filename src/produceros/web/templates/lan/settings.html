@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}LAN Mode -- ProducerOS{% endblock %}
+{% block page_heading %}LAN Mode &amp; Devices{% endblock %}
+{% block content %}
+<div class="panel">
+  <p>Current mode: <strong>{{ bind_mode }}</strong>{% if bind_mode == "lan" and lan_ip %} &middot; <code>http://{{ lan_ip }}:{{ port }}</code>{% endif %}</p>
+  {% if bind_mode != "lan" %}
+  <p class="text-faint">ProducerOS is running in desktop mode (localhost only). To allow your Android phone to connect, stop the app and start it with <code>.\scripts\run_lan.ps1</code> instead. See docs/ANDROID_PWA.md.</p>
+  {% else %}
+  <div class="flash flash-warning">LAN mode is active. Do not forward this port through your router -- it is meant for your home network only.</div>
+  {% endif %}
+</div>
+
+{% if bind_mode == "lan" %}
+<div class="panel">
+  <h2>Pair a new device</h2>
+  <form method="post" action="/settings/lan/start" class="flex gap-1" style="align-items:end;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field mb-0" style="flex:1;"><label for="device_name">Device name</label><input type="text" id="device_name" name="device_name" placeholder="My Android phone"></div>
+    <button type="submit" class="btn btn-primary">Generate pairing code</button>
+  </form>
+
+  {% if new_pairing %}
+  <div class="panel" style="background: var(--panel-alt); margin-top:1rem;">
+    <h3>Scan with your phone, or enter this code</h3>
+    <div class="flex gap-2 items-center" style="flex-wrap:wrap;">
+      <img src="{{ new_pairing.qr_data_uri }}" alt="QR code to pair {{ new_pairing.device.device_name }}" width="200" height="200">
+      <div>
+        <p style="font-size:2rem; font-weight:700; letter-spacing:0.1em;">{{ new_pairing.code }}</p>
+        <p class="text-faint">Expires in {{ new_pairing.ttl_minutes }} minutes.</p>
+        <p class="text-faint">Or visit: <code>{{ new_pairing.url }}</code></p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="panel">
+  <h2>Paired devices</h2>
+  {% for d in devices %}
+  <div class="record-card flex justify-between items-center">
+    <span>{{ d.device_name }} <span class="badge badge-neutral">{{ d.status.value }}</span>
+      {% if d.last_seen_at %}<br><small class="text-faint">Last seen {{ d.last_seen_at.strftime("%Y-%m-%d %H:%M") }}</small>{% endif %}
+    </span>
+    {% if d.status.value == "active" %}
+    <form method="post" action="/settings/lan/devices/{{ d.id }}/revoke" data-confirm="Revoke access for {{ d.device_name }}?">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn btn-sm btn-danger">Revoke</button>
+    </form>
+    {% endif %}
+  </div>
+  {% else %}<p class="empty-state">No devices paired yet.</p>{% endfor %}
+</div>
+{% endblock %}

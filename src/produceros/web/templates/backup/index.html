@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m %}
+{% block title %}Backup &amp; Restore -- ProducerOS{% endblock %}
+{% block page_heading %}Backup &amp; Restore{% endblock %}
+{% block content %}
+<div class="panel">
+  <p>Backups copy your ProducerOS database (projects, rights, releases, everything except audio files themselves -- those stay on disk and are referenced by path). Restoring always makes a safety copy of your current database first.</p>
+  <div class="btn-group">
+    <form method="post" action="/backup/create">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn btn-primary">Create backup now</button>
+    </form>
+    <a class="btn" href="/backup/export/metadata.json">Export metadata (JSON)</a>
+    <a class="btn" href="/backup/export/audio-manifest.json">Export audio-path manifest</a>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Backup history</h2>
+  {% for b in backups %}
+  <div class="record-card">
+    <div class="flex justify-between items-center">
+      <span>{{ b.created_at.strftime("%Y-%m-%d %H:%M") }} UTC &middot; {{ (b.size_bytes / 1024 / 1024)|round(2) }} MB</span>
+      {% if b.verified %}{{ m.checklist_badge("passed") }}{% else %}<span class="badge badge-neutral">Not verified</span>{% endif %}
+    </div>
+    <div class="btn-group" style="margin-top:0.5rem;">
+      <form method="post" action="/backup/{{ b.id }}/verify">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="btn btn-sm">Verify</button>
+      </form>
+      <button type="button" class="btn btn-sm" data-restore-dry-run="{{ b.id }}">Restore dry run</button>
+      <form method="post" action="/backup/{{ b.id }}/restore-confirm" data-confirm="This will replace your current database with this backup. A safety copy of the current database will be made first. Continue?">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="confirm" value="yes">
+        <button type="submit" class="btn btn-sm btn-danger">Restore this backup</button>
+      </form>
+    </div>
+    <pre class="dry-run-result" id="dry-run-{{ b.id }}" style="display:none; white-space:pre-wrap; margin-top:0.5rem; font-size:0.8rem;"></pre>
+  </div>
+  {% else %}<p class="empty-state">No backups yet.</p>{% endfor %}
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+document.querySelectorAll("[data-restore-dry-run]").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var id = btn.getAttribute("data-restore-dry-run");
+    fetch("/backup/" + id + "/restore-dry-run", { method: "POST" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var el = document.getElementById("dry-run-" + id);
+        el.textContent = JSON.stringify(data, null, 2);
+        el.style.display = "block";
+      });
+  });
+});
+</script>
+{% endblock %}

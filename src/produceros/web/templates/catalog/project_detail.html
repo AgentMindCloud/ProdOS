@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m %}
+{% block title %}{{ project.working_title }} -- ProducerOS{% endblock %}
+{% block page_heading %}{{ project.final_title or project.working_title }}{% endblock %}
+{% block content %}
+
+<div class="panel">
+  <div class="panel-title-row" style="flex-wrap:wrap;">
+    <div>
+      <span class="text-faint">{{ project.internal_code }}</span>
+      {{ m.stage_pill(project.state.value) }}
+    </div>
+    <form method="post" action="/projects/{{ project.id }}/state" class="flex gap-1">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <select name="state" aria-label="Change stage">
+        {% for s in states %}<option value="{{ s }}" {% if project.state.value == s %}selected{% endif %}>{{ s.replace("_"," ") }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="btn btn-sm">Update stage</button>
+    </form>
+  </div>
+  <div class="btn-group">
+    <a class="btn btn-sm" href="#overview">Overview</a>
+    <a class="btn btn-sm" href="#assets">Assets</a>
+    <a class="btn btn-sm" href="#rights">Rights</a>
+    <a class="btn btn-sm" href="#tracks">Tracks</a>
+    <a class="btn btn-sm" href="/releases/new?project_id={{ project.id }}">Start a release &rarr;</a>
+  </div>
+</div>
+
+<div class="panel" id="overview">
+  <h2>Overview</h2>
+  <form method="post" action="/projects/{{ project.id }}/edit">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <h3>Identity</h3>
+    <div class="grid grid-cols-3">
+      <div class="field"><label for="working_title">Working title</label><input type="text" id="working_title" name="working_title" value="{{ project.working_title }}"></div>
+      <div class="field"><label for="final_title">Final title</label><input type="text" id="final_title" name="final_title" value="{{ project.final_title or '' }}"></div>
+      <div class="field"><label for="artist_id">Artist</label>
+        <select id="artist_id" name="artist_id">
+          <option value="">Unassigned</option>
+          {% for a in artists %}<option value="{{ a.id }}" {% if project.artist_id and project.artist_id|string == a.id|string %}selected{% endif %}>{{ a.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field"><label for="producer_name">Producer</label><input type="text" id="producer_name" name="producer_name" value="{{ project.producer_name or '' }}"></div>
+      <div class="field"><label for="featured_artists">Featured artists (comma separated)</label><input type="text" id="featured_artists" name="featured_artists" value="{{ project.featured_artists|join(', ') }}"></div>
+      <div class="field"><label for="tags">Tags (comma separated)</label><input type="text" id="tags" name="tags" placeholder="e.g. summer, driving"></div>
+    </div>
+    <div class="field"><label for="description">Description</label><textarea id="description" name="description">{{ project.description or '' }}</textarea></div>
+
+    <h3>Musical information</h3>
+    <div class="grid grid-cols-4">
+      <div class="field"><label for="bpm">BPM</label><input type="number" step="0.1" id="bpm" name="bpm" value="{{ project.bpm or '' }}" inputmode="decimal"></div>
+      <div class="field"><label for="musical_key">Key</label><input type="text" id="musical_key" name="musical_key" value="{{ project.musical_key or '' }}"></div>
+      <div class="field"><label for="time_signature">Time signature</label><input type="text" id="time_signature" name="time_signature" value="{{ project.time_signature }}"></div>
+      <div class="field"><label for="energy">Energy (1-10)</label><input type="number" id="energy" name="energy" min="1" max="10" value="{{ project.energy or '' }}"></div>
+      <div class="field"><label for="genre">Genre</label><input type="text" id="genre" name="genre" value="{{ project.genre or '' }}"></div>
+      <div class="field"><label for="subgenre">Subgenre</label><input type="text" id="subgenre" name="subgenre" value="{{ project.subgenre or '' }}"></div>
+      <div class="field"><label for="mood">Mood</label><input type="text" id="mood" name="mood" value="{{ project.mood or '' }}"></div>
+      <div class="field"><label for="language">Language</label><input type="text" id="language" name="language" value="{{ project.language or '' }}"></div>
+      <div class="field"><label for="vocal_style">Vocal style</label><input type="text" id="vocal_style" name="vocal_style" value="{{ project.vocal_style or '' }}"></div>
+      <div class="field"><label for="instruments">Instruments (comma separated)</label><input type="text" id="instruments" name="instruments" value="{{ project.instruments|join(', ') }}"></div>
+      <div class="field"><label for="similar_artists">Similar artists (comma separated)</label><input type="text" id="similar_artists" name="similar_artists" value="{{ project.similar_artists|join(', ') }}"></div>
+    </div>
+    <div class="field"><label for="notes">Notes</label><textarea id="notes" name="notes">{{ project.notes or '' }}</textarea></div>
+
+    <h3>Production information</h3>
+    <div class="grid grid-cols-2">
+      <div class="field"><label for="fl_project_path">FL Studio project path</label><input type="text" id="fl_project_path" name="fl_project_path" value="{{ project.fl_project_path or '' }}"></div>
+      <div class="field"><label for="fl_project_zip_path">Zipped project path</label><input type="text" id="fl_project_zip_path" name="fl_project_zip_path" value="{{ project.fl_project_zip_path or '' }}"></div>
+      <div class="field"><label for="project_root_path">Project root folder</label><input type="text" id="project_root_path" name="project_root_path" value="{{ project.project_root_path or '' }}"></div>
+      <div class="field"><label for="revision_notes">Revision notes</label><textarea id="revision_notes" name="revision_notes">{{ project.revision_notes or '' }}</textarea></div>
+    </div>
+
+    <h3>Rights summary</h3>
+    <div class="grid grid-cols-3">
+      <div class="field"><label for="master_owner">Master owner</label><input type="text" id="master_owner" name="master_owner" value="{{ project.master_owner or '' }}"></div>
+      <div class="field"><label for="composition_owner">Composition owner</label><input type="text" id="composition_owner" name="composition_owner" value="{{ project.composition_owner or '' }}"></div>
+      <div class="field"><label for="pro_registration_status">PRO registration</label>
+        <select id="pro_registration_status" name="pro_registration_status">
+          {% for s in pro_statuses %}<option value="{{ s.value }}" {% if project.pro_registration_status == s %}selected{% endif %}>{{ s.value.replace("_"," ") }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field"><label for="sample_clearance_status">Sample clearance</label>
+        <select id="sample_clearance_status" name="sample_clearance_status">
+          {% for s in clearance_statuses %}<option value="{{ s.value }}" {% if project.sample_clearance_status == s %}selected{% endif %}>{{ s.value.replace("_"," ") }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field"><label for="one_stop_clearance_status">One-stop clearance</label>
+        <select id="one_stop_clearance_status" name="one_stop_clearance_status">
+          {% for s in clearance_statuses %}<option value="{{ s.value }}" {% if project.one_stop_clearance_status == s %}selected{% endif %}>{{ s.value.replace("_"," ") }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="checkbox-row"><input type="checkbox" id="split_confirmed" name="split_confirmed" {% if project.split_confirmed %}checked{% endif %}><label for="split_confirmed" style="margin:0;">Splits confirmed</label></div>
+    </div>
+
+    <h3>Release information</h3>
+    <div class="grid grid-cols-3">
+      <div class="field"><label for="distributor">Distributor</label><input type="text" id="distributor" name="distributor" value="{{ project.distributor or '' }}"></div>
+      <div class="field"><label for="isrc">ISRC</label><input type="text" id="isrc" name="isrc" value="{{ project.isrc or '' }}"></div>
+      <div class="field"><label for="upc">UPC</label><input type="text" id="upc" name="upc" value="{{ project.upc or '' }}"></div>
+      <div class="field"><label for="explicit_status">Explicit status</label>
+        <select id="explicit_status" name="explicit_status">
+          {% for s in explicit_statuses %}<option value="{{ s.value }}" {% if project.explicit_status == s %}selected{% endif %}>{{ s.value }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="field"><label for="release_description">Release description</label><textarea id="release_description" name="release_description">{{ project.release_description or '' }}</textarea></div>
+
+    <button type="submit" class="btn btn-primary">Save changes</button>
+  </form>
+</div>
+
+<div class="panel" id="assets">
+  <h2>Assets</h2>
+  <p class="text-faint">Register a file path for each deliverable. ProducerOS never modifies the file on disk -- it only records metadata about it.</p>
+  <form method="post" action="/projects/{{ project.id }}/assets/register" class="grid grid-cols-3" style="align-items:end;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field"><label for="asset_type">Asset type</label>
+      <select id="asset_type" name="asset_type">
+        {% for t in asset_types %}<option value="{{ t.value }}">{{ t.value.replace("_"," ").title() }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field"><label for="file_path">File path</label><input type="text" id="file_path" name="file_path" placeholder="D:\Music\Exports\Track_Master_v1.wav" required></div>
+    <div class="checkbox-row"><input type="checkbox" id="mark_current" name="mark_current" checked><label for="mark_current" style="margin:0;">Mark current</label></div>
+    <div class="field" style="grid-column: 1/-1;"><button type="submit" class="btn btn-primary">Register asset version</button></div>
+  </form>
+
+  {% for asset in assets %}
+  <div class="panel" style="background: var(--panel-alt);">
+    <h3>{{ asset.label }} <span class="text-faint">({{ asset.asset_type.value.replace("_"," ") }})</span></h3>
+    <div class="table-scroll">
+    <table class="data-table">
+      <thead><tr><th>Version</th><th>Filename</th><th>Approval</th><th>Current</th><th></th></tr></thead>
+      <tbody>
+        {% for v in asset_versions.get(asset.id, []) %}
+        <tr>
+          <td>v{{ v.version_number }}</td>
+          <td>{{ v.original_filename }}</td>
+          <td>{{ m.approval_badge(v.approval_status.value) }}</td>
+          <td>{% if v.is_current %}{{ m.checklist_badge("passed") }}{% else %}--{% endif %}</td>
+          <td>
+            {% if not v.is_current %}
+            <form method="post" action="/asset-versions/{{ v.id }}/set-current">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button type="submit" class="btn btn-sm">Mark current</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  {% else %}
+  <p class="empty-state">No assets registered yet.</p>
+  {% endfor %}
+</div>
+
+<div class="panel" id="rights">
+  <h2>Rights</h2>
+
+  <h3>Rights-share validation</h3>
+  {% if validations %}
+  <ul style="list-style:none; padding:0;">
+    {% for v in validations %}
+    <li style="padding:0.4rem 0; border-bottom:1px solid var(--border);">
+      <strong>{{ v.share_type.value.title() }}</strong>: {{ v.total_percentage }}%
+      {% if v.warning %}{{ m.checklist_badge("warning") }} {{ v.warning }}{% else %}{{ m.checklist_badge("passed") }}{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty-state">No rights shares recorded yet.</p>
+  {% endif %}
+
+  <h3>Contributors</h3>
+  <form method="post" action="/projects/{{ project.id }}/contributors/new" class="grid grid-cols-4" style="align-items:end;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field"><label for="c_name">Name</label><input type="text" id="c_name" name="name" required></div>
+    <div class="field"><label for="c_role">Role</label>
+      <select id="c_role" name="role">{% for r in contributor_roles %}<option value="{{ r.value }}">{{ r.value.replace("_"," ").title() }}</option>{% endfor %}</select>
+    </div>
+    <div class="field"><label for="c_email">Email</label><input type="email" id="c_email" name="email"></div>
+    <div class="field"><button type="submit" class="btn btn-primary">Add contributor</button></div>
+  </form>
+  {% for c in contributors %}
+  <div class="record-card" style="display:flex; justify-content:space-between; align-items:center;">
+    <span>{{ c.name }} <span class="text-faint">({{ c.role.value.replace("_"," ") }})</span></span>
+    {% if c.approved %}{{ m.checklist_badge("passed") }}{% else %}
+    <form method="post" action="/projects/{{ project.id }}/contributors/{{ c.id }}/approve">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn btn-sm">Mark approved</button>
+    </form>
+    {% endif %}
+  </div>
+  {% else %}<p class="empty-state">No contributors yet.</p>{% endfor %}
+
+  <h3>Rights shares</h3>
+  <form method="post" action="/projects/{{ project.id }}/rights-shares/new" class="grid grid-cols-4" style="align-items:end;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field"><label for="rs_holder">Holder name</label><input type="text" id="rs_holder" name="holder_name" required></div>
+    <div class="field"><label for="rs_type">Type</label>
+      <select id="rs_type" name="share_type">{% for t in share_types %}<option value="{{ t.value }}">{{ t.value }}</option>{% endfor %}</select>
+    </div>
+    <div class="field"><label for="rs_pct">Percentage</label><input type="number" id="rs_pct" name="percentage" step="0.01" min="0" max="100" required></div>
+    <div class="field"><button type="submit" class="btn btn-primary">Add share</button></div>
+  </form>
+  {% for s in rights_shares %}
+  <div class="record-card">
+    <form method="post" action="/rights-shares/{{ s.id }}/update" class="flex items-center gap-1" style="flex-wrap:wrap;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <span style="flex:1;">{{ s.holder_name }} ({{ s.share_type.value }})</span>
+      <input type="number" name="percentage" value="{{ s.percentage }}" step="0.01" min="0" max="100" style="width:100px;">
+      <label class="checkbox-row"><input type="checkbox" name="confirmed" {% if s.confirmed %}checked{% endif %}> Confirmed</label>
+      <button type="submit" class="btn btn-sm">Save</button>
+    </form>
+  </div>
+  {% else %}<p class="empty-state">No rights shares yet.</p>{% endfor %}
+
+  <h3>Clearances</h3>
+  <form method="post" action="/projects/{{ project.id }}/clearances/new" class="grid grid-cols-3" style="align-items:end;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field"><label for="cl_type">Type</label>
+      <select id="cl_type" name="clearance_type">{% for t in clearance_types %}<option value="{{ t.value }}">{{ t.value.replace("_"," ") }}</option>{% endfor %}</select>
+    </div>
+    <div class="field"><label for="cl_desc">Description</label><input type="text" id="cl_desc" name="description" required placeholder="e.g. sample from..."></div>
+    <div class="field"><button type="submit" class="btn btn-primary">Add clearance</button></div>
+  </form>
+  {% for c in clearances %}
+  <div class="record-card">
+    <div class="flex justify-between items-center">
+      <span>{{ c.description }} <span class="text-faint">({{ c.clearance_type.value }})</span></span>
+      {{ m.checklist_badge("passed" if c.status.value == "cleared" else ("waived" if c.status.value == "not_applicable" else ("blocking" if c.status.value == "denied" else "warning"))) }}
+    </div>
+    <form method="post" action="/clearances/{{ c.id }}/resolve" class="flex gap-1" style="margin-top:0.5rem;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <select name="status">{% for s in clearance_statuses %}<option value="{{ s.value }}" {% if c.status == s %}selected{% endif %}>{{ s.value.replace("_"," ") }}</option>{% endfor %}</select>
+      <button type="submit" class="btn btn-sm">Update</button>
+    </form>
+  </div>
+  {% else %}<p class="empty-state">No clearances tracked yet.</p>{% endfor %}
+</div>
+
+<div class="panel" id="tracks">
+  <h2>Tracks</h2>
+  <form method="post" action="/projects/{{ project.id }}/tracks/new" class="flex gap-1" style="align-items:end;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field mb-0" style="flex:1;"><label for="track_title">Track title</label><input type="text" id="track_title" name="title" required></div>
+    <button type="submit" class="btn btn-primary">Add track</button>
+  </form>
+  {% for t in project.tracks %}
+  <div class="record-card">{{ t.title }}</div>
+  {% else %}<p class="empty-state">Single-track project (no additional tracks added).</p>{% endfor %}
+</div>
+
+{% endblock %}

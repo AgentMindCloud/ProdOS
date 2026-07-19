@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Set up ProducerOS</title>
+  <meta name="theme-color" content="#171513">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <link rel="icon" href="/static/icons/favicon-32.png" sizes="32x32">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+  <div class="login-shell">
+    <div class="login-card panel">
+      <div class="text-center" style="margin-bottom: 1.5rem;">
+        <img src="/static/icons/icon-192.png" width="56" height="56" alt="" style="border-radius: 14px;">
+        <h1>Welcome to ProducerOS</h1>
+        <p>Create your local administrator account to get started. Everything stays on this computer.</p>
+      </div>
+      {% include "partials/flash.html" %}
+      {% if errors %}
+        <div class="form-error-summary" role="alert">
+          <ul style="margin:0; padding-left: 1.2rem;">
+          {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+      <form method="post" action="/setup">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="field">
+          <label for="display_name">Your name</label>
+          <input type="text" id="display_name" name="display_name" required autocomplete="name" value="{{ form.display_name if form else '' }}">
+        </div>
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" required autocomplete="username" value="{{ form.username if form else '' }}">
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required minlength="10" autocomplete="new-password" aria-describedby="password-hint">
+          <div class="field-hint" id="password-hint">At least 10 characters. This protects your unreleased music.</div>
+        </div>
+        <div class="field">
+          <label for="password_confirm">Confirm password</label>
+          <input type="password" id="password_confirm" name="password_confirm" required minlength="10" autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Create account &amp; continue</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
