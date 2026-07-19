@@ -99,6 +99,15 @@ def cmd_run(args: argparse.Namespace) -> None:
 
         threading.Thread(target=_open_browser, daemon=True).start()
 
+    if settings.mcp_enabled:
+        from produceros.mcp_server.server import run_mcp_server_blocking
+
+        print(f"MCP server enabled: http://{settings.mcp_bind}:{settings.mcp_port}")
+        # run_mcp_server_blocking() calls FastMCP's server.run(), which
+        # starts its own asyncio event loop -- it needs its own thread
+        # since uvicorn.run() below does the same on the main thread.
+        threading.Thread(target=run_mcp_server_blocking, daemon=True).start()
+
     uvicorn.run(app, host=host, port=port, log_level=settings.log_level.lower())
 
 
