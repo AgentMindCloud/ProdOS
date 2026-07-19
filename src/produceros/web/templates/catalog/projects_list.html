@@ -66,7 +66,7 @@
   </div>
 
   {% for p in projects %}
-  <div class="record-card">
+  <div class="record-card record-card-mobile-only">
     <div class="record-card-row"><a href="/projects/{{ p.id }}"><strong>{{ p.final_title or p.working_title }}</strong></a></div>
     <div class="record-card-row"><span class="k">Code</span><span>{{ p.internal_code }}</span></div>
     <div class="record-card-row"><span class="k">Artist</span><span>{{ p.artist.name if p.artist else "--" }}</span></div>
