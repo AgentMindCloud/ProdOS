@@ -129,8 +129,15 @@ def restore_dry_run(backup_path: str | Path) -> RestoreDryRunResult:
 
     conn = sqlite3.connect(str(path))
     try:
-        integrity = conn.execute("PRAGMA integrity_check").fetchone()
-        integrity_result = integrity[0] if integrity else "unknown"
+        try:
+            integrity = conn.execute("PRAGMA integrity_check").fetchone()
+            integrity_result = integrity[0] if integrity else "unknown"
+        except sqlite3.DatabaseError as exc:
+            return RestoreDryRunResult(
+                ok=False, integrity_check="not a valid SQLite database", table_counts={},
+                warnings=[f"'{path}' is not a valid SQLite database: {exc}"],
+            )
+
         table_counts: dict[str, int] = {}
         for table_name in Base.metadata.tables:
             try:

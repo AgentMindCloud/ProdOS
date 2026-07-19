@@ -86,7 +86,7 @@ exclude = ["migrations/versions", "tests"]
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 asyncio_mode = "auto"
 filterwarnings = ["ignore::DeprecationWarning"]
 

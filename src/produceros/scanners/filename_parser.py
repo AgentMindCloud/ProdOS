@@ -30,10 +30,13 @@ STAGE_KEYWORDS: dict[str, str] = {
     "MASTERED": "master",
 }
 
-_DATE_RE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
-_VERSION_RE = re.compile(r"\bv(\d{1,3})\b", re.IGNORECASE)
-_BPM_RE = re.compile(r"\b(\d{2,3})\s*BPM\b", re.IGNORECASE)
-_KEY_AFTER_BPM_RE = re.compile(r"\d{2,3}\s*BPM[_\s]+([A-Ga-g][#b]?m?)\b", re.IGNORECASE)
+# NOTE: these use lookaround boundaries, not \b -- producer filenames are
+# underscore-delimited, and underscore counts as a "word" character to \b,
+# so `\b` silently fails to match at an "_2026" or "_v03" boundary.
+_DATE_RE = re.compile(r"(?<![0-9])(\d{4}-\d{2}-\d{2})(?![0-9])")
+_VERSION_RE = re.compile(r"(?<![A-Za-z0-9])v(\d{1,3})(?![A-Za-z0-9])", re.IGNORECASE)
+_BPM_RE = re.compile(r"(?<![A-Za-z0-9])(\d{2,3})\s*BPM(?![A-Za-z0-9])", re.IGNORECASE)
+_KEY_AFTER_BPM_RE = re.compile(r"\d{2,3}\s*BPM[_\s]+([A-Ga-g][#b]?m?)(?![A-Za-z0-9])", re.IGNORECASE)
 _FL_VERSION_RE = re.compile(r"^(?P<track>.+?)_FL_v(?P<version>\d+)$", re.IGNORECASE)
 
 
@@ -101,7 +104,7 @@ def parse_filename(filename: str) -> ParsedFilename:
             result.musical_key = key_match.group(1)
 
     for keyword, normalized in STAGE_KEYWORDS.items():
-        if re.search(rf"\b{keyword}\b", stem, re.IGNORECASE):
+        if re.search(rf"(?<![A-Za-z0-9]){keyword}(?![A-Za-z0-9])", stem, re.IGNORECASE):
             result.mix_or_master = normalized
             break
 
