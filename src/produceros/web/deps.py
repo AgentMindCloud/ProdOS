@@ -54,7 +54,10 @@ def get_current_user(request: Request, session: Session = Depends(get_session)) 
     device_token = request.cookies.get(pairing_service.DEVICE_COOKIE_NAME)
     if device_token:
         return pairing_service.resolve_device_from_cookie(
-            session, secret_key, device_token, max_age_seconds=pairing_service.SESSION_LIFETIME_DAYS * 86400
+            session,
+            secret_key,
+            device_token,
+            max_age_seconds=pairing_service.SESSION_LIFETIME_DAYS * 86400,
         )
 
     return None

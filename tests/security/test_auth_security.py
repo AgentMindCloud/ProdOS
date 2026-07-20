@@ -58,5 +58,7 @@ def test_reusing_a_cookie_issued_before_invalidation_fails(client, db_session, a
     auth_service.invalidate_all_sessions(db_session, admin_user)
     db_session.commit()
 
-    user_after = auth_service.verify_session_token(db_session, secret_key, token, max_age_seconds=3600)
+    user_after = auth_service.verify_session_token(
+        db_session, secret_key, token, max_age_seconds=3600
+    )
     assert user_after is None

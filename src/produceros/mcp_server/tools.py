@@ -17,7 +17,6 @@ from sqlalchemy.orm import Session
 from produceros.marketing.campaigns import list_campaigns
 from produceros.marketing.engine import generate_draft
 from produceros.models.assets import Asset, AssetVersion
-from produceros.models.calendar import Deadline
 from produceros.models.catalog import Project
 from produceros.models.enums import MarketingDraftType, ReleaseType
 from produceros.models.marketing import MarketingDraft
@@ -53,7 +52,9 @@ def get_project(session: Session, project_id: str) -> dict | None:
     if project is None:
         return None
     tags = session.scalars(
-        select(Tag.name).join(ProjectTag, ProjectTag.tag_id == Tag.id).where(ProjectTag.project_id == project.id)
+        select(Tag.name)
+        .join(ProjectTag, ProjectTag.tag_id == Tag.id)
+        .where(ProjectTag.project_id == project.id)
     )
     summary = _project_summary(project)
     summary.update(
@@ -74,11 +75,7 @@ def get_project(session: Session, project_id: str) -> dict | None:
 def list_active_projects(session: Session) -> list[dict]:
     from produceros.services.dashboard import INACTIVE_STATES
 
-    return [
-        _project_summary(p)
-        for p in list_projects(session)
-        if p.state not in INACTIVE_STATES
-    ]
+    return [_project_summary(p) for p in list_projects(session) if p.state not in INACTIVE_STATES]
 
 
 def list_recent_versions(session: Session, limit: int = 10) -> list[dict]:
@@ -105,7 +102,9 @@ def find_missing_assets(session: Session) -> list[dict]:
     assets = session.scalars(select(Asset))
     for asset in assets:
         has_current = session.scalar(
-            select(AssetVersion).where(AssetVersion.asset_id == asset.id, AssetVersion.is_current.is_(True))
+            select(AssetVersion).where(
+                AssetVersion.asset_id == asset.id, AssetVersion.is_current.is_(True)
+            )
         )
         if has_current is None:
             project = session.get(Project, asset.project_id)
@@ -135,9 +134,16 @@ def check_release_readiness(session: Session, release_id: str) -> dict | None:
 
 def list_upcoming_deadlines(session: Session, days: int = 30) -> list[dict]:
     today = date.today()
-    deadlines = list_deadlines(session, start=today, end=today + timedelta(days=days), include_done=False)
+    deadlines = list_deadlines(
+        session, start=today, end=today + timedelta(days=days), include_done=False
+    )
     return [
-        {"id": str(d.id), "title": d.title, "due_date": d.due_date.isoformat(), "type": d.deadline_type.value}
+        {
+            "id": str(d.id),
+            "title": d.title,
+            "due_date": d.due_date.isoformat(),
+            "type": d.deadline_type.value,
+        }
         for d in deadlines
     ]
 
@@ -148,7 +154,9 @@ def search_catalog_by_mood(session: Session, mood: str) -> list[dict]:
 
 
 def search_catalog_by_bpm(session: Session, min_bpm: float, max_bpm: float) -> list[dict]:
-    stmt = select(Project).where(Project.bpm.is_not(None), Project.bpm >= min_bpm, Project.bpm <= max_bpm)
+    stmt = select(Project).where(
+        Project.bpm.is_not(None), Project.bpm >= min_bpm, Project.bpm <= max_bpm
+    )
     return [_project_summary(p) for p in session.scalars(stmt)]
 
 
@@ -165,8 +173,18 @@ def get_marketing_plan(session: Session, project_id: str) -> dict | None:
     drafts = session.scalars(select(MarketingDraft).where(MarketingDraft.project_id == project.id))
     return {
         "project_id": str(project.id),
-        "campaigns": [{"id": str(c.id), "name": c.name, "status": c.status.value} for c in campaigns],
-        "drafts": [{"id": str(d.id), "type": d.draft_type.value, "title": d.title, "status": d.status.value} for d in drafts],
+        "campaigns": [
+            {"id": str(c.id), "name": c.name, "status": c.status.value} for c in campaigns
+        ],
+        "drafts": [
+            {
+                "id": str(d.id),
+                "type": d.draft_type.value,
+                "title": d.title,
+                "status": d.status.value,
+            }
+            for d in drafts
+        ],
     }
 
 
@@ -175,10 +193,17 @@ def create_marketing_draft(session: Session, project_id: str, draft_type: str) -
     if project is None:
         return None
     draft = generate_draft(session, draft_type=MarketingDraftType(draft_type), project=project)
-    return {"id": str(draft.id), "title": draft.title, "body": draft.body, "status": draft.status.value}
+    return {
+        "id": str(draft.id),
+        "title": draft.title,
+        "body": draft.body,
+        "status": draft.status.value,
+    }
 
 
-def create_release_checklist_draft(session: Session, project_id: str, release_type: str, title: str) -> dict | None:
+def create_release_checklist_draft(
+    session: Session, project_id: str, release_type: str, title: str
+) -> dict | None:
     project = session.get(Project, uuid.UUID(project_id))
     if project is None:
         return None

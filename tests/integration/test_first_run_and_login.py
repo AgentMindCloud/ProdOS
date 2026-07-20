@@ -1,5 +1,3 @@
-import re
-
 from tests.conftest import complete_setup, get_form_csrf
 
 
@@ -27,7 +25,9 @@ def test_login_with_wrong_password_fails(client):
     complete_setup(client)
     client.cookies.clear()
     csrf = get_form_csrf(client, "/login")
-    r = client.post("/login", data={"csrf_token": csrf, "username": "producer", "password": "wrong-password"})
+    r = client.post(
+        "/login", data={"csrf_token": csrf, "username": "producer", "password": "wrong-password"}
+    )
     assert r.status_code == 400
     assert "Invalid username or password" in r.text
 
@@ -36,7 +36,11 @@ def test_login_with_correct_password_succeeds(client):
     complete_setup(client)
     client.cookies.clear()
     csrf = get_form_csrf(client, "/login")
-    r = client.post("/login", data={"csrf_token": csrf, "username": "producer", "password": "correcthorsebattery"}, follow_redirects=False)
+    r = client.post(
+        "/login",
+        data={"csrf_token": csrf, "username": "producer", "password": "correcthorsebattery"},
+        follow_redirects=False,
+    )
     assert r.status_code == 303
     assert r.headers["location"] == "/"
 

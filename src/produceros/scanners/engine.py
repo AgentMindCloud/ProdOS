@@ -15,7 +15,7 @@ isn't justified for typical producer folder sizes).
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from sqlalchemy import func, select
@@ -26,7 +26,11 @@ from produceros.models.enums import FindingType, ScannerRunStatus, ScannerTrigge
 from produceros.models.scanner import ScannerFinding, ScannerRoot, ScannerRun
 from produceros.scanners.filename_parser import parse_filename
 from produceros.scanners.hashing import hash_file
-from produceros.security import PathSecurityError, is_allowed_extension, resolve_within_allowed_roots
+from produceros.security import (
+    PathSecurityError,
+    is_allowed_extension,
+    resolve_within_allowed_roots,
+)
 
 
 def run_scan(
@@ -38,7 +42,7 @@ def run_scan(
 ) -> ScannerRun:
     active_roots = [r for r in roots if r.is_active]
     run = ScannerRun(
-        started_at=datetime.now(timezone.utc),
+        started_at=datetime.now(UTC),
         status=ScannerRunStatus.RUNNING,
         scanned_roots=[r.path for r in active_roots],
         dry_run=True,
@@ -57,7 +61,10 @@ def run_scan(
             root_path = Path(root.path)
             if not root_path.exists() or not root_path.is_dir():
                 _add_finding(
-                    session, run, FindingType.INVALID_PATH, root.path,
+                    session,
+                    run,
+                    FindingType.INVALID_PATH,
+                    root.path,
                     detail="Configured scanner root does not exist or is not a directory.",
                 )
                 findings_count += 1
@@ -72,7 +79,10 @@ def run_scan(
                         resolved = resolve_within_allowed_roots(candidate, root_paths)
                     except PathSecurityError:
                         _add_finding(
-                            session, run, FindingType.OUTSIDE_ROOT, str(candidate),
+                            session,
+                            run,
+                            FindingType.OUTSIDE_ROOT,
+                            str(candidate),
                             detail="File resolved outside all approved scanner roots.",
                         )
                         findings_count += 1
@@ -82,7 +92,10 @@ def run_scan(
 
                     if not is_allowed_extension(resolved, allowed_extensions):
                         _add_finding(
-                            session, run, FindingType.UNEXPECTED_FILE, str(resolved),
+                            session,
+                            run,
+                            FindingType.UNEXPECTED_FILE,
+                            str(resolved),
                             detail=f"Extension '{resolved.suffix}' is not in the allowlist.",
                         )
                         findings_count += 1
@@ -92,7 +105,10 @@ def run_scan(
                         stat = resolved.stat()
                     except OSError as exc:
                         _add_finding(
-                            session, run, FindingType.LOCKED_FILE, str(resolved),
+                            session,
+                            run,
+                            FindingType.LOCKED_FILE,
+                            str(resolved),
                             detail=f"File could not be read: {exc}",
                         )
                         findings_count += 1
@@ -102,7 +118,10 @@ def run_scan(
                         content_hash = hash_file(resolved)
                     except OSError as exc:
                         _add_finding(
-                            session, run, FindingType.LOCKED_FILE, str(resolved),
+                            session,
+                            run,
+                            FindingType.LOCKED_FILE,
+                            str(resolved),
                             detail=f"File is locked or unavailable: {exc}",
                         )
                         findings_count += 1
@@ -122,18 +141,23 @@ def run_scan(
                         findings_count += 1
 
         _check_missing_files(session, run, root_paths, seen_paths)
-        findings_count = session.scalar(
-            select(func.count()).select_from(ScannerFinding).where(ScannerFinding.run_id == run.id)
+        findings_count = (
+            session.scalar(
+                select(func.count())
+                .select_from(ScannerFinding)
+                .where(ScannerFinding.run_id == run.id)
+            )
+            or 0
         )
 
         run.status = ScannerRunStatus.COMPLETED
-        run.completed_at = datetime.now(timezone.utc)
+        run.completed_at = datetime.now(UTC)
         run.files_scanned = files_scanned
         run.findings_count = findings_count or 0
     except Exception as exc:  # pragma: no cover - defensive top-level guard
         run.status = ScannerRunStatus.FAILED
         run.error_message = str(exc)
-        run.completed_at = datetime.now(timezone.utc)
+        run.completed_at = datetime.now(UTC)
         run.files_scanned = files_scanned
         raise
     finally:
@@ -142,7 +166,9 @@ def run_scan(
     return run
 
 
-def _classify(session: Session, path: Path, content_hash: str, size_bytes: int) -> FindingType | None:
+def _classify(
+    session: Session, path: Path, content_hash: str, size_bytes: int
+) -> FindingType | None:
     existing_by_path = session.scalar(
         select(AssetVersion).where(AssetVersion.full_path == str(path))
     )

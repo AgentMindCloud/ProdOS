@@ -21,14 +21,20 @@ router = APIRouter(tags=["settings"], dependencies=[Depends(require_login)])
 
 
 @router.get("/settings")
-async def settings_home(request: Request, response: Response, session: Session = Depends(get_session), user: User = Depends(require_login)):
+async def settings_home(
+    request: Request,
+    response: Response,
+    session: Session = Depends(get_session),
+    user: User = Depends(require_login),
+):
     app_settings = get_settings()
     visible_states = settings_service.get_setting(
         session, settings_service.VISIBLE_PROJECT_STATES_KEY, default=list(DEFAULT_PROJECT_STATES)
     )
     csrf_token = get_csrf_token(request)
     return templates.TemplateResponse(
-        request, "settings/index.html",
+        request,
+        "settings/index.html",
         {
             **base_context(user, "settings"),
             "app_version": __version__,
@@ -46,13 +52,17 @@ async def settings_home(request: Request, response: Response, session: Session =
 
 
 @router.post("/settings/project-states")
-async def update_visible_states(request: Request, session: Session = Depends(get_session), user: User = Depends(require_login)):
+async def update_visible_states(
+    request: Request, session: Session = Depends(get_session), user: User = Depends(require_login)
+):
     form = await request.form()
     if verify_csrf(request, form.get("csrf_token")):
         selected = form.getlist("states") if hasattr(form, "getlist") else []
         # Default system identifiers are always preserved: an empty selection
         # falls back to "all visible" rather than hiding every stage.
         settings_service.set_setting(
-            session, settings_service.VISIBLE_PROJECT_STATES_KEY, selected or list(DEFAULT_PROJECT_STATES)
+            session,
+            settings_service.VISIBLE_PROJECT_STATES_KEY,
+            selected or list(DEFAULT_PROJECT_STATES),
         )
     return RedirectResponse("/settings", status_code=303)

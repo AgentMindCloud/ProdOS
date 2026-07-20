@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
@@ -35,7 +35,7 @@ def generate_draft(
         title=title,
         body=body,
         status=DraftStatus.DRAFT,
-        generated_at=datetime.now(timezone.utc),
+        generated_at=datetime.now(UTC),
         template_version=TEMPLATE_VERSION,
     )
     session.add(draft)
@@ -51,10 +51,12 @@ def generate_draft(
     return draft
 
 
-def edit_draft(session: Session, draft: MarketingDraft, *, body: str, user_id: uuid.UUID | None = None) -> MarketingDraft:
+def edit_draft(
+    session: Session, draft: MarketingDraft, *, body: str, user_id: uuid.UUID | None = None
+) -> MarketingDraft:
     draft.body = body
     draft.status = DraftStatus.EDITED
-    draft.edited_at = datetime.now(timezone.utc)
+    draft.edited_at = datetime.now(UTC)
     session.flush()
     log_event(
         session,
@@ -67,7 +69,9 @@ def edit_draft(session: Session, draft: MarketingDraft, *, body: str, user_id: u
     return draft
 
 
-def archive_draft(session: Session, draft: MarketingDraft, *, user_id: uuid.UUID | None = None) -> MarketingDraft:
+def archive_draft(
+    session: Session, draft: MarketingDraft, *, user_id: uuid.UUID | None = None
+) -> MarketingDraft:
     draft.status = DraftStatus.ARCHIVED
     session.flush()
     log_event(

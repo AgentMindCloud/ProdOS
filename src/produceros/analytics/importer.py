@@ -42,7 +42,9 @@ def parse_analytics_csv(content: str) -> ParseResult:
     normalized_fieldnames = {name: name.strip().lower() for name in reader.fieldnames}
 
     for line_number, raw_row in enumerate(reader, start=2):
-        row = {normalized_fieldnames[k]: v for k, v in raw_row.items() if k in normalized_fieldnames}
+        row = {
+            normalized_fieldnames[k]: v for k, v in raw_row.items() if k in normalized_fieldnames
+        }
         metric_type = (row.get("metric_type") or "").strip().lower()
         raw_value = (row.get("value") or "").strip()
 
@@ -50,15 +52,21 @@ def parse_analytics_csv(content: str) -> ParseResult:
             result.warnings.append(f"Row {line_number}: missing metric_type; skipped.")
             continue
         if metric_type not in VALID_METRIC_TYPES:
-            result.warnings.append(f"Row {line_number}: unknown metric_type '{metric_type}'; skipped.")
+            result.warnings.append(
+                f"Row {line_number}: unknown metric_type '{metric_type}'; skipped."
+            )
             continue
         try:
             value = float(raw_value)
         except ValueError:
-            result.warnings.append(f"Row {line_number}: value '{raw_value}' is not numeric; skipped.")
+            result.warnings.append(
+                f"Row {line_number}: value '{raw_value}' is not numeric; skipped."
+            )
             continue
         if value < 0:
-            result.warnings.append(f"Row {line_number}: negative value for '{metric_type}'; kept, please verify.")
+            result.warnings.append(
+                f"Row {line_number}: negative value for '{metric_type}'; kept, please verify."
+            )
 
         result.rows.append(
             ImportedRow(

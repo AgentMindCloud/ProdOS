@@ -24,9 +24,13 @@ def global_search(session: Session, query: str) -> dict[str, list]:
     like = f"%{query.strip()}%"
     projects = list(
         session.scalars(
-            select(Project).where(
-                Project.working_title.ilike(like) | Project.final_title.ilike(like) | Project.internal_code.ilike(like)
-            ).limit(20)
+            select(Project)
+            .where(
+                Project.working_title.ilike(like)
+                | Project.final_title.ilike(like)
+                | Project.internal_code.ilike(like)
+            )
+            .limit(20)
         )
     )
     artists = list(session.scalars(select(Artist).where(Artist.name.ilike(like)).limit(20)))
@@ -35,7 +39,9 @@ def global_search(session: Session, query: str) -> dict[str, list]:
 
 
 def save_filter(session: Session, name: str, query_string: str) -> None:
-    set_setting(session, f"{SAVED_FILTER_PREFIX}{uuid.uuid4()}", {"name": name, "query": query_string})
+    set_setting(
+        session, f"{SAVED_FILTER_PREFIX}{uuid.uuid4()}", {"name": name, "query": query_string}
+    )
 
 
 def list_saved_filters(session: Session) -> list[dict]:

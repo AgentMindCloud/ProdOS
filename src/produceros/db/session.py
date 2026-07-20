@@ -8,6 +8,7 @@ first use.
 
 from __future__ import annotations
 
+import contextlib
 from collections.abc import Generator
 from contextlib import contextmanager
 from functools import lru_cache
@@ -23,6 +24,7 @@ def _build_engine(database_url: str, wal_mode: bool) -> Engine:
     engine = create_engine(database_url, connect_args=connect_args, future=True)
 
     if database_url.startswith("sqlite"):
+
         @event.listens_for(engine, "connect")
         def _set_sqlite_pragmas(dbapi_connection, _connection_record):  # noqa: ANN001
             cursor = dbapi_connection.cursor()
@@ -49,10 +51,9 @@ def get_sessionmaker() -> sessionmaker[Session]:
 
 def reset_engine_cache() -> None:
     """Dispose of and clear cached engine/sessionmaker (used by tests)."""
-    try:
+    # Best-effort cleanup during cache reset; failures are intentionally ignored.
+    with contextlib.suppress(Exception):
         get_engine().dispose()
-    except Exception:  # nosec B110 - best-effort cleanup during cache reset; failures are intentionally ignored
-        pass
     get_engine.cache_clear()
     get_sessionmaker.cache_clear()
 

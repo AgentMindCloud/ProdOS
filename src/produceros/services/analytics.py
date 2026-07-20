@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -14,7 +14,9 @@ from produceros.models.enums import AnalyticsMetricType, AnalyticsSourceType, Ra
 from produceros.services.audit import log_event
 
 
-def get_or_create_source(session: Session, name: str, source_type: AnalyticsSourceType) -> AnalyticsSource:
+def get_or_create_source(
+    session: Session, name: str, source_type: AnalyticsSourceType
+) -> AnalyticsSource:
     source = session.scalar(select(AnalyticsSource).where(AnalyticsSource.name == name))
     if source is None:
         source = AnalyticsSource(name=name, source_type=source_type)
@@ -45,7 +47,7 @@ def record_import(
         reporting_period_end=reporting_period_end,
         currency=currency,
         raw_or_calculated=raw_or_calculated,
-        imported_at=datetime.now(timezone.utc),
+        imported_at=datetime.now(UTC),
         imported_by=user_id,
         original_filename=original_filename,
         row_count=len(parsed.rows),
@@ -98,7 +100,7 @@ def add_manual_metric(
         reporting_period_start=reporting_period_start,
         reporting_period_end=reporting_period_end,
         raw_or_calculated=RawOrCalculated.RAW,
-        imported_at=datetime.now(timezone.utc),
+        imported_at=datetime.now(UTC),
         imported_by=user_id,
         row_count=1,
         warnings=[],
@@ -106,7 +108,10 @@ def add_manual_metric(
     session.add(import_row)
     session.flush()
     metric = AnalyticsMetric(
-        import_id=import_row.id, metric_type=metric_type, value=value, channel=channel,
+        import_id=import_row.id,
+        metric_type=metric_type,
+        value=value,
+        channel=channel,
         content_reference=content_reference,
     )
     session.add(metric)

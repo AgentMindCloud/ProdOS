@@ -43,7 +43,9 @@ def generate_sine_wav(
 
         frames = bytearray()
         for i in range(n_frames):
-            sample = int(volume * max_amplitude * math.sin(2 * math.pi * frequency_hz * i / sample_rate))
+            sample = int(
+                volume * max_amplitude * math.sin(2 * math.pi * frequency_hz * i / sample_rate)
+            )
             packed = struct.pack("<h", sample)
             for _ in range(channels):
                 frames.extend(packed)

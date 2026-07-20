@@ -30,6 +30,26 @@ def browser():
         chromium.close()
 
 
+@pytest.fixture
+def make_page(browser):
+    """Create pages with a generous default timeout. Playwright's 30s
+    default has proven flaky for form-submit navigations when the whole
+    suite runs back-to-back on a loaded machine; 60s keeps a genuine hang
+    detectable while absorbing slow-CI jitter."""
+    pages = []
+
+    def _make(**kwargs):
+        page = browser.new_page(**kwargs)
+        page.set_default_timeout(60_000)
+        page.set_default_navigation_timeout(60_000)
+        pages.append(page)
+        return page
+
+    yield _make
+    for page in pages:
+        page.close()
+
+
 def _free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
@@ -55,7 +75,10 @@ def live_server(tmp_path, monkeypatch) -> Generator[str, None, None]:
 
     app = create_app()
     port = _free_port()
-    config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")
+    # Access logs stay on: pytest only shows captured output on failure,
+    # and knowing whether a request reached the server is the first
+    # question when an e2e navigation times out.
+    config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="info", access_log=True)
     server = uvicorn.Server(config)
 
     thread = threading.Thread(target=server.run, daemon=True)

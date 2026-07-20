@@ -31,16 +31,25 @@ router = APIRouter(tags=["backup"], dependencies=[Depends(require_login)])
 
 
 @router.get("/backup")
-async def backup_home(request: Request, response: Response, session: Session = Depends(get_session), user: User = Depends(require_login)):
+async def backup_home(
+    request: Request,
+    response: Response,
+    session: Session = Depends(get_session),
+    user: User = Depends(require_login),
+):
     backups = list_backups(session)
     csrf_token = get_csrf_token(request)
     return templates.TemplateResponse(
-        request, "backup/index.html", {**base_context(user, "settings"), "backups": backups, "csrf_token": csrf_token}
+        request,
+        "backup/index.html",
+        {**base_context(user, "settings"), "backups": backups, "csrf_token": csrf_token},
     )
 
 
 @router.post("/backup/create")
-async def create_backup_route(request: Request, session: Session = Depends(get_session), user: User = Depends(require_login)):
+async def create_backup_route(
+    request: Request, session: Session = Depends(get_session), user: User = Depends(require_login)
+):
     form = await request.form()
     if verify_csrf(request, form.get("csrf_token")):
         settings = get_settings()
@@ -49,7 +58,12 @@ async def create_backup_route(request: Request, session: Session = Depends(get_s
 
 
 @router.post("/backup/{backup_id}/verify")
-async def verify_backup_route(backup_id: str, request: Request, session: Session = Depends(get_session), user: User = Depends(require_login)):
+async def verify_backup_route(
+    backup_id: str,
+    request: Request,
+    session: Session = Depends(get_session),
+    user: User = Depends(require_login),
+):
     record = session.get(BackupRecord, uuid.UUID(backup_id))
     form = await request.form()
     if record and verify_csrf(request, form.get("csrf_token")):
@@ -58,21 +72,33 @@ async def verify_backup_route(backup_id: str, request: Request, session: Session
 
 
 @router.post("/backup/{backup_id}/restore-dry-run")
-async def restore_dry_run_route(backup_id: str, request: Request, session: Session = Depends(get_session), user: User = Depends(require_login)):
+async def restore_dry_run_route(
+    backup_id: str,
+    request: Request,
+    session: Session = Depends(get_session),
+    user: User = Depends(require_login),
+):
     record = session.get(BackupRecord, uuid.UUID(backup_id))
     if record is None:
         return RedirectResponse("/backup", status_code=303)
     result = restore_dry_run(record.file_path)
     return JSONResponse(
         {
-            "ok": result.ok, "integrity_check": result.integrity_check,
-            "table_counts": result.table_counts, "warnings": result.warnings,
+            "ok": result.ok,
+            "integrity_check": result.integrity_check,
+            "table_counts": result.table_counts,
+            "warnings": result.warnings,
         }
     )
 
 
 @router.post("/backup/{backup_id}/restore-confirm")
-async def restore_confirm_route(backup_id: str, request: Request, session: Session = Depends(get_session), user: User = Depends(require_login)):
+async def restore_confirm_route(
+    backup_id: str,
+    request: Request,
+    session: Session = Depends(get_session),
+    user: User = Depends(require_login),
+):
     record = session.get(BackupRecord, uuid.UUID(backup_id))
     form = await request.form()
     if record and verify_csrf(request, form.get("csrf_token")) and form.get("confirm") == "yes":
@@ -82,18 +108,24 @@ async def restore_confirm_route(backup_id: str, request: Request, session: Sessi
 
 
 @router.get("/backup/export/metadata.json")
-async def export_metadata(session: Session = Depends(get_session), user: User = Depends(require_login)):
+async def export_metadata(
+    session: Session = Depends(get_session), user: User = Depends(require_login)
+):
     data = export_metadata_json(session)
     return Response(
-        content=json.dumps(data, indent=2, default=str), media_type="application/json",
+        content=json.dumps(data, indent=2, default=str),
+        media_type="application/json",
         headers={"Content-Disposition": 'attachment; filename="produceros-metadata-export.json"'},
     )
 
 
 @router.get("/backup/export/audio-manifest.json")
-async def export_audio_manifest_route(session: Session = Depends(get_session), user: User = Depends(require_login)):
+async def export_audio_manifest_route(
+    session: Session = Depends(get_session), user: User = Depends(require_login)
+):
     data = export_audio_manifest(session)
     return Response(
-        content=json.dumps(data, indent=2, default=str), media_type="application/json",
+        content=json.dumps(data, indent=2, default=str),
+        media_type="application/json",
         headers={"Content-Disposition": 'attachment; filename="produceros-audio-manifest.json"'},
     )

@@ -3,12 +3,12 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, ForeignKey, String, Text
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from produceros.db.base import Base, TimestampMixin, UTCDateTime, UUIDPrimaryKeyMixin
-from produceros.models.enums import AssetType, DeliveryPackageStatus, DeliveryPresetType
+from produceros.models.enums import DeliveryPackageStatus, DeliveryPresetType
 
 
 class DeliveryPreset(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -40,7 +40,7 @@ class DeliveryPackage(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     notes: Mapped[str | None] = mapped_column(Text)
 
-    items: Mapped[list["DeliveryManifestItem"]] = relationship(
+    items: Mapped[list[DeliveryManifestItem]] = relationship(
         back_populates="package", cascade="all, delete-orphan"
     )
 

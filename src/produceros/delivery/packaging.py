@@ -7,12 +7,12 @@ from __future__ import annotations
 import json
 import shutil
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from produceros.delivery.manifest import check_completeness, current_version_for_type
+from produceros.delivery.manifest import current_version_for_type
 from produceros.models.catalog import Project
 from produceros.models.delivery import DeliveryManifestItem, DeliveryPackage, DeliveryPreset
 from produceros.models.enums import AssetType, DeliveryPackageStatus
@@ -49,14 +49,20 @@ def create_package(
     return package
 
 
-def generate_manifest(session: Session, package: DeliveryPackage, *, user_id: uuid.UUID | None = None) -> DeliveryPackage:
+def generate_manifest(
+    session: Session, package: DeliveryPackage, *, user_id: uuid.UUID | None = None
+) -> DeliveryPackage:
     """Dry-run manifest generation: computes what *would* be copied. Does
     not touch disk except to read source files for size, only real I/O
     happens in ``execute_package``."""
     preset = session.get(DeliveryPreset, package.preset_id)
     project = session.get(Project, package.project_id)
+    if preset is None or project is None:
+        raise ValueError("Delivery package references a preset or project that no longer exists.")
 
-    session.query(DeliveryManifestItem).filter(DeliveryManifestItem.package_id == package.id).delete()
+    session.query(DeliveryManifestItem).filter(
+        DeliveryManifestItem.package_id == package.id
+    ).delete()
 
     for raw_type in preset.required_asset_types:
         asset_type = AssetType(raw_type)
@@ -76,7 +82,7 @@ def generate_manifest(session: Session, package: DeliveryPackage, *, user_id: uu
         )
 
     package.status = DeliveryPackageStatus.DRY_RUN
-    package.manifest_generated_at = datetime.now(timezone.utc)
+    package.manifest_generated_at = datetime.now(UTC)
     session.flush()
     log_event(
         session,
@@ -89,12 +95,14 @@ def generate_manifest(session: Session, package: DeliveryPackage, *, user_id: uu
     return package
 
 
-def approve_package(session: Session, package: DeliveryPackage, *, approved_by: uuid.UUID) -> DeliveryPackage:
+def approve_package(
+    session: Session, package: DeliveryPackage, *, approved_by: uuid.UUID
+) -> DeliveryPackage:
     if package.status != DeliveryPackageStatus.DRY_RUN:
         raise ValueError("Generate the manifest before approving a package.")
     package.status = DeliveryPackageStatus.APPROVED
     package.approved_by = approved_by
-    package.approved_at = datetime.now(timezone.utc)
+    package.approved_at = datetime.now(UTC)
     session.flush()
     log_event(
         session,
@@ -107,13 +115,17 @@ def approve_package(session: Session, package: DeliveryPackage, *, approved_by: 
     return package
 
 
-def execute_package(session: Session, package: DeliveryPackage, *, executed_by: uuid.UUID | None = None) -> DeliveryPackage:
+def execute_package(
+    session: Session, package: DeliveryPackage, *, executed_by: uuid.UUID | None = None
+) -> DeliveryPackage:
     """Copy every manifest item into the output directory, computing a
     checksum for each. Refuses to run if the output directory already
     exists and is non-empty (never overwrite an existing package)."""
     if package.status != DeliveryPackageStatus.APPROVED:
         raise ValueError("Only an approved package may be executed.")
 
+    if not package.output_directory:
+        raise ValueError("Delivery package has no output directory set.")
     output_dir = Path(package.output_directory)
     if output_dir.exists() and any(output_dir.iterdir()):
         package.status = DeliveryPackageStatus.FAILED
@@ -123,6 +135,8 @@ def execute_package(session: Session, package: DeliveryPackage, *, executed_by: 
     output_dir.mkdir(parents=True, exist_ok=True)
 
     project = session.get(Project, package.project_id)
+    if project is None:
+        raise ValueError("Delivery package references a project that no longer exists.")
     items = list(package.items)
     manifest_records = []
 
@@ -148,14 +162,16 @@ def execute_package(session: Session, package: DeliveryPackage, *, executed_by: 
             "package_name": package.name,
             "project": project.working_title,
             "internal_code": project.internal_code,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "items": manifest_records,
             "revision_notes": project.revision_notes or "",
         }
-        (output_dir / "manifest.json").write_text(json.dumps(manifest_payload, indent=2), encoding="utf-8")
+        (output_dir / "manifest.json").write_text(
+            json.dumps(manifest_payload, indent=2), encoding="utf-8"
+        )
 
         package.status = DeliveryPackageStatus.COMPLETED
-        package.completed_at = datetime.now(timezone.utc)
+        package.completed_at = datetime.now(UTC)
     except Exception as exc:
         package.status = DeliveryPackageStatus.FAILED
         session.flush()

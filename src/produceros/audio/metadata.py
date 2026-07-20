@@ -37,7 +37,9 @@ class ExtractedAudioMetadata:
 
 
 def _extract_wav_stdlib(path: Path) -> ExtractedAudioMetadata:
-    meta = ExtractedAudioMetadata(file_type="wav", is_audio=True, file_size_bytes=path.stat().st_size)
+    meta = ExtractedAudioMetadata(
+        file_type="wav", is_audio=True, file_size_bytes=path.stat().st_size
+    )
     try:
         with wave.open(str(path), "rb") as wav_file:
             frames = wav_file.getnframes()
@@ -51,7 +53,9 @@ def _extract_wav_stdlib(path: Path) -> ExtractedAudioMetadata:
     return meta
 
 
-def _extract_via_mutagen(path: Path, meta: ExtractedAudioMetadata | None = None) -> ExtractedAudioMetadata:
+def _extract_via_mutagen(
+    path: Path, meta: ExtractedAudioMetadata | None = None
+) -> ExtractedAudioMetadata:
     from mutagen import File as MutagenFile  # local import: optional heavy dependency
 
     suffix = path.suffix.lower().lstrip(".")

@@ -9,12 +9,11 @@ online-backup API so an in-progress WAL write never corrupts the copy.
 from __future__ import annotations
 
 import hashlib
-import json
 import shutil
 import sqlite3
 import uuid
-from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 
 from sqlalchemy import inspect, select
@@ -23,7 +22,6 @@ from sqlalchemy.orm import Session
 from produceros.config import Settings
 from produceros.models import Base
 from produceros.models.assets import AssetVersion
-from produceros.models.catalog import Project
 from produceros.models.enums import BackupType
 from produceros.models.system import BackupRecord
 from produceros.services.audit import log_event
@@ -47,7 +45,7 @@ def create_backup(
     user_id: uuid.UUID | None = None,
 ) -> BackupRecord:
     settings.backups_dir.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     destination = settings.backups_dir / f"produceros_{timestamp}.db"
 
     source_conn = sqlite3.connect(str(settings.database_path))
@@ -81,7 +79,9 @@ def create_backup(
     return record
 
 
-def verify_backup(session: Session, record: BackupRecord, *, user_id: uuid.UUID | None = None) -> bool:
+def verify_backup(
+    session: Session, record: BackupRecord, *, user_id: uuid.UUID | None = None
+) -> bool:
     path = Path(record.file_path)
     ok = path.exists()
     if ok:
@@ -96,7 +96,7 @@ def verify_backup(session: Session, record: BackupRecord, *, user_id: uuid.UUID 
                 conn.close()
 
     record.verified = ok
-    record.verified_at = datetime.now(timezone.utc)
+    record.verified_at = datetime.now(UTC)
     session.flush()
     log_event(
         session,
@@ -125,7 +125,12 @@ def restore_dry_run(backup_path: str | Path) -> RestoreDryRunResult:
     path = Path(backup_path)
     warnings: list[str] = []
     if not path.exists():
-        return RestoreDryRunResult(ok=False, integrity_check="file not found", table_counts={}, warnings=[f"'{path}' does not exist."])
+        return RestoreDryRunResult(
+            ok=False,
+            integrity_check="file not found",
+            table_counts={},
+            warnings=[f"'{path}' does not exist."],
+        )
 
     conn = sqlite3.connect(str(path))
     try:
@@ -134,7 +139,9 @@ def restore_dry_run(backup_path: str | Path) -> RestoreDryRunResult:
             integrity_result = integrity[0] if integrity else "unknown"
         except sqlite3.DatabaseError as exc:
             return RestoreDryRunResult(
-                ok=False, integrity_check="not a valid SQLite database", table_counts={},
+                ok=False,
+                integrity_check="not a valid SQLite database",
+                table_counts={},
                 warnings=[f"'{path}' is not a valid SQLite database: {exc}"],
             )
 
@@ -145,12 +152,16 @@ def restore_dry_run(backup_path: str | Path) -> RestoreDryRunResult:
                 count = conn.execute(f'SELECT COUNT(*) FROM "{table_name}"').fetchone()  # noqa: S608 # nosec B608
                 table_counts[table_name] = count[0] if count else 0
             except sqlite3.OperationalError:
-                warnings.append(f"Table '{table_name}' missing from backup (may be an older schema version).")
+                warnings.append(
+                    f"Table '{table_name}' missing from backup (may be an older schema version)."
+                )
     finally:
         conn.close()
 
     ok = integrity_result == "ok"
-    return RestoreDryRunResult(ok=ok, integrity_check=integrity_result, table_counts=table_counts, warnings=warnings)
+    return RestoreDryRunResult(
+        ok=ok, integrity_check=integrity_result, table_counts=table_counts, warnings=warnings
+    )
 
 
 def restore_backup(
@@ -167,13 +178,15 @@ def restore_backup(
 
     dry_run = restore_dry_run(backup_path)
     if not dry_run.ok:
-        raise ValueError(f"Refusing to restore: backup failed integrity check ({dry_run.integrity_check}).")
+        raise ValueError(
+            f"Refusing to restore: backup failed integrity check ({dry_run.integrity_check})."
+        )
 
     from produceros.db.session import reset_engine_cache
 
     settings.backups_dir.mkdir(parents=True, exist_ok=True)
     if settings.database_path.exists():
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         pre_restore_path = settings.backups_dir / f"pre_restore_{timestamp}.db"
         source_conn = sqlite3.connect(str(settings.database_path))
         try:
@@ -202,9 +215,7 @@ def _row_to_dict(instance) -> dict:
         value = getattr(instance, column.key)
         if isinstance(value, uuid.UUID):
             value = str(value)
-        elif isinstance(value, datetime):
-            value = value.isoformat()
-        elif hasattr(value, "isoformat"):
+        elif isinstance(value, datetime) or hasattr(value, "isoformat"):
             value = value.isoformat()
         result[column.key] = value
     return result

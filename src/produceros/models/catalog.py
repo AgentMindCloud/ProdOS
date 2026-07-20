@@ -3,9 +3,19 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import JSON, Boolean, Date, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Date,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    Uuid,
+)
 from sqlalchemy import Enum as SAEnum
-from sqlalchemy import UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from produceros.db.base import Base, TimestampMixin, UTCDateTime, UUIDPrimaryKeyMixin
@@ -27,7 +37,7 @@ class Artist(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     contact_email: Mapped[str | None] = mapped_column(String(320))
     notes: Mapped[str | None] = mapped_column(Text)
 
-    projects: Mapped[list["Project"]] = relationship(back_populates="artist")
+    projects: Mapped[list[Project]] = relationship(back_populates="artist")
 
 
 class Tag(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -136,8 +146,10 @@ class Project(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
     artist: Mapped[Artist | None] = relationship(back_populates="projects")
-    tracks: Mapped[list["Track"]] = relationship(back_populates="project", cascade="all, delete-orphan")
-    versions: Mapped[list["ProjectVersion"]] = relationship(
+    tracks: Mapped[list[Track]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
+    versions: Mapped[list[ProjectVersion]] = relationship(
         back_populates="project", cascade="all, delete-orphan"
     )
 

@@ -8,6 +8,7 @@ reaches either sink, so logs are always safe to share for troubleshooting.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import re
@@ -35,10 +36,9 @@ def redact_secrets(message: str) -> str:
 
 class RedactionFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
-        try:
+        # Defensive only -- redaction must never break logging itself.
+        with contextlib.suppress(Exception):
             record.msg = redact_secrets(str(record.msg))
-        except Exception:  # nosec B110 - pragma: no cover - defensive only, must never break logging itself
-            pass
         return True
 
 

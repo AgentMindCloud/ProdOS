@@ -11,17 +11,18 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta
 from pathlib import Path
+from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import Table, select
 from sqlalchemy.orm import Session
 
 from produceros.config import get_settings
 from produceros.db.base import Base
-from produceros.demo.audio_fixtures import generate_sine_wav
 from produceros.delivery.packaging import create_package, generate_manifest
 from produceros.delivery.presets import seed_default_presets
+from produceros.demo.audio_fixtures import generate_sine_wav
 from produceros.marketing.campaigns import create_campaign, create_content_asset
 from produceros.marketing.engine import generate_draft
 from produceros.models.delivery import DeliveryPreset
@@ -84,46 +85,117 @@ def load_demo_data(session: Session) -> dict:
     manifest.track(artist_a)
     manifest.track(artist_b)
 
-    project_specs = [
-        dict(working_title="Glass Horizon", artist=artist_a, genre="Progressive House", mood="Uplifting", bpm=126, key="Am", state=ProjectState.MASTER),
-        dict(working_title="Paper Lanterns", artist=artist_a, genre="Indie Pop", mood="Warm", bpm=112, key="C", state=ProjectState.MIX),
-        dict(working_title="Static Bloom", artist=artist_b, genre="Synthwave", mood="Nostalgic", bpm=100, key="Fm", state=ProjectState.PRODUCTION),
-        dict(working_title="Low Tide", artist=artist_b, genre="Ambient", mood="Calm", bpm=70, key="Dm", state=ProjectState.ARRANGEMENT),
-        dict(working_title="Neon Freight", artist=artist_a, genre="Electro", mood="Driving", bpm=128, key="Gm", state=ProjectState.RELEASED),
-        dict(working_title="Quiet Static", artist=artist_b, genre="Downtempo", mood="Introspective", bpm=90, key="Em", state=ProjectState.IDEA),
+    project_specs: list[dict[str, Any]] = [
+        {
+            "working_title": "Glass Horizon",
+            "artist": artist_a,
+            "genre": "Progressive House",
+            "mood": "Uplifting",
+            "bpm": 126,
+            "key": "Am",
+            "state": ProjectState.MASTER,
+        },
+        {
+            "working_title": "Paper Lanterns",
+            "artist": artist_a,
+            "genre": "Indie Pop",
+            "mood": "Warm",
+            "bpm": 112,
+            "key": "C",
+            "state": ProjectState.MIX,
+        },
+        {
+            "working_title": "Static Bloom",
+            "artist": artist_b,
+            "genre": "Synthwave",
+            "mood": "Nostalgic",
+            "bpm": 100,
+            "key": "Fm",
+            "state": ProjectState.PRODUCTION,
+        },
+        {
+            "working_title": "Low Tide",
+            "artist": artist_b,
+            "genre": "Ambient",
+            "mood": "Calm",
+            "bpm": 70,
+            "key": "Dm",
+            "state": ProjectState.ARRANGEMENT,
+        },
+        {
+            "working_title": "Neon Freight",
+            "artist": artist_a,
+            "genre": "Electro",
+            "mood": "Driving",
+            "bpm": 128,
+            "key": "Gm",
+            "state": ProjectState.RELEASED,
+        },
+        {
+            "working_title": "Quiet Static",
+            "artist": artist_b,
+            "genre": "Downtempo",
+            "mood": "Introspective",
+            "bpm": 90,
+            "key": "Em",
+            "state": ProjectState.IDEA,
+        },
     ]
 
     projects = []
     for spec in project_specs:
         project = catalog_service.create_project(
-            session, working_title=spec["working_title"], artist_id=spec["artist"].id,
-            genre=spec["genre"], mood=spec["mood"], bpm=spec["bpm"], musical_key=spec["key"],
+            session,
+            working_title=spec["working_title"],
+            artist_id=spec["artist"].id,
+            genre=spec["genre"],
+            mood=spec["mood"],
+            bpm=spec["bpm"],
+            musical_key=spec["key"],
         )
-        catalog_service.change_project_state(session, project, spec["state"], note="Demo data seed.")
+        catalog_service.change_project_state(
+            session, project, spec["state"], note="Demo data seed."
+        )
         manifest.track(project)
         projects.append(project)
 
     # --- Assets, versions, and tiny synthetic audio -------------------
     for i, project in enumerate(projects[:4]):
         mix_path = generate_sine_wav(
-            audio_dir / f"{project.internal_code}_mix_v01.wav", seconds=1.5, frequency_hz=220 + i * 20
+            audio_dir / f"{project.internal_code}_mix_v01.wav",
+            seconds=1.5,
+            frequency_hz=220 + i * 20,
         )
         mix_version = asset_service.register_asset_version(
-            session, project=project, asset_type=AssetType.MIX, file_path=str(mix_path),
-            registered_via=AssetRegisteredVia.MANUAL, mark_current=True,
+            session,
+            project=project,
+            asset_type=AssetType.MIX,
+            file_path=str(mix_path),
+            registered_via=AssetRegisteredVia.MANUAL,
+            mark_current=True,
         )
         manifest.track(mix_version.asset)
         manifest.track(mix_version)
         if mix_version.analysis is not None:
             manifest.track(mix_version.analysis)
 
-        if project.state in (ProjectState.MASTER, ProjectState.RELEASE_READY, ProjectState.RELEASED):
+        if project.state in (
+            ProjectState.MASTER,
+            ProjectState.RELEASE_READY,
+            ProjectState.RELEASED,
+        ):
             master_path = generate_sine_wav(
-                audio_dir / f"{project.internal_code}_master_v01.wav", seconds=1.5, frequency_hz=440 + i * 20
+                audio_dir / f"{project.internal_code}_master_v01.wav",
+                seconds=1.5,
+                frequency_hz=440 + i * 20,
             )
             master_version = asset_service.register_asset_version(
-                session, project=project, asset_type=AssetType.MASTER, file_path=str(master_path),
-                registered_via=AssetRegisteredVia.MANUAL, mark_current=True,
+                session,
+                project=project,
+                asset_type=AssetType.MASTER,
+                file_path=str(master_path),
+                registered_via=AssetRegisteredVia.MANUAL,
+                mark_current=True,
             )
             master_version.approval_status = ApprovalStatus.APPROVED
             manifest.track(master_version.asset)
@@ -135,15 +207,36 @@ def load_demo_data(session: Session) -> dict:
 
     # --- Contributors and rights shares --------------------------------
     for project in projects[:5]:
-        writer = rights_service.add_contributor(session, project.id, name=f"{project.artist.name} (Writer)", role=ContributorRole.WRITER)
-        producer = rights_service.add_contributor(session, project.id, name="Demo Producer", role=ContributorRole.PRODUCER)
+        if project.artist is None:  # every demo project is created with an artist
+            raise RuntimeError("Demo project unexpectedly has no artist.")
+        artist_name = project.artist.name
+        writer = rights_service.add_contributor(
+            session, project.id, name=f"{artist_name} (Writer)", role=ContributorRole.WRITER
+        )
+        producer = rights_service.add_contributor(
+            session, project.id, name="Demo Producer", role=ContributorRole.PRODUCER
+        )
         writer.approved = True
         producer.approved = True
         manifest.track(writer)
         manifest.track(producer)
 
-        share_master_a = rights_service.add_rights_share(session, project.id, holder_name=project.artist.name, share_type=RightsShareType.MASTER, percentage=70, confirmed=True)
-        share_master_b = rights_service.add_rights_share(session, project.id, holder_name="Demo Producer", share_type=RightsShareType.MASTER, percentage=30, confirmed=True)
+        share_master_a = rights_service.add_rights_share(
+            session,
+            project.id,
+            holder_name=artist_name,
+            share_type=RightsShareType.MASTER,
+            percentage=70,
+            confirmed=True,
+        )
+        share_master_b = rights_service.add_rights_share(
+            session,
+            project.id,
+            holder_name="Demo Producer",
+            share_type=RightsShareType.MASTER,
+            percentage=30,
+            confirmed=True,
+        )
         manifest.track(share_master_a)
         manifest.track(share_master_b)
 
@@ -152,23 +245,33 @@ def load_demo_data(session: Session) -> dict:
         # rights-share warning system in the demo catalog.
         is_unconfirmed_demo_case = project is projects[1]
         share_comp_a = rights_service.add_rights_share(
-            session, project.id, holder_name=project.artist.name, share_type=RightsShareType.COMPOSITION,
-            percentage=60, confirmed=not is_unconfirmed_demo_case,
+            session,
+            project.id,
+            holder_name=artist_name,
+            share_type=RightsShareType.COMPOSITION,
+            percentage=60,
+            confirmed=not is_unconfirmed_demo_case,
         )
         share_comp_b = rights_service.add_rights_share(
-            session, project.id, holder_name="Demo Producer", share_type=RightsShareType.COMPOSITION,
-            percentage=40, confirmed=not is_unconfirmed_demo_case,
+            session,
+            project.id,
+            holder_name="Demo Producer",
+            share_type=RightsShareType.COMPOSITION,
+            percentage=40,
+            confirmed=not is_unconfirmed_demo_case,
         )
         manifest.track(share_comp_a)
         manifest.track(share_comp_b)
 
         project.split_confirmed = not is_unconfirmed_demo_case
-        project.master_owner = project.artist.name
-        project.composition_owner = project.artist.name
+        project.master_owner = artist_name
+        project.composition_owner = artist_name
         project.pro_registration_status = ProRegistrationStatus.REGISTERED
 
     clearance = rights_service.add_clearance(
-        session, projects[2].id, clearance_type=ClearanceType.SAMPLE,
+        session,
+        projects[2].id,
+        clearance_type=ClearanceType.SAMPLE,
         description="Synth pad sample sourced from a royalty-free demo pack.",
     )
     rights_service.resolve_clearance(session, clearance, ClearanceStatus.CLEARED)
@@ -182,13 +285,22 @@ def load_demo_data(session: Session) -> dict:
     ]:
         project.explicit_status = explicit
         project.final_title = project.working_title
-        project.release_description = f"{project.working_title} is a {project.genre.lower()} track exploring a {project.mood.lower()} mood."
+        genre = (project.genre or "electronic").lower()
+        mood = (project.mood or "atmospheric").lower()
+        project.release_description = (
+            f"{project.working_title} is a {genre} track exploring a {mood} mood."
+        )
         project.distributor = "Demo Distribution Co."
         project.isrc = f"US-DEM-26-{uuid.uuid4().hex[:5].upper()}"
         release = Release(
-            project_id=project.id, release_type=release_type, title=project.working_title,
-            release_date=date.today() + timedelta(days=21), distributor=project.distributor,
-            isrc=project.isrc, explicit_status=explicit, description=project.release_description,
+            project_id=project.id,
+            release_type=release_type,
+            title=project.working_title,
+            release_date=date.today() + timedelta(days=21),
+            distributor=project.distributor,
+            isrc=project.isrc,
+            explicit_status=explicit,
+            description=project.release_description,
         )
         session.add(release)
         session.flush()
@@ -199,12 +311,29 @@ def load_demo_data(session: Session) -> dict:
             manifest.track(result)
 
     # --- Marketing -------------------------------------------------------
-    campaign = create_campaign(session, name=f"{projects[0].working_title} Launch", campaign_type=CampaignType.FOUR_WEEK, project_id=projects[0].id, artist_id=artist_a.id)
+    campaign = create_campaign(
+        session,
+        name=f"{projects[0].working_title} Launch",
+        campaign_type=CampaignType.FOUR_WEEK,
+        project_id=projects[0].id,
+        artist_id=artist_a.id,
+    )
     manifest.track(campaign)
-    content_asset = create_content_asset(session, title="Teaser clip idea", content_type=ContentAssetType.SHORT_VIDEO, project_id=projects[0].id, campaign_id=campaign.id)
+    content_asset = create_content_asset(
+        session,
+        title="Teaser clip idea",
+        content_type=ContentAssetType.SHORT_VIDEO,
+        project_id=projects[0].id,
+        campaign_id=campaign.id,
+    )
     manifest.track(content_asset)
-    for draft_type in (MarketingDraftType.RELEASE_ANNOUNCEMENT, MarketingDraftType.INSTAGRAM_CAPTION):
-        draft = generate_draft(session, draft_type=draft_type, project=projects[0], campaign_id=campaign.id)
+    for draft_type in (
+        MarketingDraftType.RELEASE_ANNOUNCEMENT,
+        MarketingDraftType.INSTAGRAM_CAPTION,
+    ):
+        draft = generate_draft(
+            session, draft_type=draft_type, project=projects[0], campaign_id=campaign.id
+        )
         manifest.track(draft)
 
     # --- Calendar ----------------------------------------------------
@@ -217,19 +346,29 @@ def load_demo_data(session: Session) -> dict:
     ]
     for project, dtype, days in deadline_specs:
         deadline = create_deadline(
-            session, title=f"{dtype.value.replace('_', ' ').title()} -- {project.working_title}",
-            deadline_type=dtype, due_date=date.today() + timedelta(days=days), project_id=project.id,
+            session,
+            title=f"{dtype.value.replace('_', ' ').title()} -- {project.working_title}",
+            deadline_type=dtype,
+            due_date=date.today() + timedelta(days=days),
+            project_id=project.id,
         )
         manifest.track(deadline)
 
     # --- Delivery (left at "manifest generated" -- not executed, so demo
     # mode never copies files outside the app's own data directory) -------
     seed_default_presets(session)
-    client_preset = session.scalar(select(DeliveryPreset).where(DeliveryPreset.preset_type == "client"))
+    client_preset = session.scalar(
+        select(DeliveryPreset).where(DeliveryPreset.preset_type == "client")
+    )
+    if client_preset is None:  # seed_default_presets always creates it
+        raise RuntimeError("Default client delivery preset missing.")
     output_dir = get_settings().data_dir / "demo_deliveries" / projects[0].internal_code
     package = create_package(
-        session, project=projects[0], preset=client_preset,
-        name=f"{projects[0].working_title} -- Client Package", output_directory=str(output_dir),
+        session,
+        project=projects[0],
+        preset=client_preset,
+        name=f"{projects[0].working_title} -- Client Package",
+        output_directory=str(output_dir),
     )
     generate_manifest(session, package)
     manifest.track(package)
@@ -248,9 +387,14 @@ def load_demo_data(session: Session) -> dict:
         (AnalyticsMetricType.VIDEO_VIEWS, 950, "TikTok"),
     ]:
         metric = add_manual_metric(
-            session, source=source, metric_type=metric_type, value=value,
-            reporting_period_start=period_start, reporting_period_end=period_end,
-            project_id=projects[0].id, channel=channel,
+            session,
+            source=source,
+            metric_type=metric_type,
+            value=value,
+            reporting_period_start=period_start,
+            reporting_period_end=period_end,
+            project_id=projects[0].id,
+            channel=channel,
         )
         # Tracked in child-before-parent order: reversed deletion deletes
         # the metric first, then the AnalyticsImport row it belongs to.
@@ -258,7 +402,11 @@ def load_demo_data(session: Session) -> dict:
         manifest.track(metric)
 
     # --- Scanner: point a root at the demo audio dir and run a real scan ---
-    generate_sine_wav(audio_dir / "Aurora Fields_Glass Horizon_MIX_v02_2026-06-01.wav", seconds=1.0, frequency_hz=300)
+    generate_sine_wav(
+        audio_dir / "Aurora Fields_Glass Horizon_MIX_v02_2026-06-01.wav",
+        seconds=1.0,
+        frequency_hz=300,
+    )
     root = add_root(session, path=str(audio_dir), label="Demo audio folder")
     manifest.track(root)
     run = trigger_scan(session, triggered_by=ScannerTrigger.MANUAL)
@@ -291,7 +439,7 @@ def _table_to_model_map() -> dict[str, type]:
         _TABLE_TO_MODEL = {
             mapper.local_table.name: mapper.class_
             for mapper in Base.registry.mappers
-            if mapper.local_table is not None
+            if isinstance(mapper.local_table, Table)
         }
     return _TABLE_TO_MODEL
 

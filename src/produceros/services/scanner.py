@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import UTC
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -39,11 +40,19 @@ def deactivate_root(session: Session, root: ScannerRoot) -> ScannerRoot:
 
 
 def trigger_scan(
-    session: Session, *, user_id: uuid.UUID | None = None, triggered_by: ScannerTrigger = ScannerTrigger.MANUAL
+    session: Session,
+    *,
+    user_id: uuid.UUID | None = None,
+    triggered_by: ScannerTrigger = ScannerTrigger.MANUAL,
 ) -> ScannerRun:
     settings = get_settings()
     roots = list_roots(session)
-    run = run_scan(session, roots=roots, allowed_extensions=settings.scanner_allowed_extensions, triggered_by=triggered_by)
+    run = run_scan(
+        session,
+        roots=roots,
+        allowed_extensions=settings.scanner_allowed_extensions,
+        triggered_by=triggered_by,
+    )
     log_event(
         session,
         event_type="scanner.run_completed",
@@ -67,11 +76,13 @@ def list_findings(
     return list(session.scalars(stmt))
 
 
-def reject_finding(session: Session, finding: ScannerFinding, *, user_id: uuid.UUID | None = None) -> ScannerFinding:
+def reject_finding(
+    session: Session, finding: ScannerFinding, *, user_id: uuid.UUID | None = None
+) -> ScannerFinding:
     finding.status = FindingStatus.REJECTED
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    finding.resolved_at = datetime.now(timezone.utc)
+    finding.resolved_at = datetime.now(UTC)
     finding.resolved_by = user_id
     session.flush()
     log_event(

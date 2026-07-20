@@ -36,11 +36,15 @@ def test_templates_never_contain_fabricated_claims(db_session):
         _, body = render(draft_type, context)
         lowered = body.lower()
         for forbidden in FORBIDDEN_SUBSTRINGS:
-            assert forbidden not in lowered, f"{draft_type} draft contains fabricated claim: {forbidden!r}"
+            assert (
+                forbidden not in lowered
+            ), f"{draft_type} draft contains fabricated claim: {forbidden!r}"
 
 
 def test_confirmed_data_is_reflected_in_draft(db_session):
-    project = catalog_service.create_project(db_session, working_title="Real Title", genre="Techno", bpm=128)
+    project = catalog_service.create_project(
+        db_session, working_title="Real Title", genre="Techno", bpm=128
+    )
     context = build_project_context(db_session, project)
     title, body = render(MarketingDraftType.RELEASE_ANNOUNCEMENT, context)
     assert "Real Title" in title

@@ -18,7 +18,11 @@ from produceros.models.analytics import AnalyticsImport, AnalyticsMetric
 from produceros.models.enums import AnalyticsMetricType
 
 COST_METRICS = {AnalyticsMetricType.ADVERTISING_SPEND}
-REVENUE_METRICS = {AnalyticsMetricType.REVENUE, AnalyticsMetricType.BEAT_SALES, AnalyticsMetricType.LICENSING_REVENUE}
+REVENUE_METRICS = {
+    AnalyticsMetricType.REVENUE,
+    AnalyticsMetricType.BEAT_SALES,
+    AnalyticsMetricType.LICENSING_REVENUE,
+}
 
 
 @dataclass
@@ -27,8 +31,12 @@ class MetricTotal:
     total: float
 
 
-def _metrics_for(session: Session, *, project_id: uuid.UUID | None = None, campaign_id: uuid.UUID | None = None) -> list[AnalyticsMetric]:
-    stmt = select(AnalyticsMetric).join(AnalyticsImport, AnalyticsMetric.import_id == AnalyticsImport.id)
+def _metrics_for(
+    session: Session, *, project_id: uuid.UUID | None = None, campaign_id: uuid.UUID | None = None
+) -> list[AnalyticsMetric]:
+    stmt = select(AnalyticsMetric).join(
+        AnalyticsImport, AnalyticsMetric.import_id == AnalyticsImport.id
+    )
     if project_id:
         stmt = stmt.where(AnalyticsImport.project_id == project_id)
     if campaign_id:
@@ -58,7 +66,9 @@ def channel_summary(session: Session, *, project_id: uuid.UUID | None = None) ->
     return dict(sorted(totals.items(), key=lambda kv: -kv[1]))
 
 
-def content_performance_ranking(session: Session, *, project_id: uuid.UUID | None = None) -> list[tuple[str, float]]:
+def content_performance_ranking(
+    session: Session, *, project_id: uuid.UUID | None = None
+) -> list[tuple[str, float]]:
     totals: dict[str, float] = defaultdict(float)
     for metric in _metrics_for(session, project_id=project_id):
         if not metric.content_reference:
@@ -69,18 +79,25 @@ def content_performance_ranking(session: Session, *, project_id: uuid.UUID | Non
 
 def cost_summary(session: Session, *, project_id: uuid.UUID | None = None) -> float:
     return sum(
-        float(m.value) for m in _metrics_for(session, project_id=project_id) if m.metric_type in COST_METRICS
+        float(m.value)
+        for m in _metrics_for(session, project_id=project_id)
+        if m.metric_type in COST_METRICS
     )
 
 
 def revenue_summary(session: Session, *, project_id: uuid.UUID | None = None) -> float:
     return sum(
-        float(m.value) for m in _metrics_for(session, project_id=project_id) if m.metric_type in REVENUE_METRICS
+        float(m.value)
+        for m in _metrics_for(session, project_id=project_id)
+        if m.metric_type in REVENUE_METRICS
     )
 
 
 def missing_data_warnings(session: Session, imports: list[AnalyticsImport]) -> list[str]:
     warnings: list[str] = []
     for imp in imports:
-        warnings.extend(f"Import {imp.id} ({imp.original_filename or 'manual entry'}): {w}" for w in imp.warnings)
+        warnings.extend(
+            f"Import {imp.id} ({imp.original_filename or 'manual entry'}): {w}"
+            for w in imp.warnings
+        )
     return warnings

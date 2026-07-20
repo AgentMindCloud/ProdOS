@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
+from datetime import UTC
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -112,12 +113,16 @@ def add_clearance(session: Session, project_id: uuid.UUID, **fields) -> Clearanc
 
 
 def resolve_clearance(
-    session: Session, clearance: Clearance, status: ClearanceStatus, *, user_id: uuid.UUID | None = None
+    session: Session,
+    clearance: Clearance,
+    status: ClearanceStatus,
+    *,
+    user_id: uuid.UUID | None = None,
 ) -> Clearance:
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     clearance.status = status
-    clearance.resolved_at = datetime.now(timezone.utc)
+    clearance.resolved_at = datetime.now(UTC)
     session.flush()
     log_event(
         session,

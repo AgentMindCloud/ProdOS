@@ -11,10 +11,11 @@ import hmac
 import re
 import secrets
 import string
+from collections.abc import Sequence
 from pathlib import Path
 
 from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError, VerificationError, InvalidHash
+from argon2.exceptions import InvalidHash, VerificationError, VerifyMismatchError
 
 _hasher = PasswordHasher(time_cost=3, memory_cost=65536, parallelism=2)
 
@@ -68,7 +69,9 @@ class PathSecurityError(ValueError):
     """Raised when a path fails allowlist or traversal checks."""
 
 
-def resolve_within_allowed_roots(candidate: str | Path, allowed_roots: list[str | Path]) -> Path:
+def resolve_within_allowed_roots(
+    candidate: str | Path, allowed_roots: Sequence[str | Path]
+) -> Path:
     """Resolve ``candidate`` and confirm it is inside one of ``allowed_roots``.
 
     Prevents path traversal (``..``), symlink escapes, and access to

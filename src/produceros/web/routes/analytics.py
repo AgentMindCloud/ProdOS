@@ -19,7 +19,6 @@ from produceros.analytics.summaries import (
     release_summary,
     revenue_summary,
 )
-from produceros.models.analytics import AnalyticsSource
 from produceros.models.catalog import Project
 from produceros.models.enums import AnalyticsMetricType, AnalyticsSourceType
 from produceros.models.user import User
@@ -34,7 +33,10 @@ router = APIRouter(tags=["analytics"], dependencies=[Depends(require_login)])
 
 @router.get("/analytics")
 async def analytics_home(
-    request: Request, response: Response, session: Session = Depends(get_session), user: User = Depends(require_login),
+    request: Request,
+    response: Response,
+    session: Session = Depends(get_session),
+    user: User = Depends(require_login),
     project_id: str | None = None,
 ):
     projects = list(session.scalars(select(Project).order_by(Project.working_title)))
@@ -44,11 +46,15 @@ async def analytics_home(
     ranking = content_performance_ranking(session, project_id=project_uuid)
     csrf_token = get_csrf_token(request)
     return templates.TemplateResponse(
-        request, "analytics/index.html",
+        request,
+        "analytics/index.html",
         {
             **base_context(user, "analytics"),
-            "projects": projects, "selected_project_id": project_id or "",
-            "summary": summary, "channels": channels, "ranking": ranking,
+            "projects": projects,
+            "selected_project_id": project_id or "",
+            "summary": summary,
+            "channels": channels,
+            "ranking": ranking,
             "cost_total": cost_summary(session, project_id=project_uuid),
             "revenue_total": revenue_summary(session, project_id=project_uuid),
             "metric_types": list(AnalyticsMetricType),
@@ -59,11 +65,17 @@ async def analytics_home(
 
 @router.get("/analytics/csv-template")
 async def download_csv_template():
-    return PlainTextResponse(csv_template_text(), media_type="text/csv", headers={"Content-Disposition": 'attachment; filename="produceros-analytics-template.csv"'})
+    return PlainTextResponse(
+        csv_template_text(),
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="produceros-analytics-template.csv"'},
+    )
 
 
 @router.post("/analytics/import")
-async def import_csv(request: Request, session: Session = Depends(get_session), user: User = Depends(require_login)):
+async def import_csv(
+    request: Request, session: Session = Depends(get_session), user: User = Depends(require_login)
+):
     form = await request.form()
     if not verify_csrf(request, form.get("csrf_token")):
         return RedirectResponse("/analytics", status_code=303)
@@ -80,29 +92,44 @@ async def import_csv(request: Request, session: Session = Depends(get_session), 
         parsed = parse_analytics_csv(content)
         source = get_or_create_source(session, source_name, AnalyticsSourceType.OTHER)
         record_import(
-            session, source=source, parsed=parsed,
+            session,
+            source=source,
+            parsed=parsed,
             reporting_period_start=date.fromisoformat(str(period_start)),
             reporting_period_end=date.fromisoformat(str(period_end)),
             project_id=uuid.UUID(str(project_id)) if project_id else None,
             original_filename=getattr(upload, "filename", None),
             user_id=user.id,
         )
-    return RedirectResponse(f"/analytics{'?project_id=' + str(project_id) if project_id else ''}", status_code=303)
+    return RedirectResponse(
+        f"/analytics{'?project_id=' + str(project_id) if project_id else ''}", status_code=303
+    )
 
 
 @router.post("/analytics/manual-entry")
-async def manual_entry(request: Request, session: Session = Depends(get_session), user: User = Depends(require_login)):
+async def manual_entry(
+    request: Request, session: Session = Depends(get_session), user: User = Depends(require_login)
+):
     form = await request.form()
     if not verify_csrf(request, form.get("csrf_token")):
         return RedirectResponse("/analytics", status_code=303)
-    if form.get("metric_type") and form.get("value") and form.get("period_start") and form.get("period_end"):
+    if (
+        form.get("metric_type")
+        and form.get("value")
+        and form.get("period_start")
+        and form.get("period_end")
+    ):
         source = get_or_create_source(session, "Manual entry", AnalyticsSourceType.OTHER)
         project_id = form.get("project_id") or None
         add_manual_metric(
-            session, source=source, metric_type=AnalyticsMetricType(form["metric_type"]), value=float(form["value"]),
+            session,
+            source=source,
+            metric_type=AnalyticsMetricType(str(form["metric_type"])),
+            value=float(str(form["value"])),
             reporting_period_start=date.fromisoformat(str(form["period_start"])),
             reporting_period_end=date.fromisoformat(str(form["period_end"])),
             project_id=uuid.UUID(str(project_id)) if project_id else None,
-            channel=str(form.get("channel") or "") or None, user_id=user.id,
+            channel=str(form.get("channel") or "") or None,
+            user_id=user.id,
         )
     return RedirectResponse("/analytics", status_code=303)

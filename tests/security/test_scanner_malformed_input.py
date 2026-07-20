@@ -27,7 +27,9 @@ def test_scanner_records_a_finding_for_an_unreadable_file_instead_of_crashing(db
 
     try:
         if os.access(unreadable, os.R_OK):
-            pytest.skip("Running as a user that bypasses file permissions (e.g. root); cannot simulate.")
+            pytest.skip(
+                "Running as a user that bypasses file permissions (e.g. root); cannot simulate."
+            )
 
         root = ScannerRoot(path=str(root_dir), label="Music", is_active=True)
         db_session.add(root)

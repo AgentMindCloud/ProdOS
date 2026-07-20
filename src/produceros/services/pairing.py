@@ -12,14 +12,19 @@ from __future__ import annotations
 
 import uuid
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from sqlalchemy.orm import Session
 
 from produceros.models.enums import DeviceStatus
 from produceros.models.user import PairedDevice, User
-from produceros.security import generate_pairing_code, generate_session_token, hash_password, verify_password
+from produceros.security import (
+    generate_pairing_code,
+    generate_session_token,
+    hash_password,
+    verify_password,
+)
 from produceros.services.audit import log_event
 
 _pairing_attempts: dict[str, list[datetime]] = defaultdict(list)
@@ -37,7 +42,7 @@ class PairingError(ValueError):
 
 
 def _check_rate_limit(ip_address: str, max_per_minute: int) -> None:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     window_start = now - timedelta(minutes=1)
     attempts = [t for t in _pairing_attempts[ip_address] if t > window_start]
     if len(attempts) >= max_per_minute:
@@ -55,20 +60,28 @@ def start_pairing(
         device_name=device_name.strip() or "New device",
         status=DeviceStatus.PENDING,
         pairing_code_hash=hash_password(code),
-        pairing_code_expires_at=datetime.now(timezone.utc) + timedelta(minutes=ttl_minutes),
+        pairing_code_expires_at=datetime.now(UTC) + timedelta(minutes=ttl_minutes),
     )
     session.add(device)
     session.flush()
     log_event(
-        session, event_type="lan.pairing_started",
+        session,
+        event_type="lan.pairing_started",
         summary=f"Pairing started for device '{device.device_name}'.",
-        user_id=user_id, entity_type="PairedDevice", entity_id=device.id,
+        user_id=user_id,
+        entity_type="PairedDevice",
+        entity_id=device.id,
     )
     return device, code
 
 
 def confirm_pairing(
-    session: Session, *, device_id: uuid.UUID, submitted_code: str, ip_address: str, max_attempts_per_minute: int
+    session: Session,
+    *,
+    device_id: uuid.UUID,
+    submitted_code: str,
+    ip_address: str,
+    max_attempts_per_minute: int,
 ) -> tuple[PairedDevice, str]:
     _check_rate_limit(ip_address, max_attempts_per_minute)
 
@@ -76,17 +89,22 @@ def confirm_pairing(
     if device is None or device.status != DeviceStatus.PENDING:
         raise PairingError("Pairing request not found or already completed.")
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if device.pairing_code_expires_at is None or device.pairing_code_expires_at < now:
         device.status = DeviceStatus.EXPIRED
         session.flush()
         raise PairingError("This pairing code has expired. Start pairing again.")
 
-    if not device.pairing_code_hash or not verify_password(device.pairing_code_hash, submitted_code):
+    if not device.pairing_code_hash or not verify_password(
+        device.pairing_code_hash, submitted_code
+    ):
         log_event(
-            session, event_type="lan.pairing_failed",
+            session,
+            event_type="lan.pairing_failed",
             summary=f"Incorrect pairing code submitted for device '{device.device_name}'.",
-            entity_type="PairedDevice", entity_id=device.id, ip_address=ip_address,
+            entity_type="PairedDevice",
+            entity_id=device.id,
+            ip_address=ip_address,
         )
         raise PairingError("Incorrect pairing code.")
 
@@ -100,18 +118,23 @@ def confirm_pairing(
     device.last_seen_ip = ip_address
     session.flush()
     log_event(
-        session, event_type="lan.pairing_confirmed",
+        session,
+        event_type="lan.pairing_confirmed",
         summary=f"Device '{device.device_name}' paired successfully.",
-        entity_type="PairedDevice", entity_id=device.id, ip_address=ip_address,
+        entity_type="PairedDevice",
+        entity_id=device.id,
+        ip_address=ip_address,
     )
     return device, token
 
 
-def verify_device_session(session: Session, device_id: uuid.UUID, token: str) -> PairedDevice | None:
+def verify_device_session(
+    session: Session, device_id: uuid.UUID, token: str
+) -> PairedDevice | None:
     device = session.get(PairedDevice, device_id)
     if device is None or device.status != DeviceStatus.ACTIVE:
         return None
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if device.session_expires_at is None or device.session_expires_at < now:
         return None
     if not device.session_token_hash or not verify_password(device.session_token_hash, token):
@@ -131,7 +154,9 @@ def issue_device_cookie_token(secret_key: str, device: PairedDevice) -> str:
     return serializer.dumps({"device_id": str(device.id)})
 
 
-def resolve_device_from_cookie(session: Session, secret_key: str, token: str, max_age_seconds: int) -> User | None:
+def resolve_device_from_cookie(
+    session: Session, secret_key: str, token: str, max_age_seconds: int
+) -> User | None:
     serializer = URLSafeTimedSerializer(secret_key, salt=DEVICE_SALT)
     try:
         payload = serializer.loads(token, max_age=max_age_seconds)
@@ -146,7 +171,7 @@ def resolve_device_from_cookie(session: Session, secret_key: str, token: str, ma
     device = session.get(PairedDevice, device_id)
     if device is None or device.status != DeviceStatus.ACTIVE:
         return None
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if device.session_expires_at is None or device.session_expires_at < now:
         return None
 
@@ -155,15 +180,20 @@ def resolve_device_from_cookie(session: Session, secret_key: str, token: str, ma
     return device.user
 
 
-def revoke_device(session: Session, device: PairedDevice, *, user_id: uuid.UUID | None = None) -> PairedDevice:
+def revoke_device(
+    session: Session, device: PairedDevice, *, user_id: uuid.UUID | None = None
+) -> PairedDevice:
     device.status = DeviceStatus.REVOKED
-    device.revoked_at = datetime.now(timezone.utc)
+    device.revoked_at = datetime.now(UTC)
     device.session_token_hash = None
     session.flush()
     log_event(
-        session, event_type="lan.device_revoked",
+        session,
+        event_type="lan.device_revoked",
         summary=f"Device '{device.device_name}' access revoked.",
-        user_id=user_id, entity_type="PairedDevice", entity_id=device.id,
+        user_id=user_id,
+        entity_type="PairedDevice",
+        entity_id=device.id,
     )
     return device
 

@@ -3,7 +3,9 @@ from produceros.demo.audio_fixtures import generate_sine_wav
 
 
 def test_wav_stdlib_extraction(tmp_path):
-    path = generate_sine_wav(tmp_path / "tone.wav", seconds=1.0, sample_rate=44100, bit_depth=16, channels=1)
+    path = generate_sine_wav(
+        tmp_path / "tone.wav", seconds=1.0, sample_rate=44100, bit_depth=16, channels=1
+    )
     meta = extract_metadata(path)
     assert meta.is_audio
     assert meta.sample_rate == 44100

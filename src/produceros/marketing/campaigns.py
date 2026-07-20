@@ -7,7 +7,12 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from produceros.models.enums import CampaignStatus, CampaignType, ContentAssetStatus, ContentAssetType
+from produceros.models.enums import (
+    CampaignStatus,
+    CampaignType,
+    ContentAssetStatus,
+    ContentAssetType,
+)
 from produceros.models.marketing import ContentAsset, MarketingCampaign
 from produceros.services.audit import log_event
 
@@ -43,7 +48,9 @@ def create_campaign(
     return campaign
 
 
-def list_campaigns(session: Session, *, project_id: uuid.UUID | None = None) -> list[MarketingCampaign]:
+def list_campaigns(
+    session: Session, *, project_id: uuid.UUID | None = None
+) -> list[MarketingCampaign]:
     stmt = select(MarketingCampaign)
     if project_id:
         stmt = stmt.where(MarketingCampaign.project_id == project_id)

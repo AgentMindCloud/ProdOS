@@ -3,12 +3,21 @@ from sqlalchemy import select
 from produceros.models.enums import ChecklistStatus, ExplicitStatus, ReleaseType
 from produceros.models.release import ChecklistRule, Release
 from produceros.services import catalog as catalog_service
-from produceros.services.checklist import evaluate_release, seed_default_rules, summarize_status, waive_result
+from produceros.services.checklist import (
+    evaluate_release,
+    seed_default_rules,
+    summarize_status,
+    waive_result,
+)
 
 
 def _make_release(db_session, **project_fields) -> Release:
-    project = catalog_service.create_project(db_session, working_title="Checklist Track", **project_fields)
-    release = Release(project_id=project.id, release_type=ReleaseType.STREAMING_SINGLE, title="Checklist Track")
+    project = catalog_service.create_project(
+        db_session, working_title="Checklist Track", **project_fields
+    )
+    release = Release(
+        project_id=project.id, release_type=ReleaseType.STREAMING_SINGLE, title="Checklist Track"
+    )
     db_session.add(release)
     db_session.flush()
     return release
@@ -32,7 +41,9 @@ def test_new_release_has_blocking_checks(db_session):
 
 def test_social_only_release_waives_distributor_and_isrc(db_session):
     project = catalog_service.create_project(db_session, working_title="Social Track")
-    release = Release(project_id=project.id, release_type=ReleaseType.SOCIAL_ONLY, title="Social Track")
+    release = Release(
+        project_id=project.id, release_type=ReleaseType.SOCIAL_ONLY, title="Social Track"
+    )
     db_session.add(release)
     db_session.flush()
     results = evaluate_release(db_session, release)
@@ -40,13 +51,19 @@ def test_social_only_release_waives_distributor_and_isrc(db_session):
     from produceros.models.release import ChecklistRule
 
     rule_by_id = {r.id: r for r in db_session.query(ChecklistRule).all()}
-    distributor_results = [r for r in results if rule_by_id[r.rule_id].code == "metadata.distributor_recorded"]
+    distributor_results = [
+        r for r in results if rule_by_id[r.rule_id].code == "metadata.distributor_recorded"
+    ]
     assert distributor_results and distributor_results[0].status == ChecklistStatus.WAIVED
 
 
 def test_explicit_release_without_clean_version_is_blocking(db_session):
-    project = catalog_service.create_project(db_session, working_title="Explicit Track", explicit_status=ExplicitStatus.EXPLICIT)
-    release = Release(project_id=project.id, release_type=ReleaseType.STREAMING_SINGLE, title="Explicit Track")
+    project = catalog_service.create_project(
+        db_session, working_title="Explicit Track", explicit_status=ExplicitStatus.EXPLICIT
+    )
+    release = Release(
+        project_id=project.id, release_type=ReleaseType.STREAMING_SINGLE, title="Explicit Track"
+    )
     db_session.add(release)
     db_session.flush()
     results = evaluate_release(db_session, release)
@@ -54,7 +71,9 @@ def test_explicit_release_without_clean_version_is_blocking(db_session):
     from produceros.models.release import ChecklistRule
 
     rule_by_id = {r.id: r for r in db_session.query(ChecklistRule).all()}
-    clean_results = [r for r in results if rule_by_id[r.rule_id].code == "audio.clean_version_exists"]
+    clean_results = [
+        r for r in results if rule_by_id[r.rule_id].code == "audio.clean_version_exists"
+    ]
     assert clean_results and clean_results[0].status == ChecklistStatus.BLOCKING
 
 
@@ -75,5 +94,10 @@ def test_summarize_status_priority():
         return SimpleNamespace(status=status)
 
     assert summarize_status([fake(ChecklistStatus.PASSED)]) == "ready"
-    assert summarize_status([fake(ChecklistStatus.PASSED), fake(ChecklistStatus.WARNING)]) == "warning"
-    assert summarize_status([fake(ChecklistStatus.BLOCKING), fake(ChecklistStatus.PASSED)]) == "blocking"
+    assert (
+        summarize_status([fake(ChecklistStatus.PASSED), fake(ChecklistStatus.WARNING)]) == "warning"
+    )
+    assert (
+        summarize_status([fake(ChecklistStatus.BLOCKING), fake(ChecklistStatus.PASSED)])
+        == "blocking"
+    )

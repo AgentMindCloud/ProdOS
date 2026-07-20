@@ -29,7 +29,7 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     failed_login_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     locked_until: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
-    devices: Mapped[list["PairedDevice"]] = relationship(back_populates="user")
+    devices: Mapped[list[PairedDevice]] = relationship(back_populates="user")
 
 
 class PairedDevice(Base, UUIDPrimaryKeyMixin, TimestampMixin):

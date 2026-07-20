@@ -4,7 +4,6 @@ state machine and its audit trail (spec sections 7-8)."""
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -145,7 +144,9 @@ def list_projects(
     return list(session.scalars(stmt))
 
 
-def create_artist(session: Session, *, name: str, user_id: uuid.UUID | None = None, **fields) -> Artist:
+def create_artist(
+    session: Session, *, name: str, user_id: uuid.UUID | None = None, **fields
+) -> Artist:
     artist = Artist(name=name.strip(), **fields)
     session.add(artist)
     session.flush()

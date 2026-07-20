@@ -9,14 +9,13 @@ from datetime import date, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from produceros.models.analytics import AnalyticsImport
 from produceros.models.assets import AssetVersion
 from produceros.models.calendar import Deadline
 from produceros.models.catalog import Project
 from produceros.models.enums import DraftStatus, FindingStatus, ProjectState
 from produceros.models.marketing import MarketingDraft
-from produceros.models.analytics import AnalyticsImport
 from produceros.models.release import Release
-from produceros.models.rights import RightsShare
 from produceros.models.scanner import ScannerFinding
 from produceros.models.system import BackupRecord
 from produceros.services.rights import validate_rights_shares
@@ -98,10 +97,14 @@ def build_summary(session: Session) -> DashboardSummary:
     )
 
     summary.recent_analytics_imports = list(
-        session.scalars(select(AnalyticsImport).order_by(AnalyticsImport.imported_at.desc()).limit(5))
+        session.scalars(
+            select(AnalyticsImport).order_by(AnalyticsImport.imported_at.desc()).limit(5)
+        )
     )
 
-    summary.last_backup = session.scalar(select(BackupRecord).order_by(BackupRecord.created_at.desc()).limit(1))
+    summary.last_backup = session.scalar(
+        select(BackupRecord).order_by(BackupRecord.created_at.desc()).limit(1)
+    )
 
     return summary
 
@@ -113,9 +116,12 @@ def summary_to_dict(summary: DashboardSummary) -> dict:
     return {
         "active_project_count": summary.active_project_count,
         "projects_by_stage": summary.projects_by_stage,
-        "active_projects": [{"title": p.working_title, "state": p.state.value} for p in summary.active_projects],
+        "active_projects": [
+            {"title": p.working_title, "state": p.state.value} for p in summary.active_projects
+        ],
         "upcoming_deadlines": [
-            {"title": d.title, "due_date": d.due_date.isoformat()} for d in summary.upcoming_deadlines
+            {"title": d.title, "due_date": d.due_date.isoformat()}
+            for d in summary.upcoming_deadlines
         ],
         "releases_needing_attention": len(summary.releases_needing_attention),
     }

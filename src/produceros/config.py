@@ -13,6 +13,7 @@ application/install directory, because that directory may be read-only
 
 from __future__ import annotations
 
+import contextlib
 import os
 import secrets
 import sys
@@ -30,8 +31,24 @@ SECRET_KEY_FILENAME = "secret.key"  # nosec B105 - a filename constant, not a cr
 CONFIG_FILENAME = "config.toml"
 
 ALLOWED_SCANNER_EXTENSIONS: tuple[str, ...] = (
-    ".flp", ".zip", ".wav", ".aiff", ".aif", ".mp3", ".flac", ".ogg", ".m4a",
-    ".png", ".jpg", ".jpeg", ".webp", ".mp4", ".mov", ".pdf", ".txt", ".csv",
+    ".flp",
+    ".zip",
+    ".wav",
+    ".aiff",
+    ".aif",
+    ".mp3",
+    ".flac",
+    ".ogg",
+    ".m4a",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".mp4",
+    ".mov",
+    ".pdf",
+    ".txt",
+    ".csv",
 )
 
 
@@ -160,10 +177,9 @@ class Settings(BaseSettings):
             return self.secret_key_path.read_text(encoding="utf-8").strip()
         key = secrets.token_urlsafe(48)
         self.secret_key_path.write_text(key, encoding="utf-8")
-        try:
+        # Best-effort on platforms without POSIX permissions (Windows).
+        with contextlib.suppress(OSError):
             os.chmod(self.secret_key_path, 0o600)
-        except OSError:
-            pass  # best-effort on platforms without POSIX permissions (Windows)
         return key
 
 
@@ -176,7 +192,7 @@ def get_settings() -> Settings:
     """
     data_dir = default_data_dir()
     toml_overrides = _load_toml_overrides(data_dir)
-    env_keys = {k[len("PRODUCEROS_"):].lower() for k in os.environ if k.startswith("PRODUCEROS_")}
+    env_keys = {k[len("PRODUCEROS_") :].lower() for k in os.environ if k.startswith("PRODUCEROS_")}
     for key in list(toml_overrides):
         if key in env_keys:
             toml_overrides.pop(key)

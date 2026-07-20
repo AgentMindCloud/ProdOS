@@ -7,7 +7,7 @@ implementation of RFC 5545 covering the fields ProducerOS needs.
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -54,8 +54,10 @@ def create_deadline(
     return deadline
 
 
-def complete_deadline(session: Session, deadline: Deadline, *, user_id: uuid.UUID | None = None) -> Deadline:
-    deadline.completed_at = datetime.now(timezone.utc)
+def complete_deadline(
+    session: Session, deadline: Deadline, *, user_id: uuid.UUID | None = None
+) -> Deadline:
+    deadline.completed_at = datetime.now(UTC)
     session.flush()
     log_event(
         session,
@@ -99,12 +101,16 @@ def list_deadlines(
 
 def upcoming(session: Session, *, days: int = 30, **filters) -> list[Deadline]:
     today = date.today()
-    return list_deadlines(session, start=today, end=today + timedelta(days=days), include_done=False, **filters)
+    return list_deadlines(
+        session, start=today, end=today + timedelta(days=days), include_done=False, **filters
+    )
 
 
 def overdue(session: Session, **filters) -> list[Deadline]:
     today = date.today()
-    deadlines = list_deadlines(session, end=today - timedelta(days=1), include_done=False, **filters)
+    deadlines = list_deadlines(
+        session, end=today - timedelta(days=1), include_done=False, **filters
+    )
     return deadlines
 
 
@@ -120,7 +126,7 @@ def export_ics(deadlines: list[Deadline]) -> str:
         "PRODID:-//ProducerOS//Release Calendar//EN",
         "CALSCALE:GREGORIAN",
     ]
-    now_stamp = datetime.now(timezone.utc).strftime(ICS_DATETIME_FMT)
+    now_stamp = datetime.now(UTC).strftime(ICS_DATETIME_FMT)
     for deadline in deadlines:
         lines.extend(
             [

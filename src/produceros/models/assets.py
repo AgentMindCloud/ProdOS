@@ -31,7 +31,7 @@ class Asset(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     label: Mapped[str] = mapped_column(String(200), nullable=False)
     notes: Mapped[str | None] = mapped_column(Text)
 
-    versions: Mapped[list["AssetVersion"]] = relationship(
+    versions: Mapped[list[AssetVersion]] = relationship(
         back_populates="asset", cascade="all, delete-orphan", order_by="AssetVersion.version_number"
     )
 
@@ -75,7 +75,7 @@ class AssetVersion(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
     asset: Mapped[Asset] = relationship(back_populates="versions")
-    analysis: Mapped["AudioAnalysis | None"] = relationship(
+    analysis: Mapped[AudioAnalysis | None] = relationship(
         back_populates="asset_version", cascade="all, delete-orphan", uselist=False
     )
 

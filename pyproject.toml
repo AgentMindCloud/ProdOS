@@ -71,6 +71,11 @@ exclude = ["migrations/versions"]
 select = ["E", "F", "I", "UP", "B", "SIM", "C4"]
 ignore = ["E501"]
 
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency-injection idiom puts Depends()/Query() calls in
+# parameter defaults by design; B008 would flag every route signature.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Form", "fastapi.File"]
+
 [tool.ruff.lint.isort]
 known-first-party = ["produceros"]
 

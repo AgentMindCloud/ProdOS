@@ -23,8 +23,12 @@ def get_csrf_token(request: Request) -> str:
     return request.state.csrf_token
 
 
-def verify_csrf(request: Request, submitted_token: str | None) -> bool:
+def verify_csrf(request: Request, submitted_token: object) -> bool:
+    """Accepts whatever ``form.get("csrf_token")`` returned -- Starlette
+    types that as ``UploadFile | str | None``, and anything that isn't a
+    plain string (including a maliciously-uploaded file field named
+    ``csrf_token``) is simply an invalid token."""
     cookie_token = request.cookies.get(CSRF_COOKIE_NAME)
-    if not cookie_token or not submitted_token:
+    if not cookie_token or not isinstance(submitted_token, str) or not submitted_token:
         return False
     return constant_time_equals(cookie_token, submitted_token)

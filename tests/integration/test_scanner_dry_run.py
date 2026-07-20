@@ -1,11 +1,7 @@
 """Scanner dry-run and finding-approval integration tests (spec section 9)."""
 
-from sqlalchemy import select
-
 from produceros.demo.audio_fixtures import generate_sine_wav
-from produceros.models.assets import AssetVersion
 from produceros.models.enums import AssetType, FindingStatus, FindingType
-from produceros.models.scanner import ScannerFinding
 from produceros.services import catalog as catalog_service
 from produceros.services import scanner as scanner_service
 from produceros.services.assets import approve_finding_as_asset
@@ -39,7 +35,9 @@ def test_approving_a_finding_registers_an_asset_version(db_session, tmp_path):
     assert finding.finding_type == FindingType.NEW_MASTER_VERSION
 
     project = catalog_service.create_project(db_session, working_title="New Song")
-    version = approve_finding_as_asset(db_session, finding, project=project, asset_type=AssetType.MASTER)
+    version = approve_finding_as_asset(
+        db_session, finding, project=project, asset_type=AssetType.MASTER
+    )
 
     assert version.is_current
     db_session.refresh(finding)

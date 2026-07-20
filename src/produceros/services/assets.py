@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from sqlalchemy import select
@@ -13,7 +13,12 @@ from sqlalchemy.orm import Session
 from produceros.audio.metadata import extract_metadata
 from produceros.models.assets import Asset, AssetVersion, AudioAnalysis
 from produceros.models.catalog import Project
-from produceros.models.enums import ApprovalStatus, AssetRegisteredVia, AssetType, MetadataConfidence
+from produceros.models.enums import (
+    ApprovalStatus,
+    AssetRegisteredVia,
+    AssetType,
+    MetadataConfidence,
+)
 from produceros.models.scanner import ScannerFinding
 from produceros.scanners.filename_parser import parse_filename
 from produceros.scanners.hashing import hash_file
@@ -21,7 +26,11 @@ from produceros.services.audit import log_event
 
 
 def get_or_create_asset(
-    session: Session, *, project_id: uuid.UUID, asset_type: AssetType, label: str | None = None,
+    session: Session,
+    *,
+    project_id: uuid.UUID,
+    asset_type: AssetType,
+    label: str | None = None,
     track_id: uuid.UUID | None = None,
 ) -> Asset:
     stmt = select(Asset).where(Asset.project_id == project_id, Asset.asset_type == asset_type)
@@ -60,14 +69,14 @@ def register_asset_version(
     ``embedded``/``measured`` data -- never as ``user_confirmed``.
     """
     path = Path(file_path)
-    asset = get_or_create_asset(session, project_id=project.id, asset_type=asset_type, track_id=track_id)
+    asset = get_or_create_asset(
+        session, project_id=project.id, asset_type=asset_type, track_id=track_id
+    )
 
     parsed = parse_filename(path.name)
     content_hash = hash_file(path) if path.exists() else None
     size_bytes = path.stat().st_size if path.exists() else None
-    modified_at = (
-        datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc) if path.exists() else None
-    )
+    modified_at = datetime.fromtimestamp(path.stat().st_mtime, tz=UTC) if path.exists() else None
 
     existing_versions = session.scalars(
         select(AssetVersion).where(AssetVersion.asset_id == asset.id)
@@ -132,7 +141,7 @@ def _attach_audio_analysis(session: Session, version: AssetVersion, path: Path) 
         embedded_track_number=extracted.embedded_track_number,
         bpm_source=MetadataConfidence.EMBEDDED if version.parsed_bpm else None,
         key_source=MetadataConfidence.EMBEDDED if version.parsed_key else None,
-        analyzed_at=datetime.now(timezone.utc),
+        analyzed_at=datetime.now(UTC),
         warnings=extracted.warnings,
     )
     session.add(analysis)
@@ -148,7 +157,9 @@ def set_current_version(
         raise ValueError("Version does not belong to this asset.")
 
     others = session.scalars(
-        select(AssetVersion).where(AssetVersion.asset_id == asset.id, AssetVersion.is_current.is_(True))
+        select(AssetVersion).where(
+            AssetVersion.asset_id == asset.id, AssetVersion.is_current.is_(True)
+        )
     )
     for other in others:
         other.is_current = False
@@ -190,7 +201,7 @@ def approve_finding_as_asset(
         user_id=user_id,
     )
     finding.status = FindingStatus.APPROVED
-    finding.resolved_at = datetime.now(timezone.utc)
+    finding.resolved_at = datetime.now(UTC)
     finding.resolved_by = user_id
     finding.related_asset_version_id = version.id
     session.flush()

@@ -21,11 +21,15 @@ async def setup_form(request: Request, response: Response, session: Session = De
     if auth_service.has_any_user(session) and settings_service.is_first_run_complete(session):
         return RedirectResponse("/", status_code=303)
     csrf_token = get_csrf_token(request)
-    return templates.TemplateResponse(request, "auth/setup.html", {"csrf_token": csrf_token, "errors": [], "form": {}})
+    return templates.TemplateResponse(
+        request, "auth/setup.html", {"csrf_token": csrf_token, "errors": [], "form": {}}
+    )
 
 
 @router.post("/setup")
-async def setup_submit(request: Request, response: Response, session: Session = Depends(get_session)):
+async def setup_submit(
+    request: Request, response: Response, session: Session = Depends(get_session)
+):
     if auth_service.has_any_user(session) and settings_service.is_first_run_complete(session):
         return RedirectResponse("/", status_code=303)
 
@@ -34,8 +38,13 @@ async def setup_submit(request: Request, response: Response, session: Session = 
 
     if not verify_csrf(request, form.get("csrf_token")):
         return templates.TemplateResponse(
-            request, "auth/setup.html",
-            {"csrf_token": csrf_token, "errors": ["Your session expired. Please try again."], "form": form},
+            request,
+            "auth/setup.html",
+            {
+                "csrf_token": csrf_token,
+                "errors": ["Your session expired. Please try again."],
+                "form": form,
+            },
             status_code=400,
         )
 
@@ -54,7 +63,8 @@ async def setup_submit(request: Request, response: Response, session: Session = 
 
     if errors:
         return templates.TemplateResponse(
-            request, "auth/setup.html",
+            request,
+            "auth/setup.html",
             {"csrf_token": csrf_token, "errors": errors, "form": form},
             status_code=400,
         )
@@ -68,22 +78,34 @@ async def setup_submit(request: Request, response: Response, session: Session = 
 
     redirect = RedirectResponse("/", status_code=303)
     redirect.set_cookie(
-        auth_service.SESSION_COOKIE_NAME, token, httponly=True, samesite="lax",
-        secure=request.url.scheme == "https", max_age=settings.session_minutes * 60,
+        auth_service.SESSION_COOKIE_NAME,
+        token,
+        httponly=True,
+        samesite="lax",
+        secure=request.url.scheme == "https",
+        max_age=settings.session_minutes * 60,
     )
     return redirect
 
 
 @router.get("/login")
-async def login_form(request: Request, response: Response, next: str = "/", session: Session = Depends(get_session)):
-    if not auth_service.has_any_user(session) or not settings_service.is_first_run_complete(session):
+async def login_form(
+    request: Request, response: Response, next: str = "/", session: Session = Depends(get_session)
+):
+    if not auth_service.has_any_user(session) or not settings_service.is_first_run_complete(
+        session
+    ):
         return RedirectResponse("/setup", status_code=303)
     csrf_token = get_csrf_token(request)
-    return templates.TemplateResponse(request, "auth/login.html", {"csrf_token": csrf_token, "error": None, "next": next})
+    return templates.TemplateResponse(
+        request, "auth/login.html", {"csrf_token": csrf_token, "error": None, "next": next}
+    )
 
 
 @router.post("/login")
-async def login_submit(request: Request, response: Response, session: Session = Depends(get_session)):
+async def login_submit(
+    request: Request, response: Response, session: Session = Depends(get_session)
+):
     form = await request.form()
     csrf_token = get_csrf_token(request)
     next_path = str(form.get("next") or "/")
@@ -92,8 +114,13 @@ async def login_submit(request: Request, response: Response, session: Session = 
 
     if not verify_csrf(request, form.get("csrf_token")):
         return templates.TemplateResponse(
-            request, "auth/login.html",
-            {"csrf_token": csrf_token, "error": "Your session expired. Please try again.", "next": next_path},
+            request,
+            "auth/login.html",
+            {
+                "csrf_token": csrf_token,
+                "error": "Your session expired. Please try again.",
+                "next": next_path,
+            },
             status_code=400,
         )
 
@@ -102,16 +129,24 @@ async def login_submit(request: Request, response: Response, session: Session = 
     ip_address = request.client.host if request.client else None
 
     try:
-        user = auth_service.authenticate(session, username=username, password=password, ip_address=ip_address)
+        user = auth_service.authenticate(
+            session, username=username, password=password, ip_address=ip_address
+        )
     except auth_service.AccountLockedError:
         return templates.TemplateResponse(
-            request, "auth/login.html",
-            {"csrf_token": csrf_token, "error": "Too many failed attempts. Please wait a minute and try again.", "next": next_path},
+            request,
+            "auth/login.html",
+            {
+                "csrf_token": csrf_token,
+                "error": "Too many failed attempts. Please wait a minute and try again.",
+                "next": next_path,
+            },
             status_code=429,
         )
     except ValueError:
         return templates.TemplateResponse(
-            request, "auth/login.html",
+            request,
+            "auth/login.html",
             {"csrf_token": csrf_token, "error": "Invalid username or password.", "next": next_path},
             status_code=400,
         )
@@ -122,8 +157,12 @@ async def login_submit(request: Request, response: Response, session: Session = 
 
     redirect = RedirectResponse(next_path, status_code=303)
     redirect.set_cookie(
-        auth_service.SESSION_COOKIE_NAME, token, httponly=True, samesite="lax",
-        secure=request.url.scheme == "https", max_age=settings.session_minutes * 60,
+        auth_service.SESSION_COOKIE_NAME,
+        token,
+        httponly=True,
+        samesite="lax",
+        secure=request.url.scheme == "https",
+        max_age=settings.session_minutes * 60,
     )
     return redirect
 

@@ -20,7 +20,9 @@ def _s(value, placeholder: str = PLACEHOLDER) -> str:
     return str(value)
 
 
-def build_project_context(session: Session, project: Project, release: Release | None = None) -> dict:
+def build_project_context(
+    session: Session, project: Project, release: Release | None = None
+) -> dict:
     artist_name = project.artist.name if project.artist else None
     return {
         "artist_name": _s(artist_name),
@@ -41,9 +43,13 @@ def build_project_context(session: Session, project: Project, release: Release |
         "isrc": _s(release.isrc if release else project.isrc),
         "upc": _s(release.upc if release else project.upc),
         "explicit_status": _s(
-            (release.explicit_status.value if release else project.explicit_status.value)
+            release.explicit_status.value if release else project.explicit_status.value
         ),
-        "release_type": _s(release.release_type.value.replace("_", " ") if release else (project.release_type.value.replace("_", " ") if project.release_type else None)),
+        "release_type": _s(
+            release.release_type.value.replace("_", " ")
+            if release
+            else (project.release_type.value.replace("_", " ") if project.release_type else None)
+        ),
         "description": _s(release.description if release else project.release_description),
         "internal_code": project.internal_code,
     }

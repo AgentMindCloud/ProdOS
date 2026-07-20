@@ -9,8 +9,22 @@ def _make_project(db_session):
 
 def test_rights_shares_totaling_100_have_no_warning(db_session):
     project = _make_project(db_session)
-    rights_service.add_rights_share(db_session, project.id, holder_name="A", share_type=RightsShareType.MASTER, percentage=60, confirmed=True)
-    rights_service.add_rights_share(db_session, project.id, holder_name="B", share_type=RightsShareType.MASTER, percentage=40, confirmed=True)
+    rights_service.add_rights_share(
+        db_session,
+        project.id,
+        holder_name="A",
+        share_type=RightsShareType.MASTER,
+        percentage=60,
+        confirmed=True,
+    )
+    rights_service.add_rights_share(
+        db_session,
+        project.id,
+        holder_name="B",
+        share_type=RightsShareType.MASTER,
+        percentage=40,
+        confirmed=True,
+    )
 
     validations = rights_service.validate_rights_shares(db_session, project.id)
     assert len(validations) == 1
@@ -20,8 +34,22 @@ def test_rights_shares_totaling_100_have_no_warning(db_session):
 
 def test_rights_shares_not_totaling_100_warn(db_session):
     project = _make_project(db_session)
-    rights_service.add_rights_share(db_session, project.id, holder_name="A", share_type=RightsShareType.MASTER, percentage=60, confirmed=True)
-    rights_service.add_rights_share(db_session, project.id, holder_name="B", share_type=RightsShareType.MASTER, percentage=30, confirmed=True)
+    rights_service.add_rights_share(
+        db_session,
+        project.id,
+        holder_name="A",
+        share_type=RightsShareType.MASTER,
+        percentage=60,
+        confirmed=True,
+    )
+    rights_service.add_rights_share(
+        db_session,
+        project.id,
+        holder_name="B",
+        share_type=RightsShareType.MASTER,
+        percentage=30,
+        confirmed=True,
+    )
 
     validations = rights_service.validate_rights_shares(db_session, project.id)
     assert not validations[0].is_exactly_100
@@ -31,7 +59,14 @@ def test_rights_shares_not_totaling_100_warn(db_session):
 
 def test_rights_shares_100_but_unconfirmed_warn(db_session):
     project = _make_project(db_session)
-    rights_service.add_rights_share(db_session, project.id, holder_name="A", share_type=RightsShareType.MASTER, percentage=100, confirmed=False)
+    rights_service.add_rights_share(
+        db_session,
+        project.id,
+        holder_name="A",
+        share_type=RightsShareType.MASTER,
+        percentage=100,
+        confirmed=False,
+    )
 
     validations = rights_service.validate_rights_shares(db_session, project.id)
     assert validations[0].is_exactly_100
@@ -46,7 +81,14 @@ def test_no_shares_returns_no_validation_rows(db_session):
 
 def test_percentage_never_changes_except_via_explicit_update(db_session):
     project = _make_project(db_session)
-    share = rights_service.add_rights_share(db_session, project.id, holder_name="A", share_type=RightsShareType.MASTER, percentage=50, confirmed=True)
+    share = rights_service.add_rights_share(
+        db_session,
+        project.id,
+        holder_name="A",
+        share_type=RightsShareType.MASTER,
+        percentage=50,
+        confirmed=True,
+    )
     assert share.percentage == 50
 
     # Merely re-validating must never mutate the stored percentage.

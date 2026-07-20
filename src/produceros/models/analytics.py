@@ -24,9 +24,7 @@ class AnalyticsSource(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 class AnalyticsImport(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "analytics_imports"
 
-    source_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("analytics_sources.id"), nullable=False
-    )
+    source_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("analytics_sources.id"), nullable=False)
     project_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("projects.id"))
     campaign_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("marketing_campaigns.id"))
     reporting_period_start: Mapped[date] = mapped_column(Date, nullable=False)
@@ -47,9 +45,7 @@ class AnalyticsImport(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 class AnalyticsMetric(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "analytics_metrics"
 
-    import_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("analytics_imports.id"), nullable=False
-    )
+    import_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("analytics_imports.id"), nullable=False)
     metric_type: Mapped[AnalyticsMetricType] = mapped_column(
         SAEnum(AnalyticsMetricType, native_enum=False, validate_strings=True), nullable=False
     )

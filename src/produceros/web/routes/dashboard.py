@@ -13,7 +13,9 @@ router = APIRouter(tags=["dashboard"])
 
 
 @router.get("/")
-async def dashboard(request: Request, session: Session = Depends(get_session), user: User = Depends(require_login)):
+async def dashboard(
+    request: Request, session: Session = Depends(get_session), user: User = Depends(require_login)
+):
     summary = build_summary(session)
     return templates.TemplateResponse(
         request,

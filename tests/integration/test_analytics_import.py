@@ -10,11 +10,16 @@ from produceros.services.analytics import get_or_create_source, record_import
 def test_csv_import_reflected_in_release_summary(db_session):
     project = catalog_service.create_project(db_session, working_title="Analytics Track")
     source = get_or_create_source(db_session, "Spotify Export", AnalyticsSourceType.STREAMING)
-    parsed = parse_analytics_csv("metric_type,value,channel\nstreams,1000,Spotify\nsaves,50,Spotify\n")
+    parsed = parse_analytics_csv(
+        "metric_type,value,channel\nstreams,1000,Spotify\nsaves,50,Spotify\n"
+    )
 
     record_import(
-        db_session, source=source, parsed=parsed,
-        reporting_period_start=date.today() - timedelta(days=7), reporting_period_end=date.today(),
+        db_session,
+        source=source,
+        parsed=parsed,
+        reporting_period_start=date.today() - timedelta(days=7),
+        reporting_period_end=date.today(),
         project_id=project.id,
     )
 
@@ -34,8 +39,11 @@ def test_import_warnings_are_preserved(db_session):
     assert parsed.warnings  # unknown metric type produced a warning
 
     import_row = record_import(
-        db_session, source=source, parsed=parsed,
-        reporting_period_start=date.today() - timedelta(days=1), reporting_period_end=date.today(),
+        db_session,
+        source=source,
+        parsed=parsed,
+        reporting_period_start=date.today() - timedelta(days=1),
+        reporting_period_end=date.today(),
         project_id=project.id,
     )
     assert import_row.warnings == parsed.warnings

@@ -43,7 +43,12 @@ def db_session(data_dir) -> Generator[Session, None, None]:
 def admin_user(db_session):
     from produceros.services.auth import create_first_admin
 
-    user = create_first_admin(db_session, username="producer", password="correcthorsebattery", display_name="Test Producer")
+    user = create_first_admin(
+        db_session,
+        username="producer",
+        password="correcthorsebattery",
+        display_name="Test Producer",
+    )
     db_session.commit()
     return user
 

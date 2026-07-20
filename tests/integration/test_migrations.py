@@ -10,7 +10,11 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 def _run_cli(args: list[str], env: dict) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, "-m", "produceros.cli", *args],
-        cwd=REPO_ROOT, env=env, capture_output=True, text=True, timeout=60,
+        cwd=REPO_ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
 
 

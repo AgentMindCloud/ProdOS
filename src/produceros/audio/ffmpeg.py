@@ -64,10 +64,13 @@ def probe_codec_info(path: str | Path) -> str | None:
         result = subprocess.run(  # noqa: S603 # nosec B603 - fixed argv, no shell, path validated by caller
             [
                 status.ffprobe_path,
-                "-v", "error",
-                "-print_format", "json",
+                "-v",
+                "error",
+                "-print_format",
+                "json",
                 "-show_streams",
-                "-select_streams", "a:0",
+                "-select_streams",
+                "a:0",
                 str(path),
             ],
             capture_output=True,
@@ -95,16 +98,23 @@ def analyze_loudness(path: str | Path) -> LoudnessAnalysis:
     """
     status = ffmpeg_status()
     if not status.available or status.ffmpeg_path is None:
-        return LoudnessAnalysis(warnings=["FFmpeg not detected; advanced loudness analysis unavailable."])
+        return LoudnessAnalysis(
+            warnings=["FFmpeg not detected; advanced loudness analysis unavailable."]
+        )
 
     try:
         result = subprocess.run(  # noqa: S603 # nosec B603 - fixed argv, no shell
             [
                 status.ffmpeg_path,
-                "-nostdin", "-hide_banner",
-                "-i", str(path),
-                "-af", "loudnorm=print_format=json",
-                "-f", "null", "-",
+                "-nostdin",
+                "-hide_banner",
+                "-i",
+                str(path),
+                "-af",
+                "loudnorm=print_format=json",
+                "-f",
+                "null",
+                "-",
             ],
             capture_output=True,
             text=True,
@@ -119,10 +129,18 @@ def analyze_loudness(path: str | Path) -> LoudnessAnalysis:
         payload = json.loads(stderr[start : end + 1])
         codec_info = probe_codec_info(path)
         return LoudnessAnalysis(
-            integrated_loudness_lufs=float(payload.get("input_i", "nan")) if payload.get("input_i") else None,
-            loudness_range_lu=float(payload.get("input_lra", "nan")) if payload.get("input_lra") else None,
-            true_peak_dbfs=float(payload.get("input_tp", "nan")) if payload.get("input_tp") else None,
-            peak_level_dbfs=float(payload.get("input_tp", "nan")) if payload.get("input_tp") else None,
+            integrated_loudness_lufs=float(payload.get("input_i", "nan"))
+            if payload.get("input_i")
+            else None,
+            loudness_range_lu=float(payload.get("input_lra", "nan"))
+            if payload.get("input_lra")
+            else None,
+            true_peak_dbfs=float(payload.get("input_tp", "nan"))
+            if payload.get("input_tp")
+            else None,
+            peak_level_dbfs=float(payload.get("input_tp", "nan"))
+            if payload.get("input_tp")
+            else None,
             codec_info=codec_info,
         )
     except (subprocess.SubprocessError, json.JSONDecodeError, ValueError, OSError) as exc:

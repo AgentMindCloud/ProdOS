@@ -56,25 +56,55 @@ def create_app() -> FastAPI:
         response = await call_next(request)
         if not existing:
             response.set_cookie(
-                CSRF_COOKIE_NAME, token, httponly=True, samesite="lax",
-                secure=request.url.scheme == "https", max_age=CSRF_COOKIE_MAX_AGE,
+                CSRF_COOKIE_NAME,
+                token,
+                httponly=True,
+                samesite="lax",
+                secure=request.url.scheme == "https",
+                max_age=CSRF_COOKIE_MAX_AGE,
             )
         return response
 
     from produceros.web.routes import (
         analytics as analytics_routes,
+    )
+    from produceros.web.routes import (
         auth as auth_routes,
+    )
+    from produceros.web.routes import (
         backup as backup_routes,
+    )
+    from produceros.web.routes import (
         calendar as calendar_routes,
+    )
+    from produceros.web.routes import (
         catalog as catalog_routes,
+    )
+    from produceros.web.routes import (
         dashboard as dashboard_routes,
+    )
+    from produceros.web.routes import (
         delivery as delivery_routes,
+    )
+    from produceros.web.routes import (
         lan as lan_routes,
+    )
+    from produceros.web.routes import (
         marketing as marketing_routes,
+    )
+    from produceros.web.routes import (
         pwa as pwa_routes,
+    )
+    from produceros.web.routes import (
         releases as release_routes,
+    )
+    from produceros.web.routes import (
         scanner as scanner_routes,
+    )
+    from produceros.web.routes import (
         search as search_routes,
+    )
+    from produceros.web.routes import (
         settings as settings_routes,
     )
 

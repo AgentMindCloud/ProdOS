@@ -10,7 +10,7 @@ supported "where practical").
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, Uuid
 from sqlalchemy.engine import Dialect
@@ -19,7 +19,7 @@ from sqlalchemy.types import TypeDecorator
 
 
 def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class UTCDateTime(TypeDecorator):
@@ -41,15 +41,15 @@ class UTCDateTime(TypeDecorator):
         if value is None:
             return None
         if value.tzinfo is None:
-            value = value.replace(tzinfo=timezone.utc)
-        return value.astimezone(timezone.utc).replace(tzinfo=None)
+            value = value.replace(tzinfo=UTC)
+        return value.astimezone(UTC).replace(tzinfo=None)
 
     def process_result_value(self, value: datetime | None, dialect: Dialect) -> datetime | None:
         if value is None:
             return None
         if value.tzinfo is None:
-            return value.replace(tzinfo=timezone.utc)
-        return value.astimezone(timezone.utc)
+            return value.replace(tzinfo=UTC)
+        return value.astimezone(UTC)
 
 
 class Base(DeclarativeBase):
@@ -57,15 +57,11 @@ class Base(DeclarativeBase):
 
 
 class UUIDPrimaryKeyMixin:
-    id: Mapped[uuid.UUID] = mapped_column(
-        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
 
 class TimestampMixin:
-    created_at: Mapped[datetime] = mapped_column(
-        UTCDateTime, default=utcnow, nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         UTCDateTime, default=utcnow, onupdate=utcnow, nullable=False
     )

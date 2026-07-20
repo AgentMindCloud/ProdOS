@@ -4,7 +4,7 @@ performs a security-relevant action (spec sections 2, 7, 9, 15, 19)."""
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
@@ -24,7 +24,7 @@ def log_event(
     ip_address: str | None = None,
 ) -> AuditEvent:
     event = AuditEvent(
-        occurred_at=datetime.now(timezone.utc),
+        occurred_at=datetime.now(UTC),
         user_id=user_id,
         device_id=device_id,
         event_type=event_type,

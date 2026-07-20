@@ -10,7 +10,7 @@ JWT-style stateless revocation.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from sqlalchemy import select
@@ -66,7 +66,7 @@ def authenticate(
 ) -> User:
     """Verify credentials, enforcing lockout. Raises on any failure."""
     user = session.scalar(select(User).where(User.username == username.strip()))
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     if user is None:
         log_event(
@@ -130,7 +130,7 @@ def invalidate_all_sessions(session: Session, user: User) -> None:
     settings_service.set_setting(
         session,
         f"session_invalidated_before:{user.id}",
-        datetime.now(timezone.utc).isoformat(),
+        datetime.now(UTC).isoformat(),
     )
 
 
@@ -143,7 +143,7 @@ def _session_invalidated_before(session: Session, user_id: uuid.UUID) -> datetim
 
 def issue_session_token(secret_key: str, user: User) -> str:
     serializer = URLSafeTimedSerializer(secret_key, salt=SESSION_SALT)
-    return serializer.dumps({"user_id": str(user.id), "issued_at": datetime.now(timezone.utc).isoformat()})
+    return serializer.dumps({"user_id": str(user.id), "issued_at": datetime.now(UTC).isoformat()})
 
 
 def verify_session_token(

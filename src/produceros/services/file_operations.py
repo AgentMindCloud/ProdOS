@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import shutil
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from sqlalchemy.orm import Session
@@ -57,7 +57,7 @@ def approve_operation(
 ) -> ApprovedFileOperation:
     operation.status = FileOperationStatus.APPROVED
     operation.approved_by = approved_by
-    operation.approved_at = datetime.now(timezone.utc)
+    operation.approved_at = datetime.now(UTC)
     session.flush()
     log_event(
         session,
@@ -99,23 +99,39 @@ def execute_operation(
         session.flush()
         raise
 
+    needs_destination = operation.operation_type in (
+        FileOperationType.MOVE,
+        FileOperationType.RENAME,
+        FileOperationType.COPY,
+    )
+    if needs_destination and destination is None:
+        operation.status = FileOperationStatus.FAILED
+        operation.result_detail = "Operation requires a destination path but none was set."
+        session.flush()
+        raise ValueError(operation.result_detail)
+
     try:
         if operation.operation_type == FileOperationType.DELETE:
             source.unlink()
         elif operation.operation_type == FileOperationType.MOVE:
-            _refuse_overwrite(destination)
-            shutil.move(str(source), str(destination))
+            dest = _require_destination(destination)
+            _refuse_overwrite(dest)
+            shutil.move(str(source), str(dest))
         elif operation.operation_type == FileOperationType.RENAME:
-            _refuse_overwrite(destination)
-            source.rename(destination)
+            dest = _require_destination(destination)
+            _refuse_overwrite(dest)
+            source.rename(dest)
         elif operation.operation_type == FileOperationType.COPY:
-            _refuse_overwrite(destination)
-            shutil.copy2(str(source), str(destination))
+            dest = _require_destination(destination)
+            _refuse_overwrite(dest)
+            shutil.copy2(str(source), str(dest))
         elif operation.operation_type == FileOperationType.REPLACE:
-            raise ValueError("REPLACE is not permitted: ProducerOS never overwrites existing music files.")
+            raise ValueError(
+                "REPLACE is not permitted: ProducerOS never overwrites existing music files."
+            )
 
         operation.status = FileOperationStatus.EXECUTED
-        operation.executed_at = datetime.now(timezone.utc)
+        operation.executed_at = datetime.now(UTC)
         operation.result_detail = "Completed successfully."
     except Exception as exc:
         operation.status = FileOperationStatus.FAILED
@@ -143,6 +159,14 @@ def execute_operation(
     return operation
 
 
-def _refuse_overwrite(destination: Path | None) -> None:
-    if destination is not None and destination.exists():
+def _require_destination(destination: Path | None) -> Path:
+    """Runtime (not assert-based, so it survives ``python -O``) guarantee
+    that a destination-taking operation actually has one."""
+    if destination is None:
+        raise ValueError("Operation requires a destination path but none was set.")
+    return destination
+
+
+def _refuse_overwrite(destination: Path) -> None:
+    if destination.exists():
         raise FileExistsError(f"Refusing to overwrite existing file: {destination}")

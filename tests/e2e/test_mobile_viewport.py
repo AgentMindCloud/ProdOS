@@ -39,39 +39,35 @@ def _no_horizontal_scroll(page) -> bool:
 
 
 @pytest.mark.parametrize("viewport,orientation", [(PORTRAIT, "portrait"), (LANDSCAPE, "landscape")])
-def test_bottom_nav_visible_and_no_horizontal_scroll(browser, live_server, viewport, orientation):
-    page = browser.new_page(viewport=viewport)
-    try:
-        base_url = live_server
-        _complete_setup(page, base_url)
+def test_bottom_nav_visible_and_no_horizontal_scroll(make_page, live_server, viewport, orientation):
+    page = make_page(viewport=viewport)
+    base_url = live_server
+    _complete_setup(page, base_url)
 
-        for path in ("/", "/projects", "/releases", "/calendar"):
-            page.goto(f"{base_url}{path}")
-            page.wait_for_load_state("networkidle")
+    for path in ("/", "/projects", "/releases", "/calendar"):
+        page.goto(f"{base_url}{path}")
+        page.wait_for_load_state("networkidle")
 
-            bottom_nav = page.locator("nav.bottom-nav")
-            assert bottom_nav.is_visible(), f"bottom nav should be visible on {path} in {orientation}"
+        bottom_nav = page.locator("nav.bottom-nav")
+        assert bottom_nav.is_visible(), f"bottom nav should be visible on {path} in {orientation}"
 
-            sidebar = page.locator("nav.sidebar")
-            assert not sidebar.is_visible(), f"desktop sidebar should be hidden on {path} in {orientation}"
+        sidebar = page.locator("nav.sidebar")
+        assert (
+            not sidebar.is_visible()
+        ), f"desktop sidebar should be hidden on {path} in {orientation}"
 
-            assert _no_horizontal_scroll(page), f"{path} scrolls horizontally in {orientation}"
-    finally:
-        page.close()
+        assert _no_horizontal_scroll(page), f"{path} scrolls horizontally in {orientation}"
 
 
-def test_wide_landscape_phone_gets_desktop_sidebar_by_design(browser, live_server):
+def test_wide_landscape_phone_gets_desktop_sidebar_by_design(make_page, live_server):
     """A phone whose landscape width crosses the 768px breakpoint (e.g. a
     Pixel 7 at 915x412) intentionally gets the desktop sidebar rather than
     the bottom nav -- the breakpoint is width-based, not orientation-based."""
-    page = browser.new_page(viewport={"width": 915, "height": 412})
-    try:
-        base_url = live_server
-        _complete_setup(page, base_url)
-        page.wait_for_load_state("networkidle")
+    page = make_page(viewport={"width": 915, "height": 412})
+    base_url = live_server
+    _complete_setup(page, base_url)
+    page.wait_for_load_state("networkidle")
 
-        assert page.locator("nav.sidebar").is_visible()
-        assert not page.locator("nav.bottom-nav").is_visible()
-        assert _no_horizontal_scroll(page)
-    finally:
-        page.close()
+    assert page.locator("nav.sidebar").is_visible()
+    assert not page.locator("nav.bottom-nav").is_visible()
+    assert _no_horizontal_scroll(page)

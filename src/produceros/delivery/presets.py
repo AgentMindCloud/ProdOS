@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from produceros.models.enums import AssetType, DeliveryPresetType
 from produceros.models.delivery import DeliveryPreset
+from produceros.models.enums import AssetType, DeliveryPresetType
 
 
 @dataclass
@@ -23,15 +23,24 @@ DEFAULT_PRESETS: list[PresetDefinition] = [
         name="Client Package",
         preset_type=DeliveryPresetType.CLIENT,
         required_asset_types=[
-            AssetType.MIX, AssetType.MASTER, AssetType.INSTRUMENTAL, AssetType.ACAPELLA, AssetType.STEMS,
+            AssetType.MIX,
+            AssetType.MASTER,
+            AssetType.INSTRUMENTAL,
+            AssetType.ACAPELLA,
+            AssetType.STEMS,
         ],
     ),
     PresetDefinition(
         name="Sync Package",
         preset_type=DeliveryPresetType.SYNC,
         required_asset_types=[
-            AssetType.MASTER, AssetType.INSTRUMENTAL, AssetType.CLEAN_VERSION,
-            AssetType.NO_DRUMS, AssetType.NO_VOCALS, AssetType.STEMS, AssetType.LYRICS,
+            AssetType.MASTER,
+            AssetType.INSTRUMENTAL,
+            AssetType.CLEAN_VERSION,
+            AssetType.NO_DRUMS,
+            AssetType.NO_VOCALS,
+            AssetType.STEMS,
+            AssetType.LYRICS,
         ],
     ),
     PresetDefinition(

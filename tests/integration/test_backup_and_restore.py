@@ -1,7 +1,12 @@
 from produceros.config import get_settings
 from produceros.models.enums import BackupType
 from produceros.services import catalog as catalog_service
-from produceros.services.backup import create_backup, list_backups, restore_backup, restore_dry_run, verify_backup
+from produceros.services.backup import (
+    create_backup,
+    list_backups,
+    restore_backup,
+    verify_backup,
+)
 
 
 def test_backup_create_and_verify(db_session, data_dir):

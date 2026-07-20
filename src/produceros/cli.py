@@ -59,7 +59,9 @@ def _detect_bind_host(bind_mode: str) -> str:
 
         host = detect_private_ipv4()
         if host is None:
-            print("Could not detect a private LAN address. Falling back to 127.0.0.1 (desktop-only).")
+            print(
+                "Could not detect a private LAN address. Falling back to 127.0.0.1 (desktop-only)."
+            )
             return "127.0.0.1"
         return host
     return "127.0.0.1"
@@ -93,6 +95,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         print(f"Desktop mode: binding to {host}:{port} (localhost only).")
 
     if not args.no_browser and settings.open_browser:
+
         def _open_browser() -> None:
             time.sleep(1.0)
             webbrowser.open(f"http://{host}:{port}/")
@@ -169,7 +172,9 @@ def cmd_restore(args: argparse.Namespace) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="produceros", description="ProducerOS command-line interface.")
+    parser = argparse.ArgumentParser(
+        prog="produceros", description="ProducerOS command-line interface."
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     run_parser = subparsers.add_parser("run", help="Run the ProducerOS web application.")
@@ -194,7 +199,8 @@ def build_parser() -> argparse.ArgumentParser:
     backup_create.set_defaults(func=cmd_backup_create)
 
     restore_dry_run = subparsers.add_parser(
-        "restore-dry-run", help="Preview a backup file (integrity check, table counts) before restoring it."
+        "restore-dry-run",
+        help="Preview a backup file (integrity check, table counts) before restoring it.",
     )
     restore_dry_run.add_argument("backup_path")
     restore_dry_run.set_defaults(func=cmd_restore_dry_run)

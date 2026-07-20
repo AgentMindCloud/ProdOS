@@ -15,6 +15,7 @@ Examples this module is built to handle:
 
 from __future__ import annotations
 
+import contextlib
 import re
 from dataclasses import dataclass, field
 from datetime import date
@@ -36,7 +37,9 @@ STAGE_KEYWORDS: dict[str, str] = {
 _DATE_RE = re.compile(r"(?<![0-9])(\d{4}-\d{2}-\d{2})(?![0-9])")
 _VERSION_RE = re.compile(r"(?<![A-Za-z0-9])v(\d{1,3})(?![A-Za-z0-9])", re.IGNORECASE)
 _BPM_RE = re.compile(r"(?<![A-Za-z0-9])(\d{2,3})\s*BPM(?![A-Za-z0-9])", re.IGNORECASE)
-_KEY_AFTER_BPM_RE = re.compile(r"\d{2,3}\s*BPM[_\s]+([A-Ga-g][#b]?m?)(?![A-Za-z0-9])", re.IGNORECASE)
+_KEY_AFTER_BPM_RE = re.compile(
+    r"\d{2,3}\s*BPM[_\s]+([A-Ga-g][#b]?m?)(?![A-Za-z0-9])", re.IGNORECASE
+)
 _FL_VERSION_RE = re.compile(r"^(?P<track>.+?)_FL_v(?P<version>\d+)$", re.IGNORECASE)
 
 
@@ -86,10 +89,8 @@ def parse_filename(filename: str) -> ParsedFilename:
 
     date_match = _DATE_RE.search(stem)
     if date_match:
-        try:
+        with contextlib.suppress(ValueError):
             result.parsed_date = date.fromisoformat(date_match.group(1))
-        except ValueError:
-            pass
 
     version_match = _VERSION_RE.search(stem)
     if version_match:
@@ -129,9 +130,7 @@ def parse_filename(filename: str) -> ParsedFilename:
             return True
         if bpm_match and result.musical_key and token.lower() == result.musical_key.lower():
             return True
-        if token.upper() in STAGE_KEYWORDS:
-            return True
-        return False
+        return token.upper() in STAGE_KEYWORDS
 
     remaining = [t for t in tokens if not is_consumed(t)]
     if len(remaining) >= 2:
