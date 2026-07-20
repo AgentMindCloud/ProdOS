@@ -32,18 +32,26 @@ The complete initial implementation of ProducerOS per
   server with 14 read/draft-only audited tools.
 - **Demo mode**: synthetic catalog (real generated WAV fixtures, real
   scanner run) with precise manifest-based cleanup.
-- **Packaging**: PyInstaller onedir spec + launcher for a standalone
-  Windows exe; PowerShell scripts for setup/run/test/build/backup/
-  restore/demo-clean.
+- **Packaging**: PyInstaller onedir spec (windowed, ProducerOS-branded
+  `.ico`) + launcher for a standalone Windows exe, plus a real Inno Setup
+  installer (`ProducerOS-Setup-X.Y.Z.exe`) -- per-user install with no
+  admin/UAC prompt, Start Menu entry, optional desktop icon, proper
+  uninstall via "Apps & features", and in-place upgrades across versions
+  via a fixed AppId; a portable no-installer zip remains available as a
+  secondary option. PowerShell scripts for setup/run/test/build/
+  build-installer/backup/restore/demo-clean.
 - **CI/CD**: GitHub Actions for lint+type+test matrix (Ubuntu/Windows),
-  security scanning (pip-audit, gitleaks, bandit, repo hygiene), Windows
-  build with smoke test + SBOM + checksummed artifact, and tag-driven
-  release publishing.
+  security scanning (pip-audit, gitleaks, bandit, repo hygiene), a
+  Windows build that compiles the installer and smoke-tests the full
+  real-world path (silent install, shortcut creation, launch, silent
+  uninstall with data-directory preservation) plus SBOM + checksummed
+  artifacts, and tag-driven release publishing with the installer as the
+  headline download.
 - **Tests**: 123 tests -- unit, integration (real HTTP), security, and
   Playwright e2e (real Chromium, desktop + mobile viewports).
 - **Docs**: full documentation set under `docs/` (user/admin/install/
   Android/backup/release-process/data-model/security/troubleshooting/MCP),
-  five ADRs, real captured screenshots, and root-level
+  six ADRs, real captured screenshots, and root-level
   README/ARCHITECTURE/AGENTS/CONTRIBUTING/SECURITY/HANDOFF/ROADMAP.
 
 ### Fixed (during the initial build, caught by this repo's own tests)
@@ -67,3 +75,7 @@ The complete initial implementation of ProducerOS per
   `--no-browser` had no effect).
 - The MCP server was fully built but never started -- `produceros run`
   now launches it when `mcp_enabled` is set.
+- A windowed (`console=False`) PyInstaller build gets `sys.stdout`/
+  `sys.stderr` of `None` from Windows, which would have crashed on the
+  first `print()` or log line; the launcher now redirects both to a null
+  sink before anything else runs.

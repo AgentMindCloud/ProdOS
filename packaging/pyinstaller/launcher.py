@@ -9,8 +9,25 @@ non-technical producer with no terminal open.
 
 from __future__ import annotations
 
+import os
 import sys
 import traceback
+
+
+def _fix_windowed_stdio() -> None:
+    """A windowed (console=False) PyInstaller build has no console to write
+    to, so Windows gives the process ``sys.stdout``/``sys.stderr`` of
+    ``None`` rather than a real stream -- any bare ``print()`` or the
+    logging module's default ``StreamHandler`` would then crash with
+    ``AttributeError: 'NoneType' object has no attribute 'write'`` on the
+    very first line of output. Redirect both to a null sink before
+    anything else runs; nothing is lost, since ``logging_config.py``
+    already writes everything meaningful to the on-disk log file too."""
+    devnull = open(os.devnull, "w", encoding="utf-8")  # noqa: SIM115 -- must outlive this function
+    if sys.stdout is None:
+        sys.stdout = devnull
+    if sys.stderr is None:
+        sys.stderr = devnull
 
 
 def _show_startup_error(details: str) -> None:
@@ -28,10 +45,12 @@ def _show_startup_error(details: str) -> None:
             return
         except Exception:
             pass
-    print(message, file=sys.stderr)
+    if sys.stderr is not None:
+        print(message, file=sys.stderr)
 
 
 def main() -> None:
+    _fix_windowed_stdio()
     try:
         from produceros.cli import main as cli_main
 

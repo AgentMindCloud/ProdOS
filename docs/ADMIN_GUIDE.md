@@ -87,16 +87,26 @@ as-is.
 
 ## Upgrading
 
-1. Back up first (`docs/BACKUP_RESTORE.md`).
-2. Download/build the new version.
-3. Replace the old `dist\ProducerOS\` (or wherever you extracted the
-   release) with the new one -- your data directory is untouched since it
-   lives outside the app folder.
-4. Launch it. Migrations run automatically against your existing
-   database.
+If ProducerOS was installed with the installer (`ProducerOS-Setup-X.Y.Z.exe`,
+the recommended path -- see `docs/INSTALL_WINDOWS.md`): back up first
+(`docs/BACKUP_RESTORE.md`), then download and run the new version's
+installer the same way you ran the first one. It upgrades in place --
+same shortcuts, same install location, same data -- with no uninstall
+step needed. Migrations run automatically on the next launch.
+
+If running the portable zip build instead: back up first, then replace
+the old `dist\ProducerOS\` folder with the new one (your data directory
+is untouched either way since it lives outside the app folder). Launch
+it; migrations run automatically.
 
 ## Uninstalling
 
-Delete the app folder, and `%LOCALAPPDATA%\ProducerOS\` if you also want
-to remove your data (back it up first if there's any chance you'll want
-it again).
+Installer-based install: Windows Settings -> **Apps** -> **ProducerOS**
+-> **Uninstall**. This only removes the installed application; your data
+at `%LOCALAPPDATA%\ProducerOS\` is left alone automatically (the
+uninstaller shows a message confirming this). Delete that folder yourself
+if you also want to remove your data (back it up first if there's any
+chance you'll want it again).
+
+Portable zip install: delete the app folder, and
+`%LOCALAPPDATA%\ProducerOS\` if you also want to remove your data.

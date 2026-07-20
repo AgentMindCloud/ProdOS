@@ -29,8 +29,30 @@ jobs:
       - name: Install ProducerOS (editable, dev extras)
         run: python -m pip install --upgrade pip; pip install -e ".[dev]"
 
-      - name: Build with PyInstaller
-        run: .\scripts\build_windows.ps1
+      - name: Ensure Inno Setup is available
+        shell: pwsh
+        run: |
+          $found = Get-Command iscc.exe -ErrorAction SilentlyContinue
+          if (-not $found) {
+            $candidates = @(
+              "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+              "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
+            )
+            $found = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          }
+          if (-not $found) {
+            Write-Host "Inno Setup not preinstalled on this runner image -- installing via Chocolatey."
+            choco install innosetup --no-progress -y
+          } else {
+            Write-Host "Inno Setup already available: $found"
+          }
+
+      - name: Build the installer (PyInstaller + Inno Setup)
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          .\scripts\build_installer.ps1 -Version $version
+          echo "PRODUCEROS_VERSION=$version" >> $env:GITHUB_ENV
 
       - name: Generate SBOM (CycloneDX)
         run: pip install cyclonedx-bom && cyclonedx-py environment -o sbom.json
@@ -38,11 +60,17 @@ jobs:
       - name: Package and checksum
         shell: pwsh
         run: |
-          $version = "${{ github.ref_name }}"
-          $zipName = "ProducerOS-$version-windows.zip"
+          $version = $env:PRODUCEROS_VERSION
+          Copy-Item "installer-output\ProducerOS-Setup-$version.exe" "ProducerOS-Setup-$version.exe"
+          $installerHash = Get-FileHash -Path "ProducerOS-Setup-$version.exe" -Algorithm SHA256
+          "$($installerHash.Hash)  ProducerOS-Setup-$version.exe" | Out-File -Encoding ascii "ProducerOS-Setup-$version.exe.sha256"
+
+          $zipName = "ProducerOS-$version-windows-portable.zip"
           Compress-Archive -Path dist\ProducerOS\* -DestinationPath $zipName
-          $hash = Get-FileHash -Path $zipName -Algorithm SHA256
-          "$($hash.Hash)  $zipName" | Out-File -Encoding ascii "$zipName.sha256"
+          $zipHash = Get-FileHash -Path $zipName -Algorithm SHA256
+          "$($zipHash.Hash)  $zipName" | Out-File -Encoding ascii "$zipName.sha256"
+
+          echo "INSTALLER_NAME=ProducerOS-Setup-$version.exe" >> $env:GITHUB_ENV
           echo "ZIP_NAME=$zipName" >> $env:GITHUB_ENV
 
       - name: Upload release assets
@@ -50,6 +78,8 @@ jobs:
         with:
           name: release-windows
           path: |
+            ${{ env.INSTALLER_NAME }}
+            ${{ env.INSTALLER_NAME }}.sha256
             ${{ env.ZIP_NAME }}
             ${{ env.ZIP_NAME }}.sha256
             sbom.json
@@ -70,22 +100,39 @@ jobs:
 
       - name: Create release notes
         run: |
-          cat > release-notes.md <<'EOF'
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          cat > release-notes.md <<EOF
           ## ProducerOS ${{ github.ref_name }}
 
-          ### Install
-          1. Download `ProducerOS-${{ github.ref_name }}-windows.zip` below.
-          2. Verify the checksum against the accompanying `.sha256` file.
-          3. Extract the zip -- keep `ProducerOS.exe` and its `_internal\` folder together.
-          4. Run `ProducerOS.exe` (or `scripts\run_desktop.ps1` from a source checkout).
+          ### Install (recommended)
+          1. Download **\`ProducerOS-Setup-${VERSION}.exe\`** below.
+          2. Double-click it. No admin rights needed, no other software
+             required.
+          3. Keep "Create a desktop icon" checked (it's on by default) and
+             click through the wizard.
+          4. Use the ProducerOS icon on your desktop (or Start Menu) to
+             open the app from now on.
 
-          Database migrations run automatically on first launch. See
-          `docs/INSTALL_WINDOWS.md` for the full walkthrough and
-          `docs/BACKUP_RESTORE.md` before upgrading an existing install.
+          ### Updating from an older version
+          Just download the new \`ProducerOS-Setup-${VERSION}.exe\` and run
+          it the same way -- it upgrades your existing install in place.
+          Your projects, releases, and settings are stored separately and
+          are never touched by installing, updating, or uninstalling.
+
+          ### Portable option
+          \`ProducerOS-${VERSION}-windows-portable.zip\` is a no-installer
+          alternative: extract it anywhere and run \`ProducerOS.exe\`
+          directly (keep it together with its \`_internal\\\` folder). No
+          Start Menu entry or desktop icon is created this way.
 
           ### Verify
-          The attached `sbom.json` (CycloneDX) lists every bundled
-          dependency for this build.
+          Each download has a matching \`.sha256\` checksum file. The
+          attached \`sbom.json\` (CycloneDX) lists every bundled dependency
+          in this build.
+
+          See \`docs/INSTALL_WINDOWS.md\` for the full walkthrough and
+          \`docs/BACKUP_RESTORE.md\` before updating an existing install.
           EOF
 
       - name: Create GitHub release

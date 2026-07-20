@@ -15,18 +15,26 @@ import struct
 import zlib
 from pathlib import Path
 
-BACKGROUND = (26, 24, 22, 255)       # deep charcoal
-ACCENT = (242, 140, 56, 255)         # warm orange
+BACKGROUND = (26, 24, 22, 255)  # deep charcoal
+ACCENT = (242, 140, 56, 255)  # warm orange
 ACCENT_DIM = (196, 108, 40, 255)
 
-ICONS_DIR = Path(__file__).resolve().parent.parent / "src" / "produceros" / "web" / "static" / "icons"
+ICONS_DIR = (
+    Path(__file__).resolve().parent.parent / "src" / "produceros" / "web" / "static" / "icons"
+)
+PACKAGING_DIR = Path(__file__).resolve().parent.parent / "packaging" / "pyinstaller"
 
 
 def _png_chunk(tag: bytes, data: bytes) -> bytes:
-    return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+    return (
+        struct.pack(">I", len(data))
+        + tag
+        + data
+        + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+    )
 
 
-def _write_png(path: Path, pixels: list[list[tuple[int, int, int, int]]]) -> None:
+def _png_bytes(pixels: list[list[tuple[int, int, int, int]]]) -> bytes:
     height = len(pixels)
     width = len(pixels[0])
     raw = bytearray()
@@ -37,15 +45,47 @@ def _write_png(path: Path, pixels: list[list[tuple[int, int, int, int]]]) -> Non
 
     ihdr = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
     idat = zlib.compress(bytes(raw), level=9)
-    png = b"\x89PNG\r\n\x1a\n" + _png_chunk(b"IHDR", ihdr) + _png_chunk(b"IDAT", idat) + _png_chunk(b"IEND", b"")
-    path.write_bytes(png)
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + _png_chunk(b"IHDR", ihdr)
+        + _png_chunk(b"IDAT", idat)
+        + _png_chunk(b"IEND", b"")
+    )
+
+
+def _write_png(path: Path, pixels: list[list[tuple[int, int, int, int]]]) -> None:
+    path.write_bytes(_png_bytes(pixels))
+
+
+def _write_ico(path: Path, sized_pixels: list[list[list[tuple[int, int, int, int]]]]) -> None:
+    """Pack several square icon images into one multi-resolution .ico file.
+
+    Windows has accepted PNG-compressed frames inside .ico containers since
+    Vista, so each frame here is just the same PNG encoder used for the web
+    icons -- no separate uncompressed-BMP encoder needed, no image library.
+    """
+    frames = [_png_bytes(pixels) for pixels in sized_pixels]
+    count = len(frames)
+    header = struct.pack("<HHH", 0, 1, count)  # reserved, type=icon, count
+
+    entries = bytearray()
+    offset = 6 + 16 * count  # ICONDIR + ICONDIRENTRY headers
+    for pixels, frame in zip(sized_pixels, frames, strict=True):
+        size = len(pixels)
+        dim_byte = size if size < 256 else 0  # 0 means "256" per the ICO spec
+        entries += struct.pack("<BBBBHHII", dim_byte, dim_byte, 0, 0, 1, 32, len(frame), offset)
+        offset += len(frame)
+
+    path.write_bytes(header + bytes(entries) + b"".join(frames))
 
 
 def _lerp(a: int, b: int, t: float) -> int:
     return int(a + (b - a) * t)
 
 
-def _blend(base: tuple[int, int, int, int], top: tuple[int, int, int, int], alpha: float) -> tuple[int, int, int, int]:
+def _blend(
+    base: tuple[int, int, int, int], top: tuple[int, int, int, int], alpha: float
+) -> tuple[int, int, int, int]:
     return (
         _lerp(base[0], top[0], alpha),
         _lerp(base[1], top[1], alpha),
@@ -56,7 +96,12 @@ def _blend(base: tuple[int, int, int, int], top: tuple[int, int, int, int], alph
 
 def _rounded_mask(x: int, y: int, size: int, radius: int) -> bool:
     """True if (x, y) is inside a square-with-rounded-corners of the given size."""
-    corners = [(radius, radius), (size - radius - 1, radius), (radius, size - radius - 1), (size - radius - 1, size - radius - 1)]
+    corners = [
+        (radius, radius),
+        (size - radius - 1, radius),
+        (radius, size - radius - 1),
+        (size - radius - 1, size - radius - 1),
+    ]
     if x < radius and y < radius:
         return (x - corners[0][0]) ** 2 + (y - corners[0][1]) ** 2 <= radius**2
     if x > size - radius - 1 and y < radius:
@@ -121,6 +166,17 @@ def main() -> None:
         pixels = _generate(size, maskable=maskable)
         _write_png(ICONS_DIR / filename, pixels)
         print(f"wrote {filename} ({size}x{size}, maskable={maskable})")
+
+    # Windows .ico for the frozen exe (PyInstaller's EXE(icon=...)) and the
+    # Inno Setup installer (SetupIconFile) -- same non-maskable mark at the
+    # standard Windows icon sizes, packed into one multi-resolution file.
+    PACKAGING_DIR.mkdir(parents=True, exist_ok=True)
+    ico_sizes = [16, 32, 48, 256]
+    ico_path = PACKAGING_DIR / "app-icon.ico"
+    _write_ico(ico_path, [_generate(size, maskable=False) for size in ico_sizes])
+    print(
+        f"wrote {ico_path.relative_to(PACKAGING_DIR.parent.parent)} ({', '.join(str(s) for s in ico_sizes)})"
+    )
 
 
 if __name__ == "__main__":

@@ -93,7 +93,10 @@ writer in `scripts/generate_icons.py`). No frameworks, no build step.
 - `produceros db-upgrade | db-current | demo-load | demo-clean |
   backup-create | restore-dry-run | restore` -- see `cli.py`.
 - Frozen Windows build: `packaging/pyinstaller/launcher.py` forwards argv
-  into the same CLI (`packaging/README.md`).
+  into the same CLI (`packaging/README.md`). Installed via
+  `packaging/inno/producer-os.iss` (Inno Setup) -- a real Windows
+  installer with Start Menu/desktop shortcuts and no admin prompt, not
+  just a zip; see [ADR 0006](docs/adr/0006-inno-setup-installer.md).
 
 ## Testing strategy
 

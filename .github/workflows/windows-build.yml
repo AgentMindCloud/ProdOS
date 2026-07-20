@@ -26,10 +26,28 @@ jobs:
       - name: Install ProducerOS (editable, dev extras)
         run: python -m pip install --upgrade pip; pip install -e ".[dev]"
 
-      - name: Build with PyInstaller
-        run: .\scripts\build_windows.ps1
+      - name: Ensure Inno Setup is available
+        shell: pwsh
+        run: |
+          $found = Get-Command iscc.exe -ErrorAction SilentlyContinue
+          if (-not $found) {
+            $candidates = @(
+              "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+              "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
+            )
+            $found = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          }
+          if (-not $found) {
+            Write-Host "Inno Setup not preinstalled on this runner image -- installing via Chocolatey."
+            choco install innosetup --no-progress -y
+          } else {
+            Write-Host "Inno Setup already available: $found"
+          }
 
-      - name: Smoke test the built exe
+      - name: Build the installer (PyInstaller + Inno Setup)
+        run: .\scripts\build_installer.ps1 -Version "0.0.0-ci$(Get-Date -Format yyyyMMddHHmmss)"
+
+      - name: Smoke test the raw PyInstaller build
         shell: pwsh
         run: |
           $env:PRODUCEROS_DATA_DIR = "$env:RUNNER_TEMP\produceros-smoketest"
@@ -73,23 +91,85 @@ jobs:
           & $exe backup-create
           & $exe demo-clean
 
+      - name: Smoke test the actual installer (silent install, shortcuts, launch)
+        shell: pwsh
+        run: |
+          $installerPath = Get-ChildItem "installer-output\ProducerOS-Setup-*.exe" | Select-Object -First 1
+          if (-not $installerPath) { throw "No installer .exe found in installer-output\." }
+
+          $installDir = "$env:RUNNER_TEMP\produceros-installed"
+          Write-Host "Running silent install to $installDir"
+          Start-Process -FilePath $installerPath.FullName `
+            -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=$installDir", "/TASKS=desktopicon" `
+            -Wait -NoNewWindow
+
+          $installedExe = Join-Path $installDir "ProducerOS.exe"
+          if (-not (Test-Path $installedExe)) {
+            throw "Silent install did not produce $installedExe."
+          }
+          Write-Host "Installed exe present: $installedExe"
+
+          $startMenuShortcut = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\ProducerOS\ProducerOS.lnk"
+          $desktopShortcut = "$env:USERPROFILE\Desktop\ProducerOS.lnk"
+          if (-not (Test-Path $startMenuShortcut)) { throw "Start Menu shortcut was not created at $startMenuShortcut." }
+          if (-not (Test-Path $desktopShortcut)) { throw "Desktop shortcut was not created at $desktopShortcut." }
+          Write-Host "Start Menu and desktop shortcuts both created."
+
+          $env:PRODUCEROS_DATA_DIR = "$env:RUNNER_TEMP\produceros-installed-data"
+          $job = Start-Job -ScriptBlock {
+            param($exePath, $dataDir)
+            $env:PRODUCEROS_DATA_DIR = $dataDir
+            & $exePath run --no-browser --port 8421
+          } -ArgumentList $installedExe, $env:PRODUCEROS_DATA_DIR
+
+          $ok = $false
+          for ($i = 0; $i -lt 30; $i++) {
+            Start-Sleep -Seconds 1
+            try {
+              $response = Invoke-WebRequest -Uri "http://127.0.0.1:8421/setup" -UseBasicParsing -TimeoutSec 2
+              if ($response.StatusCode -eq 200) { $ok = $true; break }
+            } catch {
+              continue
+            }
+          }
+          Stop-Job $job -ErrorAction SilentlyContinue
+          Receive-Job $job -ErrorAction SilentlyContinue
+          Remove-Job $job -Force -ErrorAction SilentlyContinue
+          if (-not $ok) { throw "Installed ProducerOS.exe did not respond with 200 on /setup." }
+          Write-Host "Installed app smoke test passed."
+
+          Write-Host "Uninstalling and confirming user data is left alone..."
+          $uninstaller = Join-Path $installDir "unins000.exe"
+          Start-Process -FilePath $uninstaller -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait -NoNewWindow
+          if (Test-Path $installedExe) { throw "Uninstaller did not remove $installedExe." }
+          if (-not (Test-Path "$env:PRODUCEROS_DATA_DIR\produceros.db")) {
+            throw "Uninstall should never touch the data directory, but the database is gone."
+          }
+          Write-Host "Uninstall removed the app and left user data intact, as designed."
+
       - name: Generate SBOM (CycloneDX)
         run: pip install cyclonedx-bom && cyclonedx-py environment -o sbom.json
 
-      - name: Compute checksum
+      - name: Compute checksums
         shell: pwsh
         run: |
-          Compress-Archive -Path dist\ProducerOS\* -DestinationPath ProducerOS-windows.zip
-          $hash = Get-FileHash -Path ProducerOS-windows.zip -Algorithm SHA256
-          "$($hash.Hash)  ProducerOS-windows.zip" | Out-File -Encoding ascii ProducerOS-windows.zip.sha256
-          Get-Content ProducerOS-windows.zip.sha256
+          $installerPath = Get-ChildItem "installer-output\ProducerOS-Setup-*.exe" | Select-Object -First 1
+          Copy-Item $installerPath.FullName "ProducerOS-Setup.exe"
+          $installerHash = Get-FileHash -Path "ProducerOS-Setup.exe" -Algorithm SHA256
+          "$($installerHash.Hash)  ProducerOS-Setup.exe" | Out-File -Encoding ascii ProducerOS-Setup.exe.sha256
 
-      - name: Upload build artifact
+          Compress-Archive -Path dist\ProducerOS\* -DestinationPath ProducerOS-windows-portable.zip
+          $zipHash = Get-FileHash -Path ProducerOS-windows-portable.zip -Algorithm SHA256
+          "$($zipHash.Hash)  ProducerOS-windows-portable.zip" | Out-File -Encoding ascii ProducerOS-windows-portable.zip.sha256
+
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ProducerOS-windows
           path: |
-            ProducerOS-windows.zip
-            ProducerOS-windows.zip.sha256
+            ProducerOS-Setup.exe
+            ProducerOS-Setup.exe.sha256
+            ProducerOS-windows-portable.zip
+            ProducerOS-windows-portable.zip.sha256
             sbom.json
           retention-days: 14

@@ -25,6 +25,10 @@ packaging/pyinstaller/build/
 packaging/pyinstaller/dist/
 *.spec.bak
 release-artifacts/
+installer-output/
+*.exe.sha256
+/ProducerOS-*.exe
+/ProducerOS-*.zip
 
 # Test / tooling caches
 .pytest_cache/

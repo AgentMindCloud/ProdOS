@@ -13,16 +13,19 @@ explicitly approved, logged operation.
 
 ![Dashboard](docs/screenshots/dashboard-desktop.png)
 
-## Quick start (Windows, from a release)
+## Quick start (Windows)
 
-1. Download `ProducerOS-vX.Y.Z-windows.zip` from Releases, verify its
-   `.sha256`, and extract it.
-2. Run `ProducerOS.exe`. Migrations apply automatically; your browser
-   opens to the dashboard.
-3. Create your admin account on the first-run setup page.
+1. Download **`ProducerOS-Setup-X.Y.Z.exe`** from
+   [Releases](../../releases) and double-click it. No admin rights, no
+   Python, nothing else to install first.
+2. Click through the installer -- leave "Create a desktop icon" checked.
+3. Use the new **ProducerOS** desktop icon to open the app. Your browser
+   opens automatically to the setup page.
 
-Full walkthrough: [docs/INSTALL_WINDOWS.md](docs/INSTALL_WINDOWS.md).
-Phone access: [docs/ANDROID_PWA.md](docs/ANDROID_PWA.md).
+Updating later is the same: download the newest installer and run it
+again -- it upgrades in place and never touches your data. Full
+walkthrough: [docs/INSTALL_WINDOWS.md](docs/INSTALL_WINDOWS.md). Phone
+access: [docs/ANDROID_PWA.md](docs/ANDROID_PWA.md).
 
 ## Quick start (from source, any OS)
 
