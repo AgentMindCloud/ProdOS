@@ -4,7 +4,7 @@ Current state of ProducerOS for whoever works on it next. Keep this
 document updated whenever project state changes materially -- it is
 required to be current (spec `docs/PRODUCT_SPEC.md`, section 33).
 
-Last updated: 2026-07-20.
+Last updated: 2026-07-25.
 
 ## Where things stand
 
@@ -27,6 +27,14 @@ message confirming user data was kept. `scripts/build_installer.ps1`
 builds it; `.github/workflows/windows-build.yml` now silent-installs the
 compiled installer, verifies both shortcuts exist, launches the
 *installed* exe, and silently uninstalls it to confirm data survives.
+
+**Review pass (Opus 5)**: found and fixed three real defects that all
+sat on the non-technical-user path -- the app silently doing nothing when
+the icon was clicked a second time, the browser racing server startup,
+and web-UI restore being broken on Windows. Also added an in-app quit,
+closing a gap created by the windowed build (no console, no window, so
+Task Manager was the only way to stop it -- and a running instance blocks
+the updater). Test count went 123 -> 127.
 
 ## What is verified vs. not
 
@@ -142,7 +150,16 @@ available in the build environment):
     upgrade (`[InstallDelete]` wiping `_internal\`) and uninstall
     completely safe with zero special-case code -- don't "simplify" this
     by installing to the same tree as the data dir.
-13. **The Inno Setup `AppId` GUID in `packaging/inno/producer-os.iss`
+13. **Tests that call `cli.cmd_run` must stub `uvicorn.Server.run` (not
+    `uvicorn.run`) and pass an explicit free `--port`.** `cmd_run` builds
+    the Server object itself, so stubbing `uvicorn.run` silently stubs
+    nothing and the test starts a *real* server that blocks until pytest
+    is killed -- this actually happened during the review pass and left a
+    stray process holding port 8420. `cmd_run` also probes the port
+    before binding, so a test on the default port passes or fails based
+    on what else is running on the machine. See
+    `tests/unit/test_cli_run_mcp_wiring.py`.
+14. **The Inno Setup `AppId` GUID in `packaging/inno/producer-os.iss`
     must never change.** It's what makes a newer installer register as
     an upgrade instead of a second, parallel install. If it's ever
     accidentally regenerated, every existing user's install becomes

@@ -35,11 +35,25 @@ Some environments block `webbrowser.open()`. Just open
 `http://127.0.0.1:8420/` (or your configured port) manually, or pass
 `--no-browser` and do so from the start.
 
-## Port already in use
+## I double-clicked the icon and nothing seems to happen
 
-Another process (maybe a previous ProducerOS instance that didn't shut
-down cleanly) is using the port. Either close it, or run with a
-different port: `ProducerOS.exe run --port 8500`.
+ProducerOS is probably already running: it keeps serving in the
+background after you close its browser tab. Double-clicking the icon in
+that situation re-opens the app in your browser rather than starting a
+second copy, so give it a moment. If no tab appears, browse to
+<http://127.0.0.1:8420/> directly.
+
+## "Port 8420 is already being used by another program"
+
+Some other application on your PC has taken the port ProducerOS wants.
+Close that program, or start ProducerOS on a different port:
+`ProducerOS.exe run --port 8500`.
+
+## How do I actually stop ProducerOS?
+
+**Settings -> Close ProducerOS** inside the app. Closing the browser tab
+alone leaves it running in the background (deliberately -- that's what
+makes reopening instant).
 
 ## Locked out after failed logins
 

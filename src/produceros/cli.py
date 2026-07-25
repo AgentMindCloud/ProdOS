@@ -53,6 +53,62 @@ def cmd_db_current(_args: argparse.Namespace) -> None:
     command.current(_alembic_config(), verbose=True)
 
 
+def _probe_running_instance(host: str, port: int, timeout: float = 1.5) -> bool:
+    """True if a *ProducerOS* instance is already serving on host:port.
+
+    Checked before binding so that double-clicking the desktop icon while
+    the app is already running re-opens the browser instead of dying on
+    "address already in use" -- which, in a windowed build with no console,
+    would look to the user like clicking the icon did nothing at all.
+    """
+    import json
+    import urllib.request
+
+    try:
+        # Scheme is hardcoded http and the host is either 127.0.0.1 or our
+        # own detected private LAN address -- never attacker-supplied, so
+        # the file:/custom-scheme concern behind S310/B310 cannot apply.
+        with urllib.request.urlopen(  # noqa: S310 # nosec B310
+            f"http://{host}:{port}/healthz", timeout=timeout
+        ) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        return payload.get("app") == "ProducerOS"
+    except Exception:
+        return False
+
+
+def _port_is_available(host: str, port: int) -> bool:
+    import socket
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            probe.bind((host, port))
+        except OSError:
+            return False
+    return True
+
+
+def _open_browser_when_ready(url: str, host: str, port: int, timeout: float = 30.0) -> None:
+    """Wait for the server to actually accept connections, then open it.
+
+    A fixed sleep raced server startup: on a slow machine (or a first launch
+    where antivirus is still scanning the freshly-installed bundle) the
+    browser could open before uvicorn was listening and land the user on a
+    "can't reach this site" page.
+    """
+    import socket
+
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            with socket.create_connection((host, port), timeout=0.5):
+                break
+        except OSError:
+            time.sleep(0.2)
+    webbrowser.open(url)
+
+
 def _detect_bind_host(bind_mode: str) -> str:
     if bind_mode == "lan":
         from produceros.services.network import detect_private_ipv4
@@ -78,6 +134,24 @@ def cmd_run(args: argparse.Namespace) -> None:
     bind_mode = args.mode or settings.bind_mode
     host = _detect_bind_host(bind_mode)
     port = args.port or settings.port
+    url = f"http://{host}:{port}/"
+
+    # Already running? Then the user almost certainly just clicked the
+    # desktop icon again to get back into the app -- give them exactly
+    # that, instead of failing to bind.
+    if _probe_running_instance(host, port):
+        logger.info("ProducerOS is already running on %s:%s; opening the browser.", host, port)
+        print(f"ProducerOS is already running at {url} -- opening it in your browser.")
+        if not args.no_browser and settings.open_browser:
+            webbrowser.open(url)
+        return
+
+    if not _port_is_available(host, port):
+        raise RuntimeError(
+            f"Port {port} on {host} is already being used by another program, so ProducerOS "
+            f"cannot start.\n\nClose whatever is using that port, or start ProducerOS on a "
+            f"different one, for example:\n    ProducerOS.exe run --port {port + 1}"
+        )
 
     logger.info("Running Alembic migrations before startup.")
     command.upgrade(_alembic_config(), "head")
@@ -95,12 +169,9 @@ def cmd_run(args: argparse.Namespace) -> None:
         print(f"Desktop mode: binding to {host}:{port} (localhost only).")
 
     if not args.no_browser and settings.open_browser:
-
-        def _open_browser() -> None:
-            time.sleep(1.0)
-            webbrowser.open(f"http://{host}:{port}/")
-
-        threading.Thread(target=_open_browser, daemon=True).start()
+        threading.Thread(
+            target=_open_browser_when_ready, args=(url, host, port), daemon=True
+        ).start()
 
     if settings.mcp_enabled:
         from produceros.mcp_server.server import run_mcp_server_blocking
@@ -111,7 +182,19 @@ def cmd_run(args: argparse.Namespace) -> None:
         # since uvicorn.run() below does the same on the main thread.
         threading.Thread(target=run_mcp_server_blocking, daemon=True).start()
 
-    uvicorn.run(app, host=host, port=port, log_level=settings.log_level.lower())
+    # Construct the Server explicitly rather than calling uvicorn.run(), so
+    # the in-app "Quit ProducerOS" button has something to stop: a windowed
+    # build has no console to Ctrl+C and no window to close.
+    from produceros.runtime import set_shutdown_hook
+
+    server = uvicorn.Server(
+        uvicorn.Config(app, host=host, port=port, log_level=settings.log_level.lower())
+    )
+    set_shutdown_hook(lambda: setattr(server, "should_exit", True))
+    try:
+        server.run()
+    finally:
+        set_shutdown_hook(None)
 
 
 def cmd_demo_load(_args: argparse.Namespace) -> None:

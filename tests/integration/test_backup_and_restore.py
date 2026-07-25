@@ -84,3 +84,64 @@ def test_restore_refuses_corrupt_backup(data_dir, db_session, tmp_path):
 
     with pytest.raises(ValueError):
         restore_backup(settings, corrupt, confirmed=True)
+
+
+def test_restore_leaves_no_staging_file_behind(db_session, data_dir):
+    """The restore swaps a staged copy into place rather than writing over
+    the live database directly (Windows refuses the latter while any handle
+    is open). The staging file must never survive the operation."""
+    settings = get_settings()
+    catalog_service.create_project(db_session, working_title="Staging Check")
+    db_session.commit()
+    record = create_backup(db_session, settings)
+    db_session.commit()
+
+    restore_backup(settings, record.file_path, confirmed=True)
+
+    staged = settings.database_path.with_name(settings.database_path.name + ".restore-staged")
+    assert not staged.exists()
+    assert settings.database_path.exists()
+
+
+def test_restore_through_the_web_ui_succeeds_with_a_live_session(client):
+    """Exercises restore through the real HTTP route, which used to hold its
+    own open database session while the file was replaced underneath it.
+
+    Note on what this can and cannot prove: the failure that motivated the
+    fix is Windows-only (an open handle blocks replacing a file; POSIX
+    happily lets it through), so running here on Linux this test cannot
+    reproduce the original breakage. It guards the surrounding behavior --
+    the route completes, and the app still works against the restored
+    database -- while the Windows-specific part is covered by construction
+    (session closed before the swap, staged os.replace in
+    services/backup._swap_in_database) rather than by this assertion."""
+    import re
+
+    from tests.conftest import complete_setup
+
+    complete_setup(client)
+
+    created = client.post(
+        "/backup/create",
+        data={
+            "csrf_token": re.search(
+                r'name="csrf_token" value="([^"]+)"', client.get("/backup").text
+            ).group(1)
+        },
+        follow_redirects=True,
+    )
+    assert created.status_code == 200
+
+    page = client.get("/backup").text
+    backup_id = re.search(r"/backup/([0-9a-f-]{36})/restore-confirm", page).group(1)
+    csrf_token = re.search(r'name="csrf_token" value="([^"]+)"', page).group(1)
+
+    response = client.post(
+        f"/backup/{backup_id}/restore-confirm",
+        data={"csrf_token": csrf_token, "confirm": "yes"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+
+    # The app must still be usable against the restored database.
+    assert client.get("/backup").status_code == 200

@@ -54,6 +54,19 @@ The complete initial implementation of ProducerOS per
   six ADRs, real captured screenshots, and root-level
   README/ARCHITECTURE/AGENTS/CONTRIBUTING/SECURITY/HANDOFF/ROADMAP.
 
+### Added (review pass)
+
+- **Single-instance behaviour**: launching ProducerOS while it is already
+  running now re-opens it in the browser instead of failing to bind.
+- **`GET /healthz`**: unauthenticated liveness probe (app name + version
+  only), used to tell "ProducerOS is already running here" apart from
+  "another program owns this port", which now produces an actionable
+  error rather than a silent exit.
+- **Settings -> Close ProducerOS**: an in-app quit. A windowed build has
+  no console and no window, so without it the only way to stop the
+  server was Task Manager -- and a running instance holds the files an
+  update needs to replace.
+
 ### Fixed (during the initial build, caught by this repo's own tests)
 
 - Filename parser: `\b` word-boundary regexes silently failed next to
@@ -79,3 +92,18 @@ The complete initial implementation of ProducerOS per
   `sys.stderr` of `None` from Windows, which would have crashed on the
   first `print()` or log line; the launcher now redirects both to a null
   sink before anything else runs.
+- Double-clicking the desktop icon while ProducerOS was already running
+  raised `SystemExit(1)` from uvicorn's failed bind. `launcher.py`
+  deliberately re-raises `SystemExit` without a message box, so in a
+  windowed build the user saw nothing at all -- no console, no error, no
+  browser. This was the single most likely way for the app to look
+  broken, since closing the browser tab does not stop the server.
+- The browser was opened after a fixed 1-second sleep, which could race
+  server startup on a slow machine and land the user on a "can't reach
+  this site" page; it now waits for the port to actually accept
+  connections.
+- Restoring a backup from the web UI replaced the database file while the
+  request's own SQLAlchemy session still held it open. POSIX allows that;
+  Windows does not, so restore -- a data-recovery path -- would have
+  failed there. The session is now closed first, and the swap stages a
+  copy and `os.replace`s it into place with a retry.

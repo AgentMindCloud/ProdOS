@@ -61,4 +61,19 @@
     <button type="submit" class="btn btn-primary" style="margin-top:1rem;">Save visibility</button>
   </form>
 </div>
+
+{% if can_shut_down %}
+<div class="panel">
+  <h2>Close ProducerOS</h2>
+  <p class="text-faint">
+    ProducerOS keeps running in the background even after you close this browser
+    tab, so that reopening it is instant. Use this to stop it completely --
+    worth doing before installing a ProducerOS update.
+  </p>
+  <form method="post" action="/settings/quit" data-confirm="Close ProducerOS? Your work is already saved.">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="btn btn-danger">Close ProducerOS</button>
+  </form>
+</div>
+{% endif %}
 {% endblock %}

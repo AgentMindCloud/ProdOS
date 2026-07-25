@@ -103,7 +103,13 @@ async def restore_confirm_route(
     form = await request.form()
     if record and verify_csrf(request, form.get("csrf_token")) and form.get("confirm") == "yes":
         settings = get_settings()
-        restore_backup(settings, record.file_path, confirmed=True)
+        backup_file = record.file_path
+        # Release this request's own database handle before the file is
+        # swapped underneath us. Windows refuses to replace a file that is
+        # still open, so restoring from the web UI would fail outright
+        # while this session held a connection.
+        session.close()
+        restore_backup(settings, backup_file, confirmed=True)
     return RedirectResponse("/backup", status_code=303)
 
 

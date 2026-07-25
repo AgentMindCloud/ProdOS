@@ -25,6 +25,12 @@ ProducerOS from now on -- there's no separate "server" to start, no
 terminal, no browser bookmark to remember. Double-click the icon, wait a
 few seconds, your browser opens to the dashboard.
 
+**Closing the browser tab doesn't stop ProducerOS** -- it keeps running
+quietly in the background so that reopening it is instant. Double-click
+the desktop icon any time to jump straight back in. When you actually
+want to stop it (before installing an update, or just to shut it down),
+use **Settings -> Close ProducerOS** inside the app.
+
 Your data (database, projects, logs, backups, generated secret key) lives
 at `%LOCALAPPDATA%\ProducerOS\` -- a completely separate location from
 where the app itself is installed, so it's never touched by installing,
@@ -36,9 +42,10 @@ When a new version comes out:
 
 1. Download the new `ProducerOS-Setup-X.Y.Z.exe` from Releases, same as
    before.
-2. Close ProducerOS if it's running (close the browser tab is enough for
-   the page; if you want to be thorough, right-click the ProducerOS
-   window in your taskbar and close it, or just restart your PC first).
+2. Close ProducerOS via **Settings -> Close ProducerOS** in the app.
+   (Closing just the browser tab is not enough -- ProducerOS keeps
+   running in the background. If you forget, the installer will close it
+   for you; this step only avoids a possible "files in use" prompt.)
 3. Double-click the new installer and click through it, same as the first
    time.
 

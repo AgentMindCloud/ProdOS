@@ -90,9 +90,12 @@ as-is.
 If ProducerOS was installed with the installer (`ProducerOS-Setup-X.Y.Z.exe`,
 the recommended path -- see `docs/INSTALL_WINDOWS.md`): back up first
 (`docs/BACKUP_RESTORE.md`), then download and run the new version's
-installer the same way you ran the first one. It upgrades in place --
-same shortcuts, same install location, same data -- with no uninstall
-step needed. Migrations run automatically on the next launch.
+installer the same way you ran the first one. Stop the running instance
+first via **Settings -> Close ProducerOS** (it keeps serving in the
+background after its browser tab is closed); if you forget, the
+installer's Restart Manager integration closes it for you. It upgrades in
+place -- same shortcuts, same install location, same data -- with no
+uninstall step needed. Migrations run automatically on the next launch.
 
 If running the portable zip build instead: back up first, then replace
 the old `dist\ProducerOS\` folder with the new one (your data directory

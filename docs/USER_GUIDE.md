@@ -120,6 +120,13 @@ it here) to get summaries per project/period.
 from one if needed (a pre-restore safety copy is always taken
 automatically first). Full walkthrough: `docs/BACKUP_RESTORE.md`.
 
+## Starting and stopping ProducerOS
+
+Open it with the **ProducerOS** desktop icon. Closing the browser tab
+does *not* stop it -- it keeps running in the background so the icon
+brings you straight back in. To stop it completely (worth doing before
+installing an update), use **Settings -> Close ProducerOS**.
+
 ## Search
 
 The search box (or `/search`) looks across projects, artists, and

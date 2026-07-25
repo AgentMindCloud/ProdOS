@@ -57,6 +57,15 @@ Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 LicenseFile={#RepoRoot}\LICENSE
+; ProducerOS keeps serving in the background after its browser tab is
+; closed (that is what makes reopening it instant), so an update almost
+; always runs while the old version still holds ProducerOS.exe and
+; _internal\ open. Let the Windows Restart Manager close it first --
+; otherwise the user hits a "files in use" error mid-upgrade. Both are
+; Inno's defaults; stated explicitly because the upgrade path depends on
+; them. Users can also stop it cleanly from Settings -> Close ProducerOS.
+CloseApplications=yes
+RestartApplications=no
 ; ProducerOS's own data (database, logs, backups, secret key) lives at
 ; %LOCALAPPDATA%\ProducerOS -- a different path from the install
 ; directory above (%LOCALAPPDATA%\Programs\ProducerOS) -- so upgrading

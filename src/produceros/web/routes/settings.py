@@ -11,7 +11,9 @@ from produceros.audio.ffmpeg import ffmpeg_status
 from produceros.config import get_settings
 from produceros.models.enums import DEFAULT_PROJECT_STATES
 from produceros.models.user import User
+from produceros.runtime import can_shut_down, request_shutdown
 from produceros.services import settings as settings_service
+from produceros.services.audit import log_event
 from produceros.web.app import templates
 from produceros.web.context import base_context
 from produceros.web.csrf import get_csrf_token, verify_csrf
@@ -44,6 +46,7 @@ async def settings_home(
             "mcp_bind": app_settings.mcp_bind,
             "mcp_port": app_settings.mcp_port,
             "ffmpeg": ffmpeg_status(),
+            "can_shut_down": can_shut_down(),
             "all_states": list(DEFAULT_PROJECT_STATES),
             "visible_states": visible_states,
             "csrf_token": csrf_token,
@@ -66,3 +69,31 @@ async def update_visible_states(
             selected or list(DEFAULT_PROJECT_STATES),
         )
     return RedirectResponse("/settings", status_code=303)
+
+
+@router.post("/settings/quit")
+async def quit_app(
+    request: Request, session: Session = Depends(get_session), user: User = Depends(require_login)
+):
+    """Stop the ProducerOS server from inside the app.
+
+    A windowed Windows build has no console and no window, so without this
+    the only way to stop it is Task Manager -- and a running instance holds
+    files the updater needs to replace. Login + CSRF protected like every
+    other state-changing action.
+    """
+    form = await request.form()
+    if not verify_csrf(request, form.get("csrf_token")):
+        return RedirectResponse("/settings", status_code=303)
+
+    log_event(
+        session,
+        event_type="app.shutdown_requested",
+        summary=f"'{user.username}' shut ProducerOS down from the Settings page.",
+        user_id=user.id,
+    )
+    session.commit()
+
+    if not request_shutdown():
+        return RedirectResponse("/settings?quit=unsupported", status_code=303)
+    return templates.TemplateResponse(request, "settings/quit.html", {})

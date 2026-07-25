@@ -9,8 +9,10 @@ online-backup API so an in-progress WAL write never corrupts the copy.
 from __future__ import annotations
 
 import hashlib
+import os
 import shutil
 import sqlite3
+import time
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -199,13 +201,46 @@ def restore_backup(
             source_conn.close()
 
     reset_engine_cache()
-    shutil.copy2(Path(backup_path), settings.database_path)
+    _swap_in_database(Path(backup_path), settings.database_path)
     for suffix in ("-wal", "-shm"):
         stale = Path(str(settings.database_path) + suffix)
         if stale.exists():
             stale.unlink()
 
     return settings.database_path
+
+
+def _swap_in_database(source: Path, destination: Path, *, attempts: int = 10) -> None:
+    """Replace ``destination`` with a copy of ``source``, atomically.
+
+    Copying straight over the live database is fine on POSIX (an open file
+    handle keeps working against the old inode) but fails on Windows, where
+    the OS refuses to overwrite a file another handle still has open --
+    which is exactly the situation during a restore triggered from the web
+    UI. So: stage the copy alongside the destination, then ``os.replace``
+    it into place (atomic on the same filesystem, and permitted on Windows
+    once the previous handles are closed), retrying briefly because a
+    connection being torn down by ``reset_engine_cache`` may need a moment
+    to actually release its handle.
+    """
+    staged = destination.with_name(destination.name + ".restore-staged")
+    shutil.copy2(source, staged)
+    try:
+        last_error: OSError | None = None
+        for attempt in range(attempts):
+            try:
+                os.replace(staged, destination)
+                return
+            except PermissionError as exc:  # pragma: no cover - Windows-only path
+                last_error = exc
+                time.sleep(0.2 * (attempt + 1))
+        raise RuntimeError(
+            f"Could not replace the live database at '{destination}' -- it is still open by "
+            f"another program. Close ProducerOS completely and run the restore again."
+        ) from last_error
+    finally:
+        if staged.exists():
+            staged.unlink()
 
 
 def _row_to_dict(instance) -> dict:

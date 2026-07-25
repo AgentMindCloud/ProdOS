@@ -31,6 +31,20 @@ def create_app() -> FastAPI:
 
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
+    @app.get("/healthz", include_in_schema=False)
+    async def healthz() -> dict[str, str]:
+        """Liveness probe, deliberately unauthenticated.
+
+        Used by `produceros run` to tell "ProducerOS is already running on
+        this port" (re-open the browser) apart from "some unrelated program
+        owns this port" (report a clear error) -- see cli._probe_running_instance.
+        Exposes only the app name and version, never any user data, so it is
+        safe to answer before a session exists.
+        """
+        from produceros import __version__
+
+        return {"app": "ProducerOS", "version": __version__}
+
     @app.exception_handler(AuthRedirect)
     async def _auth_redirect_handler(request: Request, exc: AuthRedirect):
         return RedirectResponse(url=exc.location, status_code=303)
