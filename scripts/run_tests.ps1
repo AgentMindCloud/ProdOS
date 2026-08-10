@@ -15,11 +15,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
-$VenvPython = Join-Path $RepoRoot ".venv\Scripts\python.exe"
-
-if (-not (Test-Path $VenvPython)) {
-    throw "No .venv found at $VenvPython. Run scripts\setup_windows.ps1 first."
-}
+. "$PSScriptRoot\_python.ps1"
+$VenvPython = Get-ProducerOSPython -RepoRoot $RepoRoot
 
 Push-Location $RepoRoot
 try {
