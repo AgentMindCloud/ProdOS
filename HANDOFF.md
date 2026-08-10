@@ -4,7 +4,7 @@ Current state of ProducerOS for whoever works on it next. Keep this
 document updated whenever project state changes materially -- it is
 required to be current (spec `docs/PRODUCT_SPEC.md`, section 33).
 
-Last updated: 2026-07-25.
+Last updated: 2026-08-10.
 
 ## Where things stand
 
@@ -56,19 +56,25 @@ the updater). Test count went 123 -> 127.
 - Mobile layout in a real Chromium at phone viewports, portrait and
   landscape (`tests/e2e/test_mobile_viewport.py`).
 
-**Not verified** (no Windows machine, no Inno Setup, no CI minutes
-available in the build environment):
+**Verified on real CI** (added after the first live GitHub Actions runs):
 
-- A real Windows `.exe` and the real Inno Setup installer -- neither has
-  been built or run on real Windows. `windows-build.yml` builds the
-  installer, silent-installs it, checks both shortcuts exist, launches
-  the installed exe, and silently uninstalls it to confirm
-  `%LOCALAPPDATA%\ProducerOS\` survives -- but that workflow has **never
-  been triggered**. Same for `ci.yml`, `security.yml`, and `release.yml`:
-  written, YAML-validated, unexecuted. **First priority for the next
-  session**: push to a branch/PR that triggers them and fix whatever
-  surfaces -- the `.iss` script in particular has only been manually
-  reviewed against Inno Setup's documented syntax, never compiled.
+- The Inno Setup script compiles on `windows-latest`, the silent install
+  creates both the Start Menu and desktop shortcuts, the *installed*
+  windowed `.exe` serves HTTP 200, every CLI subcommand works from the
+  frozen build, and a silent uninstall leaves `%LOCALAPPDATA%\ProducerOS`
+  intact. `windows-build.yml` is green end to end.
+- `ci.yml` passes on `windows-latest` (lint, mypy, the 123
+  unit/integration/security tests, the 4 e2e tests, migration check, and
+  the demo round trip).
+
+**Not verified** (no Windows machine or Inno Setup in the dev container):
+
+- Nobody has yet *interactively* installed and used the app on a real
+  Windows desktop -- CI installs silently. The SmartScreen prompt, the
+  look of the desktop icon, and the interactive upgrade flow are still
+  unseen firsthand.
+- `security.yml` and `release.yml` had not run at the time of writing;
+  `release.yml` fires only on a version tag.
 - A real Android device installing the PWA over LAN (mobile support was
   verified via Chromium viewport emulation, not physical hardware).
 - An external MCP client (e.g. Claude Desktop) driving the MCP tools
@@ -159,7 +165,27 @@ available in the build environment):
     before binding, so a test on the default port passes or fails based
     on what else is running on the machine. See
     `tests/unit/test_cli_run_mcp_wiring.py`.
-14. **The Inno Setup `AppId` GUID in `packaging/inno/producer-os.iss`
+14. **In Inno Setup `[Code]`, use `SuppressibleMsgBox`, never `MsgBox`.**
+    `/SUPPRESSMSGBOXES` only suppresses Setup's own dialogs, so a bare
+    `MsgBox` blocks any silent install/uninstall forever waiting for a
+    click nobody can give. This hung CI twice before it was spotted.
+15. **PowerShell `Stop-Job` does not kill the process the job started.**
+    The Windows smoke tests leaked `ProducerOS.exe` instances that then
+    held files the uninstaller needed. Always follow with
+    `Get-Process -Name ProducerOS | Stop-Process -Force`.
+16. **Never set `SO_REUSEADDR` when probing whether a port is free.** On
+    Windows it permits binding a port another process is already
+    listening on, so the probe calls a busy port free -- see
+    `cli._port_is_available`.
+17. **Windows' clock granularity is ~15.6ms**, easily enough for two
+    `datetime.now()` calls to compare equal. Any comparison gating a
+    security decision must fail closed on ties -- hence the `<=` in
+    `auth.verify_session_token`.
+18. **Never hardcode a browser path in `tests/e2e/conftest.py`.**
+    `/opt/pw-browsers/chromium` is specific to this dev container and
+    broke the whole e2e suite on GitHub Actions; it is now used only when
+    it actually exists.
+19. **The Inno Setup `AppId` GUID in `packaging/inno/producer-os.iss`
     must never change.** It's what makes a newer installer register as
     an upgrade instead of a second, parallel install. If it's ever
     accidentally regenerated, every existing user's install becomes
