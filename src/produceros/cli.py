@@ -80,8 +80,15 @@ def _probe_running_instance(host: str, port: int, timeout: float = 1.5) -> bool:
 def _port_is_available(host: str, port: int) -> bool:
     import socket
 
+    # Deliberately NOT setting SO_REUSEADDR: on Windows that flag lets a
+    # second socket bind a port another process is already listening on, so
+    # the probe would report "free" for an occupied port and we would be
+    # back to the silent-failure bug this check exists to prevent. Without
+    # it the bind fails on both platforms, which is what we want. The cost
+    # is calling a port in TIME_WAIT "busy"; the user gets a clear message
+    # and can retry or pick another port, which is far better than the app
+    # appearing to do nothing.
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             probe.bind((host, port))
         except OSError:

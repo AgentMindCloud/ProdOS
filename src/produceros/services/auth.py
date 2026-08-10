@@ -162,7 +162,11 @@ def verify_session_token(
         return None
 
     invalidated_before = _session_invalidated_before(session, user_id)
-    if invalidated_before and issued_at < invalidated_before:
+    # `<=`, not `<`: Windows' system clock has ~15.6ms granularity, so a
+    # token issued in the same tick as a "log out everywhere" would compare
+    # equal and survive the revocation it should have been killed by. Real
+    # failure, caught by CI on windows-latest. Ties fail closed.
+    if invalidated_before and issued_at <= invalidated_before:
         return None
 
     return session.get(User, user_id)

@@ -13,6 +13,7 @@ import socket
 import threading
 import time
 from collections.abc import Generator
+from pathlib import Path
 
 import pytest
 import uvicorn
@@ -21,11 +22,16 @@ from playwright.sync_api import sync_playwright
 
 @pytest.fixture(scope="session")
 def browser():
-    # This environment pre-installs Chromium at a fixed path/version rather
-    # than whatever version this project's pinned `playwright` package would
-    # try to download, so launch it explicitly instead of downloading.
+    # Some sandboxes pre-install Chromium at a fixed path that doesn't match
+    # the version this project's pinned `playwright` would fetch; point at it
+    # when it's actually there. Everywhere else (CI included, where
+    # `playwright install chromium` puts the browser in its own cache) let
+    # Playwright resolve its own browser -- hardcoding the sandbox path made
+    # the whole e2e suite fail to launch on GitHub Actions.
+    preinstalled = Path("/opt/pw-browsers/chromium")
+    launch_kwargs = {"executable_path": str(preinstalled)} if preinstalled.exists() else {}
     with sync_playwright() as p:
-        chromium = p.chromium.launch(executable_path="/opt/pw-browsers/chromium")
+        chromium = p.chromium.launch(**launch_kwargs)
         yield chromium
         chromium.close()
 
