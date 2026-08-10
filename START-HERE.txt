@@ -1,0 +1,136 @@
+===========================================================
+ ProducerOS - How to install it (5 minutes, nothing to learn)
+===========================================================
+
+ProducerOS keeps track of your music projects: versions, files,
+credits and splits, release checklists, deadlines, and deliveries.
+Everything stays on your own computer. It never uploads your music
+anywhere, and it never changes or deletes your audio files.
+
+
+-----------------------------------------------------------
+STEP 1 - Find the installer
+-----------------------------------------------------------
+
+You are looking for one file named something like:
+
+    ProducerOS-Setup-0.1.0.exe
+
+If whoever sent you this also sent that file, you already have it.
+
+If not, download it here (no account needed, it is free):
+
+    https://github.com/AgentMindCloud/ProdOS/releases
+
+On that page, under the newest version, click the file named
+ProducerOS-Setup-....exe to download it.
+
+
+-----------------------------------------------------------
+STEP 2 - Install it
+-----------------------------------------------------------
+
+1. Double-click ProducerOS-Setup-0.1.0.exe
+
+2. Windows may show a blue box saying "Windows protected your PC".
+   This is normal. It appears because this is a small independent
+   app rather than one from a big company.
+
+   Click "More info", then click "Run anyway".
+
+3. Click through the installer. The default choices are fine.
+   Leave "Create a desktop icon" ticked.
+
+4. When it finishes, tick "Launch ProducerOS now" and click Finish.
+
+You will NOT be asked for an administrator password. Nothing else
+needs to be installed first.
+
+
+-----------------------------------------------------------
+STEP 3 - First time you open it
+-----------------------------------------------------------
+
+ProducerOS opens in your normal web browser. This is just how it
+shows its screen - it is still running only on your computer, and
+still works with no internet connection.
+
+The first screen asks you to create your login:
+
+  - Your name
+  - A username you will remember
+  - A password (at least 10 characters)
+
+Write these down somewhere safe. There is no "forgot password"
+email, because ProducerOS has no connection to the internet.
+
+That's it. You're in.
+
+
+-----------------------------------------------------------
+USING IT FROM NOW ON
+-----------------------------------------------------------
+
+Open ProducerOS with the ProducerOS icon on your desktop
+(it is also in your Start Menu).
+
+Closing the browser tab does NOT close ProducerOS - it keeps
+running quietly so it opens again instantly. Just double-click
+the desktop icon whenever you want it back.
+
+To close it properly, go to Settings and click
+"Close ProducerOS".
+
+
+-----------------------------------------------------------
+WANT TO TRY IT WITH EXAMPLE DATA FIRST?
+-----------------------------------------------------------
+
+Ask whoever sent you this to show you the "demo data" option.
+It fills ProducerOS with a few made-up artists and songs so you
+can click around safely, and it can be removed again afterwards
+without touching anything real.
+
+
+-----------------------------------------------------------
+IF SOMETHING GOES WRONG
+-----------------------------------------------------------
+
+"I double-clicked the icon and nothing happened"
+    It is probably already running. Wait a few seconds for the
+    browser to open. If nothing appears, open your browser and
+    type this into the address bar:   127.0.0.1:8420
+
+"It says the port is already being used"
+    Another program on your PC is using the same doorway.
+    Restarting your computer usually fixes it.
+
+Anything else: send whoever gave you this app the file at
+    C:\Users\<your name>\AppData\Local\ProducerOS\logs\produceros.log
+It contains no passwords - it is safe to send.
+
+
+-----------------------------------------------------------
+YOUR DATA
+-----------------------------------------------------------
+
+Everything you enter is stored on your own PC, here:
+
+    C:\Users\<your name>\AppData\Local\ProducerOS
+
+Installing updates, or even uninstalling ProducerOS, does NOT
+delete it. You can make a backup any time from the Backup page
+inside the app.
+
+
+-----------------------------------------------------------
+UPDATES
+-----------------------------------------------------------
+
+When you're told there's a new version:
+
+  1. In ProducerOS, go to Settings -> Close ProducerOS
+  2. Download the new ProducerOS-Setup-....exe (same link as above)
+  3. Double-click it and click through, exactly like the first time
+
+It updates in place. Your projects and settings are untouched.

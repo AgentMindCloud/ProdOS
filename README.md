@@ -27,6 +27,12 @@ again -- it upgrades in place and never touches your data. Full
 walkthrough: [docs/INSTALL_WINDOWS.md](docs/INSTALL_WINDOWS.md). Phone
 access: [docs/ANDROID_PWA.md](docs/ANDROID_PWA.md).
 
+**Setting this up for someone non-technical?** Give them
+[START-HERE.txt](START-HERE.txt) -- plain-language install steps with no
+jargon -- and see
+[docs/SHARING_WITH_SOMEONE.md](docs/SHARING_WITH_SOMEONE.md) for how to
+hand them the installer.
+
 ## Quick start (from source, any OS)
 
 Requires Python 3.12.
@@ -77,6 +83,8 @@ ruff check src tests && mypy src
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Code layout and how the pieces fit |
 | [AGENTS.md](AGENTS.md) | Non-negotiable rules for contributors (human or AI) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Development workflow |
+| [START-HERE.txt](START-HERE.txt) | Plain-language install steps to hand to a non-technical user |
+| [docs/SHARING_WITH_SOMEONE.md](docs/SHARING_WITH_SOMEONE.md) | How to get the installer and send it to someone |
 | [HANDOFF.md](HANDOFF.md) | Current project state for whoever works on it next |
 
 ## License
