@@ -17,6 +17,7 @@ jobs:
     name: Build Windows package
     needs: validate
     runs-on: windows-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 

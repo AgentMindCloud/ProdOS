@@ -14,6 +14,7 @@ jobs:
   build:
     name: Build & smoke test (windows-latest)
     runs-on: windows-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -75,6 +76,11 @@ jobs:
           Stop-Job $job -ErrorAction SilentlyContinue
           Receive-Job $job -ErrorAction SilentlyContinue
           Remove-Job $job -Force -ErrorAction SilentlyContinue
+          # Stop-Job kills the job's PowerShell, not the ProducerOS.exe it
+          # started -- leaving orphans that hold files the installer and
+          # uninstaller later need to replace.
+          Get-Process -Name ProducerOS -ErrorAction SilentlyContinue | Stop-Process -Force
+          Start-Sleep -Seconds 2
 
           if (-not $ok) {
             throw "Built ProducerOS.exe did not respond with 200 on /setup within 30 seconds."
@@ -99,8 +105,9 @@ jobs:
 
           $installDir = "$env:RUNNER_TEMP\produceros-installed"
           Write-Host "Running silent install to $installDir"
+          Get-Process -Name ProducerOS -ErrorAction SilentlyContinue | Stop-Process -Force
           Start-Process -FilePath $installerPath.FullName `
-            -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=$installDir", "/TASKS=desktopicon" `
+            -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/FORCECLOSEAPPLICATIONS", "/DIR=$installDir", "/TASKS=desktopicon" `
             -Wait -NoNewWindow
 
           $installedExe = Join-Path $installDir "ProducerOS.exe"
@@ -138,9 +145,16 @@ jobs:
           if (-not $ok) { throw "Installed ProducerOS.exe did not respond with 200 on /setup." }
           Write-Host "Installed app smoke test passed."
 
+          # The app must actually be stopped before uninstalling. Leaving it
+          # running previously hung the uninstaller indefinitely on files in
+          # use -- the real-world equivalent of updating without closing the
+          # app first, which is why the installer also sets CloseApplications.
+          Get-Process -Name ProducerOS -ErrorAction SilentlyContinue | Stop-Process -Force
+          Start-Sleep -Seconds 3
+
           Write-Host "Uninstalling and confirming user data is left alone..."
           $uninstaller = Join-Path $installDir "unins000.exe"
-          Start-Process -FilePath $uninstaller -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait -NoNewWindow
+          Start-Process -FilePath $uninstaller -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/FORCECLOSEAPPLICATIONS" -Wait -NoNewWindow
           if (Test-Path $installedExe) { throw "Uninstaller did not remove $installedExe." }
           if (-not (Test-Path "$env:PRODUCEROS_DATA_DIR\produceros.db")) {
             throw "Uninstall should never touch the data directory, but the database is gone."
