@@ -24,7 +24,22 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install --upgrade pip pip-audit
       - name: pip-audit
-        run: python -m pip install -e . && pip-audit --strict
+        # Audits requirements.lock rather than the installed environment.
+        # Auditing the environment meant installing ProducerOS itself, and
+        # `--strict` then failed every single run with "produceros:
+        # Dependency not found on PyPI and could not be audited" -- an
+        # unpublishable local package, not a vulnerability. The lock file
+        # is also the better target: it pins dev/build tooling
+        # (PyInstaller, pytest, ruff) that an environment install of the
+        # runtime extras alone would never have scanned.
+        #
+        # PYSEC-2026-1845 (pytest 8.4.2, fixed in 9.0.3) is ignored on
+        # purpose: pytest is test-only, is never installed on a user's
+        # machine, and is not bundled into the Windows installer. Moving
+        # to pytest 9 also requires bumping pytest-asyncio and pytest-cov,
+        # which is tracked in HANDOFF.md rather than done under a release.
+        # Drop this flag once that bump lands.
+        run: pip-audit --strict -r requirements.lock --ignore-vuln PYSEC-2026-1845
 
   secret-scan:
     name: Secret scan

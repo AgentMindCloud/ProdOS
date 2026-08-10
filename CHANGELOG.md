@@ -15,6 +15,15 @@ once tagged releases begin.
 - `docs/BUILDING.md`: how to build the installer (via CI or locally on
   Windows), what gates a release, and how to cut one.
 
+### Fixed
+
+- The `Security` workflow's dependency audit had failed on every run
+  since the repository was created. `pip-audit --strict` was rejecting
+  ProducerOS itself ("Dependency not found on PyPI and could not be
+  audited") because it is a local, unpublished package -- not because of
+  any vulnerability. It now audits `requirements.lock`, which also covers
+  the dev/build tooling the previous environment scan never saw.
+
 ### Changed
 
 - `packaging/README.md` and ADR 0006 no longer describe the installer as

@@ -210,6 +210,17 @@ the updater). Test count went 123 -> 127.
     accidentally regenerated, every existing user's install becomes
     stranded (their old copy stays installed and unrelated to the new
     one) -- treat it like a permanent, immutable identifier.
+21. **`pip-audit --strict` on the installed environment can never pass
+    for this repo.** The `Security` workflow was red on *every* run since
+    the repo was created, and nobody noticed because the failure message
+    looks like a scan result: `produceros: Dependency not found on PyPI
+    and could not be audited`. That is `--strict` objecting to ProducerOS
+    itself -- a local, deliberately unpublished package -- not to a
+    vulnerability. `--skip-editable` does not help (`--strict` then fails
+    with "distribution marked as editable" instead). The fix was to audit
+    `requirements.lock` instead of the environment, which also widens
+    coverage to the dev/build tooling. If you ever see that job go red,
+    read the actual finding before assuming a new CVE.
 
 ## Environment quick-start (dev container)
 
@@ -226,15 +237,22 @@ pytest tests/e2e -q
 
 ## Suggested next steps, in order
 
-1. Trigger the GitHub Actions workflows (open a PR or push to main per
-   their `on:` blocks); fix anything that only surfaces on real
-   `windows-latest` (most likely candidates: the `.iss` script failing to
-   compile for a syntax reason invisible to manual review, PowerShell
-   quirks in `windows-build.yml`'s installer smoke test, Playwright
-   browser install timing in `ci.yml`).
-2. Tag `v0.1.0` once CI is green to exercise `release.yml` end-to-end and
-   produce a real, downloadable `ProducerOS-Setup-0.1.0.exe`.
-3. Actually install that on a real Windows machine once: confirm the
+*(Steps 1 and 2 of the original list are done: all four workflows have
+run on real runners and CI + Windows Build are green on `main`, and
+v0.1.0 is published with a CI-built `ProducerOS-Setup-0.1.0.exe`. That
+same binary is now committed at `installer/` so a repo ZIP is a usable
+handoff -- see `installer/README.md` and `docs/BUILDING.md`.)*
+
+1. **Bump pytest to >= 9.0.3** (PYSEC-2026-1845), which also means
+   bumping `pytest-asyncio` and `pytest-cov` past their current `<0.25` /
+   `<6.0` caps in `pyproject.toml`, plus `requirements.lock`. It is
+   test-only and never reaches a user's machine, which is why it wasn't
+   done under the release. Once it lands, drop
+   `--ignore-vuln PYSEC-2026-1845` from `.github/workflows/security.yml`.
+2. Fix the e2e fixture state leak on ubuntu runners (gotcha #19), then
+   remove `with: run_e2e: false` from `release.yml` so releases are gated
+   on the browser suite again.
+3. Actually install v0.1.0 on a real Windows machine once: confirm the
    SmartScreen warning reads the way `docs/INSTALL_WINDOWS.md` describes,
    confirm the desktop icon looks right (the generated `.ico`'s visual
    correctness was only checked as a rendered PNG frame here, never as an
