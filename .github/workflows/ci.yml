@@ -5,6 +5,15 @@ on:
     branches: [main]
   pull_request:
   workflow_call:
+    inputs:
+      run_e2e:
+        description: >-
+          Run the Playwright browser suite. Callers that must not be blocked
+          by it (the release pipeline) pass false; push/PR runs leave it
+          unset, which keeps it on.
+        required: false
+        default: true
+        type: boolean
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -47,6 +56,8 @@ jobs:
         run: pytest tests/unit tests/integration tests/security -q
 
       - name: e2e tests (Playwright)
+        # `inputs` is empty for push/pull_request, so this is true there.
+        if: ${{ inputs.run_e2e != false }}
         shell: bash
         run: |
           # The browser suite is timing-sensitive on shared CI runners: the

@@ -185,7 +185,26 @@ the updater). Test count went 123 -> 127.
     `/opt/pw-browsers/chromium` is specific to this dev container and
     broke the whole e2e suite on GitHub Actions; it is now used only when
     it actually exists.
-19. **The Inno Setup `AppId` GUID in `packaging/inno/producer-os.iss`
+19. **Open bug: the e2e fixtures leak state between tests on ubuntu CI.**
+    Symptom, straight from the server access log in a failing run:
+
+        POST /setup   303      <- setup submitted
+        GET  /        303      <- dashboard bounced...
+        GET  /setup   200      <- ...back to setup
+
+    i.e. immediately after a successful first-run setup the app behaves
+    as though no admin exists, so `wait_for_url` times out. That points at
+    `live_server` in `tests/e2e/conftest.py`: `PRODUCEROS_DATA_DIR` is
+    monkeypatched per test and the settings/engine caches are reset, but
+    something (a not-yet-exited uvicorn thread from the previous test
+    still holding a cached engine, most likely) leaves the new test's
+    requests reading a different database than the one the POST wrote to.
+    Reproduces only on ubuntu-latest; windows-latest and this dev
+    container both pass. Because of this the release pipeline runs
+    `ci.yml` with `run_e2e: false` (see the comment there) -- fix the
+    fixture, then remove that flag rather than leaving releases
+    permanently unguarded by the browser tests.
+20. **The Inno Setup `AppId` GUID in `packaging/inno/producer-os.iss`
     must never change.** It's what makes a newer installer register as
     an upgrade instead of a second, parallel install. If it's ever
     accidentally regenerated, every existing user's install becomes
