@@ -4,9 +4,22 @@ on:
   push:
     tags:
       - "v*.*.*"
+  # Manual trigger as well as tag-push, so a release can be cut from the
+  # Actions tab (and by tooling that can create workflow runs but not
+  # push tags). softprops/action-gh-release creates the tag itself when
+  # it doesn't already exist, so both paths produce the same result.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, including the leading v (e.g. v0.1.0)"
+        required: true
+        type: string
 
 permissions:
   contents: write
+
+env:
+  RELEASE_TAG: ${{ inputs.version || github.ref_name }}
 
 jobs:
   validate:
@@ -51,7 +64,7 @@ jobs:
       - name: Build the installer (PyInstaller + Inno Setup)
         shell: pwsh
         run: |
-          $version = "${{ github.ref_name }}" -replace '^v', ''
+          $version = "${{ env.RELEASE_TAG }}" -replace '^v', ''
           .\scripts\build_installer.ps1 -Version $version
           echo "PRODUCEROS_VERSION=$version" >> $env:GITHUB_ENV
 
@@ -101,10 +114,10 @@ jobs:
 
       - name: Create release notes
         run: |
-          VERSION="${{ github.ref_name }}"
+          VERSION="${{ env.RELEASE_TAG }}"
           VERSION="${VERSION#v}"
           cat > release-notes.md <<EOF
-          ## ProducerOS ${{ github.ref_name }}
+          ## ProducerOS ${{ env.RELEASE_TAG }}
 
           ### Install (recommended)
           1. Download **\`ProducerOS-Setup-${VERSION}.exe\`** below.
@@ -139,8 +152,8 @@ jobs:
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ProducerOS ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ProducerOS ${{ env.RELEASE_TAG }}
           body_path: release-notes.md
           files: |
             release-assets/*
