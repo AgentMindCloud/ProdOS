@@ -104,13 +104,20 @@ begin
   // an app often worry their data went with it. It didn't: the data
   // directory is a separate folder from the install directory and was
   // never touched by this uninstaller.
+  //
+  // SuppressibleMsgBox, not MsgBox: /SUPPRESSMSGBOXES only suppresses
+  // Setup's *own* dialogs, never a MsgBox() raised from [Code]. Using
+  // MsgBox here left the uninstaller blocked on a modal dialog forever
+  // during any silent uninstall (it hung CI for minutes until the job was
+  // cancelled). SuppressibleMsgBox shows the dialog normally for a real
+  // user and auto-answers IDOK when running silently.
   if CurUninstallStep = usPostUninstall then
-    MsgBox(
+    SuppressibleMsgBox(
       'ProducerOS has been removed.' + #13#10 + #13#10 +
       'Your projects, releases, and settings were kept and were not deleted. ' +
       'They are stored separately at:' + #13#10 +
       ExpandConstant('{localappdata}') + '\ProducerOS' + #13#10 + #13#10 +
       'If you want to remove that data too, delete that folder yourself.',
-      mbInformation, MB_OK
+      mbInformation, MB_OK, IDOK
     );
 end;
