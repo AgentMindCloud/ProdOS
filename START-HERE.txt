@@ -16,9 +16,17 @@ You are looking for one file named something like:
 
     ProducerOS-Setup-0.1.0.exe
 
-If whoever sent you this also sent that file, you already have it.
+If you were sent a ZIP file, unzip it first (right-click -> "Extract
+All"), then open the folder inside it called:
 
-If not, download it here (no account needed, it is free):
+    installer
+
+The file you want is in there. It is the only thing in this whole
+download you need to touch.
+
+If you were sent that .exe file on its own, you already have it.
+
+If you have neither, download it here (no account needed, it is free):
 
     https://github.com/AgentMindCloud/ProdOS/releases
 

@@ -4,7 +4,24 @@ All notable changes to ProducerOS. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer
 once tagged releases begin.
 
-## [Unreleased] -- 0.1.0 (initial build)
+## [Unreleased]
+
+### Added
+
+- The current Windows installer is now committed to `installer/`, so
+  downloading this repository as a ZIP yields something a non-technical
+  person can double-click. See `installer/README.md` for the trade-off
+  and `docs/BUILDING.md` for how to refresh it after a release.
+- `docs/BUILDING.md`: how to build the installer (via CI or locally on
+  Windows), what gates a release, and how to cut one.
+
+### Changed
+
+- `packaging/README.md` and ADR 0006 no longer describe the installer as
+  unverified: `windows-build.yml` has been observed passing on a real
+  `windows-latest` runner, and v0.1.0 was built by that pipeline.
+
+## [0.1.0] -- 2026-08-10
 
 The complete initial implementation of ProducerOS per
 `docs/PRODUCT_SPEC.md`.

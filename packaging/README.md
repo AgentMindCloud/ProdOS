@@ -52,6 +52,9 @@ this way.
 
 ## Building
 
+Full instructions (prerequisites, CI builds, cutting a release) are in
+[`../docs/BUILDING.md`](../docs/BUILDING.md). The short version:
+
 From a Windows machine with the dev environment set up
 (`scripts\setup_windows.ps1`) and [Inno Setup](https://jrsoftware.org/isdl.php)
 installed (`windows-latest` GitHub Actions runners already have it):
@@ -118,17 +121,18 @@ smoke tested for real:
   mark), since there's no Windows Explorer here to eyeball a shortcut
   icon in.
 
-**Not verified in this environment** (no Windows machine, no Inno Setup
-available here): that the `.iss` script actually compiles, that the
-compiled installer actually runs a silent install, creates real Start
-Menu/desktop shortcuts, and that uninstalling actually leaves
-`%LOCALAPPDATA%\ProducerOS\` alone. `.github/workflows/windows-build.yml`
-checks exactly these things on a real `windows-latest` runner, but that
-workflow has not yet been triggered/observed passing from this session.
-Treat the installer as syntax-reviewed and Linux-smoke-tested-by-analogy,
-not Windows-verified, until that CI run is observed passing --
-[ADR 0006](../docs/adr/0006-inno-setup-installer.md) has the same caveat
-in more detail.
+**Verified on real Windows by CI.** `.github/workflows/windows-build.yml`
+runs on a `windows-latest` runner and has been observed passing on `main`
+(run `31359810341`, commit `1607160`). It checks that the `.iss` script
+compiles, that the compiled installer completes a silent install, that
+Start Menu and desktop shortcuts are really created, that the *installed*
+`ProducerOS.exe` starts and serves an HTTP `200`, and that uninstalling
+leaves `%LOCALAPPDATA%\ProducerOS\` intact.
+
+**Still not verified by anyone:** an *interactive* install on a real
+Windows desktop (CI only ever runs it silently), and what SmartScreen
+actually shows on first run — that behaviour is predicted from the
+installer being unsigned, not observed.
 
 ## Signing
 

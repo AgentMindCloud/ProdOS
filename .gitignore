@@ -30,6 +30,12 @@ installer-output/
 /ProducerOS-*.exe
 /ProducerOS-*.zip
 
+# ...except the one shipped installer that is deliberately committed, so
+# that "Code -> Download ZIP" contains something a non-technical person can
+# actually double-click. See installer/README.md.
+!installer/ProducerOS-Setup-*.exe
+!installer/ProducerOS-Setup-*.exe.sha256
+
 # Test / tooling caches
 .pytest_cache/
 .ruff_cache/

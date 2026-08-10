@@ -31,7 +31,10 @@ access: [docs/ANDROID_PWA.md](docs/ANDROID_PWA.md).
 [START-HERE.txt](START-HERE.txt) -- plain-language install steps with no
 jargon -- and see
 [docs/SHARING_WITH_SOMEONE.md](docs/SHARING_WITH_SOMEONE.md) for how to
-hand them the installer.
+hand them the installer. The quickest route: send them this repo as a ZIP
+(green **Code** button -> **Download ZIP**) -- the current installer is
+committed at [installer/](installer/), so the ZIP already contains
+everything they need.
 
 ## Quick start (from source, any OS)
 
@@ -74,6 +77,7 @@ ruff check src tests && mypy src
 | [docs/ANDROID_PWA.md](docs/ANDROID_PWA.md) | LAN pairing + PWA install on Android |
 | [docs/BACKUP_RESTORE.md](docs/BACKUP_RESTORE.md) | Backups, restore, data export |
 | [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) | Idea-to-delivered-release workflow |
+| [docs/BUILDING.md](docs/BUILDING.md) | Building the Windows installer, cutting a release |
 | [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | Schema as implemented |
 | [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md) | Auth, CSRF, file safety, LAN pairing |
 | [docs/MCP.md](docs/MCP.md) | Optional local MCP server for AI assistants |

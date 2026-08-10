@@ -105,11 +105,12 @@ PyInstaller's generic icon.
   then silently uninstall and confirm the data directory survives --
   not just "the raw PyInstaller bundle runs," which was all the previous
   smoke test checked.
-- As with the PyInstaller `.exe` itself (ADR 0005), the `.iss` script has
-  not been compiled on real Windows from this session -- there is no
-  Windows machine or Inno Setup available in this build environment. It
-  was written and manually reviewed against Inno Setup's documented
-  syntax, but `windows-build.yml`'s CI run on a real `windows-latest`
-  runner is what actually validates it compiles and behaves as designed.
-  Treat it as syntax-reviewed, not build-verified, until that CI run is
-  observed passing.
+- The `.iss` script cannot be compiled in this build environment (no
+  Windows, no Inno Setup), so `windows-build.yml` on a real
+  `windows-latest` runner is what validates it. That run has now been
+  observed passing on `main` (run `31359810341`, commit `1607160`), and
+  the v0.1.0 release installer was produced by the same pipeline, so the
+  script is build-verified rather than merely syntax-reviewed.
+- Two things that CI still cannot tell us: how an *interactive* install
+  behaves (CI only ever runs `/VERYSILENT`), and what SmartScreen shows
+  on first run. Both are predicted, not observed.

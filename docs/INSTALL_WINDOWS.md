@@ -115,3 +115,7 @@ alone (no Inno Setup needed) produces just the raw
 installer-free alternative -- see `packaging/README.md` for what's
 bundled and [ADR 0006](adr/0006-inno-setup-installer.md) for why both
 exist and how they differ.
+
+Full build and release instructions -- prerequisites, CI builds, cutting a
+tag, refreshing the committed installer -- are in
+[BUILDING.md](BUILDING.md).

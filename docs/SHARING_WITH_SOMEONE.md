@@ -7,27 +7,44 @@ with no jargon.
 
 ## The important thing to know first
 
-**The installer is not in the repository, and it can't be.**
+**The built installer is committed into this repo, in `installer/`.**
 
-`ProducerOS-Setup-X.Y.Z.exe` is *built* from the source code, on Windows,
-by GitHub Actions. It isn't a file that lives in the repo. So:
+That is deliberate and slightly unusual. Normally
+`ProducerOS-Setup-X.Y.Z.exe` would live only on the Releases page, and a
+repo ZIP would contain source code with nothing runnable in it. Here the
+current installer is committed so that "Code -> Download ZIP" gives you a
+package you can hand straight to a non-technical person:
 
-- Downloading the repo as a ZIP ("Code -> Download ZIP") gives you the
-  **source code** -- about 200 Python files, no installer. Sending that
-  to a non-technical person is not useful: there's nothing in it they can
-  double-click.
-- The built installer lives on the **Releases** page instead, which is
-  exactly what that page is for.
+```
+ProdOS-main.zip
+  START-HERE.txt                          <- plain-language instructions
+  installer/ProducerOS-Setup-0.1.0.exe    <- the thing he double-clicks
+  ...everything else is source code he can ignore
+```
 
-Good news: the Releases route is *simpler* than the ZIP route for both of
-you. It's one file instead of a whole source tree.
+The cost of doing it this way, for the record: ~23 MB per release stays in
+git history forever. Keep only the newest installer in `installer/`
+(replace, don't accumulate) and that stays manageable for a project this
+size. See [`../installer/README.md`](../installer/README.md).
 
-> Why not commit the .exe into the repo anyway? It's ~40 MB per release,
-> and git keeps every version forever -- ten releases would add ~400 MB
-> that everyone re-downloads on every clone, permanently. Releases exist
-> precisely so binaries don't have to live in git history.
+The installer is *also* still published on the
+[Releases page](https://github.com/AgentMindCloud/ProdOS/releases), which
+is the smaller, faster download if he's willing to click a link.
 
-## Option 1: send him a link (easiest)
+## Option 0: send him the repo ZIP (what you asked for)
+
+1. Go to <https://github.com/AgentMindCloud/ProdOS>
+2. Green **Code** button -> **Download ZIP**
+3. Send him that ZIP however you like (WhatsApp, Drive, WeTransfer, USB).
+
+Tell him: *unzip it, open the `installer` folder, double-click the .exe,
+and read `START-HERE.txt` if anything is confusing.*
+
+This is the heaviest option (the ZIP carries the source tree as well as
+the installer, so ~30 MB instead of ~23 MB) but it needs no explaining and
+no GitHub visit at all.
+
+## Option 1: send him a link (smallest download)
 
 Send him this URL:
 
@@ -45,10 +62,10 @@ message) so he knows what to do with it.
 
 If he shouldn't have to visit GitHub at all:
 
-1. Go to <https://github.com/AgentMindCloud/ProdOS/releases>
-2. Download `ProducerOS-Setup-X.Y.Z.exe` yourself (~40 MB).
-3. Put that file and `START-HERE.txt` together in one folder.
-4. Zip the folder and send it however you like.
+1. Take `installer/ProducerOS-Setup-X.Y.Z.exe` from your own clone (or
+   download it from <https://github.com/AgentMindCloud/ProdOS/releases>).
+2. Put that file and `START-HERE.txt` together in one folder.
+3. Zip the folder and send it however you like.
 
 That gives him a two-file package: the thing to double-click, and the
 instructions. Nothing else.
@@ -83,9 +100,12 @@ publishes it to the Releases page with a checksum and an SBOM. It takes
 roughly 10-15 minutes, after which the new `.exe` is on the Releases page
 ready to share.
 
-If you'd rather build one locally on your own Windows PC, see
-`docs/INSTALL_WINDOWS.md` ("For developers: building from source") --
-that needs Python and Inno Setup installed.
+One extra step if you want the repo-ZIP route to keep working: after the
+release finishes, swap the new `.exe` into `installer/`. Full steps are in
+[`BUILDING.md`](BUILDING.md) under "Refreshing the committed installer".
+
+If you'd rather build one locally on your own Windows PC, that's also in
+[`BUILDING.md`](BUILDING.md) -- it needs Python and Inno Setup installed.
 
 ## First-time setup on his machine
 
