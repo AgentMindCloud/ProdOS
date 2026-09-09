@@ -27,7 +27,7 @@
 {%- endmacro %}
 
 {% macro stage_pill(state) -%}
-  <span class="stage-pill">{{ state.replace("_", " ") }}</span>
+  <span class="stage-pill stage-{{ state|lower }}">{{ state.replace("_", " ") }}</span>
 {%- endmacro %}
 
 {% macro approval_badge(status) -%}
@@ -42,4 +42,30 @@
 
 {% macro csrf_field(csrf_token) -%}
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+{%- endmacro %}
+
+{% macro icon(name) -%}
+<svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-{{ name }}"/></svg>
+{%- endmacro %}
+
+{% macro cover(project, size='', artwork=none) -%}
+<img class="project-cover {{ size }}{% if not artwork %} cover-{{ project.state.value|lower }}{% endif %}" src="{% if artwork %}/asset-versions/{{ artwork.id }}/preview{% else %}/static/artwork/studio-disc.png{% endif %}" alt="{% if artwork %}Project artwork{% else %}{% endif %}" {% if not artwork %}title="Default project illustration"{% endif %} width="64" height="64" loading="lazy">
+{%- endmacro %}
+
+{% macro player(media, project) -%}
+{% if media.audio %}
+<div class="audio-player" data-audio-player>
+  <div class="audio-caption"><span>LOCAL PREVIEW</span><span>{{ media.audio.asset.label }} · v{{ media.audio.version_number }}</span></div>
+  <canvas class="audio-visualizer" width="640" height="100" aria-label="Live audio visualization; active during playback"></canvas>
+  <audio controls preload="none" src="/asset-versions/{{ media.audio.id }}/preview" aria-label="Preview {{ project.final_title or project.working_title }}"></audio>
+  <div class="player-controls" hidden>
+    <button type="button" class="btn btn-round" data-audio-skip="-10" aria-label="Back 10 seconds">−10</button>
+    <button type="button" class="btn btn-primary play-button" data-audio-play aria-label="Play audio preview">{{ icon('play') }}</button>
+    <button type="button" class="btn btn-round" data-audio-skip="10" aria-label="Forward 10 seconds">+10</button>
+  </div>
+  <p class="audio-status" role="status" data-audio-status>{{ media.audio.original_filename }}</p>
+</div>
+{% else %}
+<div class="preview-empty"><span class="preview-empty-icon">{{ icon('releases') }}</span><p>Your next sound starts here.</p><a href="/projects/{{ project.id }}#assets">Register a local mix or master →</a><small>Preview needs an audio file inside an approved music folder.</small></div>
+{% endif %}
 {%- endmacro %}

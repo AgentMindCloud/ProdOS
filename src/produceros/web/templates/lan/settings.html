@@ -14,19 +14,19 @@
 {% if bind_mode == "lan" %}
 <div class="panel">
   <h2>Pair a new device</h2>
-  <form method="post" action="/settings/lan/start" class="flex gap-1" style="align-items:end;">
+  <form method="post" action="/settings/lan/start" class="layout-1 flex gap-1">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <div class="field mb-0" style="flex:1;"><label for="device_name">Device name</label><input type="text" id="device_name" name="device_name" placeholder="My Android phone"></div>
+    <div class="layout-2 field mb-0"><label for="device_name">Device name</label><input type="text" id="device_name" name="device_name" placeholder="My Android phone"></div>
     <button type="submit" class="btn btn-primary">Generate pairing code</button>
   </form>
 
   {% if new_pairing %}
-  <div class="panel" style="background: var(--panel-alt); margin-top:1rem;">
+  <div class="layout-28 panel">
     <h3>Scan with your phone, or enter this code</h3>
-    <div class="flex gap-2 items-center" style="flex-wrap:wrap;">
+    <div class="layout-21 flex gap-2 items-center">
       <img src="{{ new_pairing.qr_data_uri }}" alt="QR code to pair {{ new_pairing.device.device_name }}" width="200" height="200">
       <div>
-        <p style="font-size:2rem; font-weight:700; letter-spacing:0.1em;">{{ new_pairing.code }}</p>
+        <p class="layout-29">{{ new_pairing.code }}</p>
         <p class="text-faint">Expires in {{ new_pairing.ttl_minutes }} minutes.</p>
         <p class="text-faint">Or visit: <code>{{ new_pairing.url }}</code></p>
       </div>

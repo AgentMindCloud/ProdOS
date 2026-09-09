@@ -21,6 +21,7 @@ from pathlib import Path
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from produceros.config import get_settings
 from produceros.models.assets import AssetVersion
 from produceros.models.enums import FindingType, ScannerRunStatus, ScannerTrigger
 from produceros.models.scanner import ScannerFinding, ScannerRoot, ScannerRun
@@ -29,6 +30,7 @@ from produceros.scanners.hashing import hash_file
 from produceros.security import (
     PathSecurityError,
     is_allowed_extension,
+    is_within_size_limit,
     resolve_within_allowed_roots,
 )
 
@@ -39,7 +41,11 @@ def run_scan(
     roots: list[ScannerRoot],
     allowed_extensions: list[str],
     triggered_by: ScannerTrigger = ScannerTrigger.MANUAL,
+    max_file_size_mb: int | None = None,
 ) -> ScannerRun:
+    size_limit = (
+        get_settings().scanner_max_file_size_mb if max_file_size_mb is None else max_file_size_mb
+    )
     active_roots = [r for r in roots if r.is_active]
     run = ScannerRun(
         started_at=datetime.now(UTC),
@@ -110,6 +116,18 @@ def run_scan(
                             FindingType.LOCKED_FILE,
                             str(resolved),
                             detail=f"File could not be read: {exc}",
+                        )
+                        findings_count += 1
+                        continue
+
+                    if not is_within_size_limit(stat.st_size, size_limit):
+                        _add_finding(
+                            session,
+                            run,
+                            FindingType.UNEXPECTED_FILE,
+                            str(resolved),
+                            size_bytes=stat.st_size,
+                            detail=f"Skipped: file exceeds the {size_limit} MiB scanner limit. Its contents were not read.",
                         )
                         findings_count += 1
                         continue

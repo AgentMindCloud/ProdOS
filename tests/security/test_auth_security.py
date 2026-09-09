@@ -4,12 +4,39 @@ from __future__ import annotations
 
 import re
 
+import pytest
+
 from tests.conftest import complete_setup
 
 
 def _login_csrf(client) -> str:
     r = client.get("/login")
     return re.search(r'name="csrf_token" value="([^"]+)"', r.text).group(1)
+
+
+@pytest.mark.parametrize(
+    ("destination", "expected"),
+    [
+        ("//example.invalid", "/"),
+        ("/\\example.invalid", "/"),
+        ("/projects?state=MIX", "/projects?state=MIX"),
+    ],
+)
+def test_login_redirect_stays_on_local_app(client, destination, expected):
+    complete_setup(client)
+    client.cookies.delete("produceros_session")
+    response = client.post(
+        "/login",
+        data={
+            "csrf_token": _login_csrf(client),
+            "username": "producer",
+            "password": "correcthorsebattery",
+            "next": destination,
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == expected
 
 
 def test_five_failed_logins_lock_the_account(client):

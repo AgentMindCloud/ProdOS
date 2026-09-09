@@ -1,0 +1,37 @@
+ProducerOS 0.2.0 - Windows portable review build
+
+1. Copy ProducerOS-0.2.0-Windows.zip to your Windows computer.
+2. Right-click it and choose Extract All. Keep the complete extracted
+   ProducerOS folder, including its _internal subfolder.
+3. If an older ProducerOS is running, open its Settings and choose Quit.
+   Back up existing metadata from Settings / Backup before upgrading.
+4. Double-click ProducerOS.exe in the extracted folder. Your browser
+   opens the app at http://127.0.0.1:8420/. No Python install is needed.
+5. On first use, create your own local account. Remember the password;
+   a self-service password-recovery screen has not been built yet.
+6. Add a project. In its Overview, set the Project root folder to the
+   folder containing your music, then save. Under Assets, register a
+   local master/mix file path and mark it current to enable playback.
+   You may instead add the music folder as an active Scanner root.
+7. To close the background app, use Settings / Quit. Closing the browser
+   alone leaves it running. To open it again, double-click ProducerOS.exe.
+
+Your music stays in its original folders. There is no music upload.
+Metadata, passwords (hashed), settings and backups normally live in:
+    %LOCALAPPDATA%\ProducerOS
+The executable folder is separate. Do not delete the data folder.
+Metadata backups do NOT back up your music. Keep a separate music backup.
+
+Playback depends on your browser's audio-format support. WAV, MP3, FLAC,
+OGG, M4A and AIFF extensions are allowed; unsupported codecs may not play.
+ProducerOS does not read FL Studio project-file internals.
+
+This is an unsigned portable review build, not the old 0.1.0 installer.
+Do not run the app from inside the ZIP or move the EXE away from _internal.
+Windows startup and HTTP workflows were tested on the developer's machine.
+Clean-machine installation, interactive upgrades and antivirus/SmartScreen
+behavior still need testing on the recipient's computer.
+
+Optional phone access uses LAN mode on your own network. Do not forward
+the app's port through your router. Hosting a website is not required to
+use ProducerOS, including when you live in a different country.

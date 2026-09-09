@@ -1,0 +1,42 @@
+/* Static layout declarations extracted from legacy templates for CSP compatibility. */
+.layout-1 { align-items:end; }
+.layout-2 { flex:1; }
+.layout-3 { list-style:none; padding:0; }
+.layout-4 { display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid var(--border); }
+.layout-5 { margin-bottom: 1.5rem; }
+.layout-6 { border-radius: 14px; }
+.layout-7 { margin:0; padding-left: 1.2rem; }
+.layout-8 { margin-top:0.5rem; }
+.layout-9 { display:none; white-space:pre-wrap; margin-top:0.5rem; font-size:0.8rem; }
+.layout-10 { margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem; }
+.layout-11 { grid-column:1/-1; }
+.layout-12 { grid-column: 1/-1; }
+.layout-13 { border-color: var(--blocking); }
+.layout-14 { align-items:flex-end; }
+.layout-15 { list-style:none; padding:0; margin:0; }
+.layout-16 { padding:0.6rem 0; border-bottom:1px solid var(--border); }
+.layout-17 { margin:0; }
+.layout-18 { background: var(--panel-alt); }
+.layout-19 { padding:0.4rem 0; border-bottom:1px solid var(--border); }
+.layout-20 { display:flex; justify-content:space-between; align-items:center; }
+.layout-21 { flex-wrap:wrap; }
+.layout-22 { width:100px; }
+.layout-23 { align-self:end; }
+.layout-24 { padding: 1rem 0.25rem; border-bottom: 1px solid var(--border); min-height: var(--touch); text-decoration:none; color: var(--text); }
+.layout-25 { padding:0.3rem 0; }
+.layout-26 { margin-top:1rem; }
+.layout-27 { text-transform:uppercase; font-size:1.5rem; letter-spacing:0.1em; text-align:center; }
+.layout-28 { background: var(--panel-alt); margin-top:1rem; }
+.layout-29 { font-size:2rem; font-weight:700; letter-spacing:0.1em; }
+.layout-30 { min-height:320px; font-family: ui-monospace, monospace; }
+.layout-31 { display:inline; }
+.layout-32 { max-width: 560px; margin: 3rem auto; }
+.layout-33 { border-radius: 16px; margin-bottom: 1rem; }
+.layout-34 { text-align: left; display:none; }
+.layout-35 { border-color: var(--border); width: 100%; margin: 0.5rem 0; }
+.layout-36 { margin: 0.4rem 0 0; }
+.layout-37 { margin: 0.2rem 0 0; }
+.layout-38 { margin-bottom:1rem; }
+.layout-39 { margin: 0.5rem 0; }
+.layout-40 { margin:0 0 0.5rem; }
+.layout-41 { margin-top:0.75rem; }

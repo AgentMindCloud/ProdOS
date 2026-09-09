@@ -2,9 +2,10 @@
 {% import "partials/macros.html" as m %}
 {% block title %}Projects -- ProducerOS{% endblock %}
 {% block page_heading %}Projects{% endblock %}
+{% block page_subtitle %}A home for every idea, mix and master.{% endblock %}
 {% block content %}
 
-<div class="flex justify-between items-center gap-1" style="margin-bottom:1rem; flex-wrap:wrap;">
+<div class="project-toolbar"><p>{{ projects|length }} projects in your view · <a href="/artists">Manage artists</a></p>
   <button class="btn filter-toggle" data-filter-toggle type="button">
     <svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-filter"/></svg> Filters
   </button>
@@ -40,21 +41,21 @@
           {% for a in artists %}<option value="{{ a.id }}" {% if filters.artist_id == a.id|string %}selected{% endif %}>{{ a.name }}</option>{% endfor %}
         </select>
       </div>
-      <div class="field" style="align-self:end;">
+      <div class="layout-23 field">
         <button type="submit" class="btn btn-primary btn-block">Apply</button>
       </div>
     </form>
   </div>
 </div>
 
-<div class="panel">
+<div class="panel projects-panel">
   <div class="table-scroll">
   <table class="data-table">
     <thead><tr><th>Title</th><th>Artist</th><th>Stage</th><th>BPM/Key</th><th>Updated</th></tr></thead>
     <tbody>
       {% for p in projects %}
       <tr>
-        <td><a href="/projects/{{ p.id }}">{{ p.final_title or p.working_title }}</a><br><small>{{ p.internal_code }}</small></td>
+        <td><div class="project-cell">{{ m.cover(p) }}<div><a href="/projects/{{ p.id }}">{{ p.final_title or p.working_title }}</a><br><small>{{ p.internal_code }}</small></div></div></td>
         <td>{{ p.artist.name if p.artist else "--" }}</td>
         <td>{{ m.stage_pill(p.state.value) }}</td>
         <td>{{ p.bpm or "--" }} {{ p.musical_key or "" }}</td>
@@ -67,7 +68,7 @@
 
   {% for p in projects %}
   <div class="record-card record-card-mobile-only">
-    <div class="record-card-row"><a href="/projects/{{ p.id }}"><strong>{{ p.final_title or p.working_title }}</strong></a></div>
+    <div class="project-cell">{{ m.cover(p) }}<a href="/projects/{{ p.id }}"><strong>{{ p.final_title or p.working_title }}</strong></a></div>
     <div class="record-card-row"><span class="k">Code</span><span>{{ p.internal_code }}</span></div>
     <div class="record-card-row"><span class="k">Artist</span><span>{{ p.artist.name if p.artist else "--" }}</span></div>
     <div class="record-card-row"><span class="k">Stage</span>{{ m.stage_pill(p.state.value) }}</div>

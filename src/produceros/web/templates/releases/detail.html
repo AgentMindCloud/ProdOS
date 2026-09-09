@@ -3,7 +3,7 @@
 {% block title %}{{ release.title }} -- ProducerOS{% endblock %}
 {% block page_heading %}{{ release.title }}{% endblock %}
 {% block content %}
-<div class="panel flex justify-between items-center" style="flex-wrap:wrap;">
+<div class="layout-21 panel flex justify-between items-center">
   <div>
     <p class="mb-0">Project: <a href="/projects/{{ project.id }}">{{ project.working_title }}</a> &middot; {{ release.release_type.value.replace("_"," ") }}</p>
     {{ m.readiness_badge(release.readiness_status) }}
@@ -23,12 +23,12 @@
       <span>{{ rule.description }}</span>
       {{ m.checklist_badge(result.status.value) }}
     </div>
-    {% if result.detail %}<p class="text-faint" style="margin: 0.4rem 0 0;">{{ result.detail }}</p>{% endif %}
-    {% if result.recommended_action %}<p class="text-dim" style="margin: 0.2rem 0 0;">Recommended: {{ result.recommended_action }}</p>{% endif %}
+    {% if result.detail %}<p class="layout-36 text-faint">{{ result.detail }}</p>{% endif %}
+    {% if result.recommended_action %}<p class="layout-37 text-dim">Recommended: {{ result.recommended_action }}</p>{% endif %}
     {% if result.status.value == "blocking" %}
-    <form method="post" action="/checklist-results/{{ result.id }}/waive" class="flex gap-1" style="margin-top:0.5rem;">
+    <form method="post" action="/checklist-results/{{ result.id }}/waive" class="layout-8 flex gap-1">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <input type="text" name="reason" placeholder="Reason for waiving (required for audit log)" style="flex:1;">
+      <input class="layout-2" type="text" name="reason" placeholder="Reason for waiving (required for audit log)">
       <button type="submit" class="btn btn-sm">Waive</button>
     </form>
     {% endif %}

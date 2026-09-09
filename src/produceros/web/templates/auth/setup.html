@@ -4,23 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Set up ProducerOS</title>
-  <meta name="theme-color" content="#171513">
+  <meta name="theme-color" content="#e5f5ff">
   <link rel="manifest" href="/static/manifest.webmanifest">
   <link rel="icon" href="/static/icons/favicon-32.png" sizes="32x32">
   <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="stylesheet" href="/static/css/layout.css">
 </head>
 <body>
   <div class="login-shell">
     <div class="login-card panel">
-      <div class="text-center" style="margin-bottom: 1.5rem;">
-        <img src="/static/icons/icon-192.png" width="56" height="56" alt="" style="border-radius: 14px;">
+      <div class="layout-5 text-center">
+        <img class="layout-6" src="/static/icons/icon-192.png" width="56" height="56" alt="">
         <h1>Welcome to ProducerOS</h1>
         <p>Create your local administrator account to get started. Everything stays on this computer.</p>
       </div>
       {% include "partials/flash.html" %}
       {% if errors %}
         <div class="form-error-summary" role="alert">
-          <ul style="margin:0; padding-left: 1.2rem;">
+          <ul class="layout-7">
           {% for error in errors %}<li>{{ error }}</li>{% endfor %}
           </ul>
         </div>

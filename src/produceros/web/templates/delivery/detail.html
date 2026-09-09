@@ -10,16 +10,16 @@
   <p>Output folder: <code>{{ package.output_directory }}</code></p>
 
   <h3>Completeness check ({{ preset.name }})</h3>
-  <ul style="list-style:none; padding:0;">
+  <ul class="layout-3">
     {% for c in completeness %}
-    <li style="padding:0.3rem 0;">
+    <li class="layout-25">
       {{ c.asset_type.value.replace("_"," ").title() }}
       {% if c.present %}{{ m.checklist_badge("passed") }}{% else %}{{ m.checklist_badge("blocking") }}{% endif %}
     </li>
     {% endfor %}
   </ul>
 
-  <div class="btn-group" style="margin-top:1rem;">
+  <div class="layout-26 btn-group">
     <form method="post" action="/delivery/packages/{{ package.id }}/generate-manifest">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <button type="submit" class="btn">Generate manifest (dry run)</button>

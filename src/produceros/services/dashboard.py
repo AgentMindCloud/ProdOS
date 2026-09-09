@@ -26,6 +26,9 @@ INACTIVE_STATES = {ProjectState.RELEASED, ProjectState.ARCHIVED, ProjectState.ON
 @dataclass
 class DashboardSummary:
     active_project_count: int = 0
+    release_attention_count: int = 0
+    deadline_count: int = 0
+    unconfirmed_rights_count: int = 0
     projects_by_stage: dict = field(default_factory=dict)
     active_projects: list = field(default_factory=list)
     releases_needing_attention: list = field(default_factory=list)
@@ -52,9 +55,9 @@ def build_summary(session: Session) -> DashboardSummary:
     summary.projects_by_stage = stage_counts
 
     releases = list(session.scalars(select(Release)))
-    summary.releases_needing_attention = [
-        r for r in releases if r.readiness_status in ("blocking", "warning")
-    ][:8]
+    needing_attention = [r for r in releases if r.readiness_status in ("blocking", "warning")]
+    summary.release_attention_count = len(needing_attention)
+    summary.releases_needing_attention = needing_attention[:8]
 
     today = date.today()
     deadlines = list(
@@ -66,6 +69,7 @@ def build_summary(session: Session) -> DashboardSummary:
         )
     )
     summary.upcoming_deadlines = deadlines[:10]
+    summary.deadline_count = len(deadlines)
 
     unconfirmed = []
     for p in active:
@@ -73,6 +77,7 @@ def build_summary(session: Session) -> DashboardSummary:
         if any(v.warning for v in validations) or not validations:
             unconfirmed.append(p)
     summary.unconfirmed_rights_projects = unconfirmed[:8]
+    summary.unconfirmed_rights_count = len(unconfirmed)
 
     summary.recent_versions = list(
         session.scalars(select(AssetVersion).order_by(AssetVersion.created_at.desc()).limit(8))
@@ -123,5 +128,5 @@ def summary_to_dict(summary: DashboardSummary) -> dict:
             {"title": d.title, "due_date": d.due_date.isoformat()}
             for d in summary.upcoming_deadlines
         ],
-        "releases_needing_attention": len(summary.releases_needing_attention),
+        "releases_needing_attention": summary.release_attention_count,
     }

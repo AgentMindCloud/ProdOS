@@ -1,5 +1,19 @@
 # User Guide
 
+## Local listening and artwork (0.2.0 review build)
+
+In a project's Overview, save its **Project root folder**, or add the
+music folder to Scanner. Under **Assets**, register a local Mix or Master
+file path and mark it current. The dashboard/project detail can then play
+that file without uploading or copying it. Registered Artwork in a
+supported raster format can replace the default hero illustration.
+
+Use the native audio controls or the large play/pause and ten-second skip
+buttons. The colored visualization responds to playback; it is not a
+full-track waveform. Browser codec support is required. Preview files
+outside approved music folders, or inside ProducerOS's data directory,
+are intentionally unavailable. FL Studio project files are never parsed.
+
 This is a walkthrough of ProducerOS's features from a producer's point of
 view. For install steps see `docs/INSTALL_WINDOWS.md`; for phone access
 see `docs/ANDROID_PWA.md`; for admin/operational topics (backups,

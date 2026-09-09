@@ -7,6 +7,13 @@ automatic file mutation, no invented marketing content).
 
 ## Near-term polish
 
+- **Friend onboarding and recovery**: test 0.2.0 on the recipient's real
+  Windows PC; add a local folder picker, password change/recovery and
+  a moved-file relinking workflow. Keep offline operation intact.
+- **Large-library handling**: background scan progress/cancel, pagination,
+  storage visibility and representative performance benchmarks. The
+  existing scanner size setting is now enforced before hashing.
+
 - **Audit-log page**: `AuditEvent` rows are written everywhere but only
   inspectable via the database today (`docs/ADMIN_GUIDE.md`).
 - **Scheduled backups in-app**: currently done via Task Scheduler +
@@ -20,8 +27,9 @@ automatic file mutation, no invented marketing content).
 
 ## Features
 
-- **Waveform previews / in-browser audio playback** of registered
-  versions (local files only, streamed by the local server).
+- **Full waveform overview**: local streamed playback and a live frequency
+  visualizer shipped in the 0.2.0 review build; full-track waveforms remain
+  unbuilt. Avoid decoding a whole large file into browser memory.
 - **A/B version comparison** with the loudness metrics already collected
   by `audio/`.
 - **Checklist rule editor**: rules are seeded and deterministic; letting

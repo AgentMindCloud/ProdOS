@@ -48,7 +48,9 @@ def create_backup(
 ) -> BackupRecord:
     settings.backups_dir.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    destination = settings.backups_dir / f"produceros_{timestamp}.db"
+    # A double click (or overlapping automated/manual backups) can happen
+    # within one clock tick. Every history record needs its own snapshot.
+    destination = settings.backups_dir / f"produceros_{timestamp}_{uuid.uuid4().hex}.db"
 
     source_conn = sqlite3.connect(str(settings.database_path))
     try:
@@ -126,15 +128,15 @@ class RestoreDryRunResult:
 def restore_dry_run(backup_path: str | Path) -> RestoreDryRunResult:
     path = Path(backup_path)
     warnings: list[str] = []
-    if not path.exists():
+    if not path.is_file():
         return RestoreDryRunResult(
             ok=False,
             integrity_check="file not found",
             table_counts={},
-            warnings=[f"'{path}' does not exist."],
+            warnings=[f"'{path}' is not an existing database file."],
         )
 
-    conn = sqlite3.connect(str(path))
+    conn = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
     try:
         try:
             integrity = conn.execute("PRAGMA integrity_check").fetchone()
@@ -148,19 +150,33 @@ def restore_dry_run(backup_path: str | Path) -> RestoreDryRunResult:
             )
 
         table_counts: dict[str, int] = {}
-        for table_name in Base.metadata.tables:
+        for table_name, table in Base.metadata.tables.items():
             try:
                 # table_name is our own ORM metadata (Base.metadata.tables), never user input.
                 count = conn.execute(f'SELECT COUNT(*) FROM "{table_name}"').fetchone()  # noqa: S608 # nosec B608
                 table_counts[table_name] = count[0] if count else 0
+                columns = {
+                    row[1]
+                    for row in conn.execute(f'PRAGMA table_info("{table_name}")')  # noqa: S608 # nosec B608 - trusted ORM table name
+                }
+                missing_columns = set(table.columns.keys()) - columns
+                if missing_columns:
+                    warnings.append(
+                        f"Table '{table_name}' is missing required columns: "
+                        f"{', '.join(sorted(missing_columns))}."
+                    )
             except sqlite3.OperationalError:
                 warnings.append(
-                    f"Table '{table_name}' missing from backup (may be an older schema version)."
+                    f"Required table '{table_name}' is missing or unreadable in the backup."
                 )
     finally:
         conn.close()
 
-    ok = integrity_result == "ok"
+    # SQLite integrity alone also passes for an empty or unrelated database.
+    # Never replace a working catalog with a schema this app cannot read.
+    ok = integrity_result == "ok" and not warnings
+    if integrity_result == "ok" and warnings:
+        warnings.append("Use a compatible ProducerOS backup; older schemas must be upgraded first.")
     return RestoreDryRunResult(
         ok=ok, integrity_check=integrity_result, table_counts=table_counts, warnings=warnings
     )
@@ -180,16 +196,15 @@ def restore_backup(
 
     dry_run = restore_dry_run(backup_path)
     if not dry_run.ok:
-        raise ValueError(
-            f"Refusing to restore: backup failed integrity check ({dry_run.integrity_check})."
-        )
+        detail = "; ".join(dry_run.warnings) or dry_run.integrity_check
+        raise ValueError(f"Refusing to restore: backup validation failed ({detail}).")
 
     from produceros.db.session import reset_engine_cache
 
     settings.backups_dir.mkdir(parents=True, exist_ok=True)
     if settings.database_path.exists():
         timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-        pre_restore_path = settings.backups_dir / f"pre_restore_{timestamp}.db"
+        pre_restore_path = settings.backups_dir / f"pre_restore_{timestamp}_{uuid.uuid4().hex}.db"
         source_conn = sqlite3.connect(str(settings.database_path))
         try:
             dest_conn = sqlite3.connect(str(pre_restore_path))

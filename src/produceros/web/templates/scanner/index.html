@@ -6,7 +6,7 @@
 <div class="panel">
   <p>ProducerOS scans your configured folders and reports what it finds. It never deletes, renames, moves, or uploads anything on its own -- every change requires your explicit approval.</p>
   <h2>Scanner roots</h2>
-  <form method="post" action="/scanner/roots/new" class="grid grid-cols-3" style="align-items:end;">
+  <form method="post" action="/scanner/roots/new" class="layout-1 grid grid-cols-3">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <div class="field"><label for="path">Folder path</label><input type="text" id="path" name="path" placeholder="D:\Music\Projects" required></div>
     <div class="field"><label for="label">Label (optional)</label><input type="text" id="label" name="label" placeholder="Projects"></div>
@@ -24,7 +24,7 @@
   </div>
   {% else %}<p class="empty-state">No scanner roots configured yet. Add a folder above, e.g. <code>D:\Music\Projects</code>.</p>{% endfor %}
 
-  <form method="post" action="/scanner/scan" style="margin-top:1rem;">
+  <form class="layout-26" method="post" action="/scanner/scan">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <button type="submit" class="btn btn-primary" {% if not roots %}disabled{% endif %}>Run scan now (read-only)</button>
   </form>
@@ -47,11 +47,11 @@
     <div class="flex justify-between items-center">
       <span class="badge badge-warning">{{ f.finding_type.value.replace("_"," ") }}</span>
     </div>
-    <p style="margin: 0.5rem 0;">{{ f.path }}</p>
-    <p class="text-faint" style="margin:0 0 0.5rem;">{{ f.detail }}</p>
-    <div class="flex gap-1" style="flex-wrap:wrap;">
+    <p class="layout-39">{{ f.path }}</p>
+    <p class="layout-40 text-faint">{{ f.detail }}</p>
+    <div class="layout-21 flex gap-1">
       {% if f.finding_type.value in new_version_types %}
-      <form method="post" action="/scanner/findings/{{ f.id }}/approve" class="flex gap-1" style="flex-wrap:wrap;">
+      <form method="post" action="/scanner/findings/{{ f.id }}/approve" class="layout-21 flex gap-1">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <select name="project_id" required>
           <option value="">Assign to project&hellip;</option>

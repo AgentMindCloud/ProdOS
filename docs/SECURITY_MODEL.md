@@ -43,6 +43,30 @@ follow this pattern.
 
 ## File-system safety
 
+### Local media previews (0.2.0)
+
+`services/media.py` and `web/routes/media.py` serve only registered audio
+and raster artwork after login. The resolved file must be within an
+active/configured scanner root or its project's explicit root folder.
+The app data directory is excluded even when a broad root is configured;
+relative paths, alternate data streams, FLP, SVG and active-document
+formats are not previewed. Ownership is checked before using current
+media pointers. FileResponse supplies range streaming and private,
+no-store responses. Browser codec support is required; no conversion,
+copy or full-file waveform decode is performed.
+
+Tests cover authentication, roots, file types, private data exclusion,
+current-version ownership and bounded streaming reads. Windows symlink
+creation was unavailable in the 2026-09-09 review; the symlink case was
+skipped, not claimed verified. This remains a local single-user design.
+
+Analytics multipart imports are bounded before parsing: 5 MiB CSV plus
+bounded multipart overhead, at most 10,000 data rows. This is not a global
+quota across all app requests or stored records. The scanner enforces its
+configured per-file size threshold before content hashing.
+
+### Approved file operations
+
 ProducerOS never deletes, renames, moves, or overwrites a file on disk on
 its own initiative:
 

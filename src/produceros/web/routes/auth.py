@@ -109,7 +109,12 @@ async def login_submit(
     form = await request.form()
     csrf_token = get_csrf_token(request)
     next_path = str(form.get("next") or "/")
-    if not next_path.startswith("/"):
+    if (
+        not next_path.startswith("/")
+        or next_path.startswith("//")
+        or "\\" in next_path
+        or any(ord(character) < 32 or ord(character) == 127 for character in next_path)
+    ):
         next_path = "/"
 
     if not verify_csrf(request, form.get("csrf_token")):

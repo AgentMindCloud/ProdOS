@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from produceros.models.user import User
 from produceros.services.dashboard import build_summary
+from produceros.services.media import project_media
 from produceros.web.app import templates
 from produceros.web.context import base_context
 from produceros.web.deps import get_session, require_login
@@ -20,7 +21,14 @@ async def dashboard(
     return templates.TemplateResponse(
         request,
         "dashboard/index.html",
-        {**base_context(user, "dashboard"), "summary": summary},
+        {
+            **base_context(user, "dashboard"),
+            "summary": summary,
+            "featured": summary.active_projects[0] if summary.active_projects else None,
+            "media": project_media(session, summary.active_projects[0])
+            if summary.active_projects
+            else {"audio": None, "artwork": None},
+        },
     )
 
 

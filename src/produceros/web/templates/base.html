@@ -4,11 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}ProducerOS{% endblock %}</title>
-  <meta name="theme-color" content="#171513">
+  <meta name="theme-color" content="#e5f5ff">
   <link rel="manifest" href="/static/manifest.webmanifest">
   <link rel="icon" href="/static/icons/favicon-32.png" sizes="32x32">
   <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon-180.png">
   <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="stylesheet" href="/static/css/layout.css">
   {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -17,10 +18,10 @@
     {% include "partials/nav.html" %}
     <div class="main-column">
       <header class="topbar">
-        <h1>{% block page_heading %}ProducerOS{% endblock %}</h1>
+        <div class="page-title"><span class="mobile-brand">ProducerOS</span><h1>{% block page_heading %}ProducerOS{% endblock %}</h1><p>{% block page_subtitle %}Your studio, in focus.{% endblock %}</p></div>
         <span class="offline-indicator" role="status">
           <svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-offline"/></svg>
-          Offline -- showing cached summary
+          Network offline · local app may still be available
         </span>
         {% if lan_mode %}
         <span class="lan-indicator" role="status">
@@ -28,9 +29,11 @@
           LAN mode active
         </span>
         {% endif %}
-        <a class="btn btn-sm" href="/search" aria-label="Search">
+        <form action="/search" method="get" class="global-search" role="search">
           <svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-search"/></svg>
-        </a>
+          <input type="search" name="q" aria-label="Search projects, releases, artists" placeholder="Search projects, releases, artists…">
+        </form>
+        <a class="btn btn-primary topbar-create" href="/projects/new" aria-label="New project"><svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-plus"/></svg><span>New project</span></a>
       </header>
       <main id="main-content" class="content">
         {% include "partials/flash.html" %}

@@ -3,38 +3,58 @@
 Local-first music production management for a producer using FL Studio on
 Windows. Projects, versions, audio assets, contributors, rights, releases,
 marketing plans, deadlines, delivery packages, and analytics -- in one
-dark-themed dashboard usable from a Windows desktop browser and from an
-Android phone as an installable PWA over your home network.
+visual blue studio dashboard in a Windows desktop browser, with a responsive
+phone layout and optional PWA access over your home network. Physical-device
+PWA installation has not been verified in the September 2026 review.
 
 **No API keys. No cloud services. No Docker. No internet after install.**
 Everything runs and stays on your machine; your unreleased music never
 leaves it, and ProducerOS never modifies an audio file without an
 explicitly approved, logged operation.
 
-![Dashboard](docs/screenshots/dashboard-desktop.png)
+![Dashboard with synthetic demo data](docs/review-2026-09-09/02-dashboard-after.png)
+
+## Try ProducerOS 0.2.0
+
+**[Website and interactive demo](https://prodos.tech/)** ·
+**[Windows preview download](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.0)**
+
+The redesigned UI and bug fixes are included in this source tree. The
+`ProducerOS-0.2.0-Windows.zip` release download includes Python; extract
+the complete folder and run `ProducerOS.exe`.
+Follow [these instructions](docs/review-2026-09-09/WINDOWS_PORTABLE.txt).
+This is an unsigned portable preview, tested on one Windows machine. It is
+not a new installer or a certified clean-machine upgrade. The bundled
+**0.1.0 installer still contains the previous UI**.
+
+See the [review, verification and hosting assessment](docs/review-2026-09-09/REVIEW.md).
+Registered local audio can now play in the dashboard/project detail after
+its folder is added to Scanner or set as the project's root folder. No
+music upload, cloud account or runtime network dependency was added.
 
 ## Quick start (Windows)
 
-1. Download **`ProducerOS-Setup-X.Y.Z.exe`** from
-   [Releases](../../releases) and double-click it. No admin rights, no
-   Python, nothing else to install first.
-2. Click through the installer -- leave "Create a desktop icon" checked.
-3. Use the new **ProducerOS** desktop icon to open the app. Your browser
-   opens automatically to the setup page.
+1. Download **`ProducerOS-0.2.0-Windows.zip`** from the
+   [preview release](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.0)
+   or [prodos.tech](https://prodos.tech/#download).
+2. Choose **Extract All**. Keep the complete extracted `ProducerOS` folder
+   together, including `_internal`.
+3. Run `ProducerOS.exe`. It opens your local app in your browser. Create
+   your local login, then start with a test project.
 
-Updating later is the same: download the newest installer and run it
-again -- it upgrades in place and never touches your data. Full
-walkthrough: [docs/INSTALL_WINDOWS.md](docs/INSTALL_WINDOWS.md). Phone
-access: [docs/ANDROID_PWA.md](docs/ANDROID_PWA.md).
+Before trying the preview with an existing library, back up the app database
+and your music separately, and quit any running older copy through Settings.
+Clean-machine installation and upgrades have not been verified. The legacy
+installer guide is [docs/INSTALL_WINDOWS.md](docs/INSTALL_WINDOWS.md).
+Optional home-network phone access: [docs/ANDROID_PWA.md](docs/ANDROID_PWA.md).
 
 **Setting this up for someone non-technical?** Give them
 [START-HERE.txt](START-HERE.txt) -- plain-language install steps with no
 jargon -- and see
-[docs/SHARING_WITH_SOMEONE.md](docs/SHARING_WITH_SOMEONE.md) for how to
-hand them the installer. The quickest route: send them this repo as a ZIP
-(green **Code** button -> **Download ZIP**) -- the current installer is
-committed at [installer/](installer/), so the ZIP already contains
-everything they need.
+[docs/SHARING_WITH_SOMEONE.md](docs/SHARING_WITH_SOMEONE.md). Send the website
+or preview-release link; a GitHub account is not required to download.
+**Code → Download ZIP** downloads the source tree and the old bundled
+installer, not the current portable app.
 
 ## Quick start (from source, any OS)
 
@@ -62,8 +82,8 @@ python -m produceros.cli demo-clean   # removes exactly what demo-load created
 ## Running the tests
 
 ```bash
-pytest tests/unit tests/integration tests/security -q   # 119 tests
-pytest tests/e2e -q                                     # 4 tests, real Chromium via Playwright
+pytest tests/unit tests/integration tests/security -q   # Windows review: 161 passed, 3 skipped
+pytest tests/e2e -q                                     # 6 tests, real Chromium via Playwright
 ruff check src tests && mypy src
 ```
 

@@ -1,0 +1,34 @@
+{
+  "health": {
+    "app": "ProducerOS",
+    "version": "0.2.0"
+  },
+  "routes": {
+    "/": 200,
+    "/projects": 200,
+    "/projects/new": 200,
+    "/artists": 200,
+    "/releases": 200,
+    "/calendar": 200,
+    "/marketing": 200,
+    "/scanner": 200,
+    "/delivery": 200,
+    "/analytics": 200,
+    "/settings": 200,
+    "/backup": 200,
+    "/offline.html": 200,
+    "/static/css/app.css": 200,
+    "/static/css/layout.css": 200,
+    "/static/js/app.js": 200,
+    "/static/js/offline.js": 200,
+    "/static/artwork/studio-disc.png": 200,
+    "/static/svg/icons.svg": 200,
+    "/static/manifest.webmanifest": 200,
+    "/service-worker.js": 200
+  },
+  "isolated_data_directory": true,
+  "project_create": "passed",
+  "backup_dry_run": "passed",
+  "external_login_redirect_blocked": true,
+  "graceful_quit": "passed"
+}

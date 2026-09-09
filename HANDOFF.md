@@ -1,5 +1,60 @@
 # HANDOFF
 
+## Current snapshot: 2026-09-09, version 0.2.0
+
+The reference-led blue visual redesign, local audio/artwork preview and
+review fixes are implemented. Start with
+[the current review](docs/review-2026-09-09/REVIEW.md) for exact scope,
+evidence, remaining work, storage/hosting advice and source links.
+
+- Verified on this Windows machine: 161 backend tests passed / 3 skipped;
+  6 real Chromium browser tests passed; Ruff lint/format and mypy passed;
+  fresh migrations + Alembic drift check + demo load/clean passed.
+- The actual Windows PyInstaller 0.2.0 executable passed setup/login,
+  21 page/static endpoint checks, project creation, backup dry run,
+  safe login redirect and graceful shutdown. The portable ZIP is in
+  `release-artifacts/`; it contains no review accounts or user data.
+- The 0.1.0 installer in `installer/` is unchanged. Inno Setup was not
+  available, so no new installer, interactive upgrade/uninstall or clean
+  recipient-machine test is claimed. Physical Android/iOS testing and
+  large-library performance testing remain outstanding.
+- Preserve offline runtime, localhost default, read-only scanning and
+  explicit approvals for music-file changes. Previews only serve
+  registered audio/raster artwork inside approved roots, exclude the app
+  data directory, require login and stream ranges without copying music.
+- The owner-approved companion website and Windows preview download are live
+  at **https://prodos.tech/** on existing Hostinger Business hosting; see
+  [launch evidence](docs/WEBSITE_LAUNCH.md). The owner also authorized publishing
+  this source and the reviewed preview to the existing public repository,
+  `AgentMindCloud/ProdOS`. GitHub publication is being prepared from an isolated
+  clone because the original downloaded source snapshot has no `.git`.
+- Website: 10 checks passed, including demo edits/audio/reset, responsive
+  controls, no-JS paths and the complete app download hash. Preview is at
+  `http://127.0.0.1:8427/`; deploy ZIP is
+  `release-artifacts/prodos-site-20260909.zip`. File Manager access was restored
+  by the owner; archive uploaded and manually extracted. An extra enclosing
+  folder was corrected by moving only the approved contents to `public_html`.
+  Live HTTPS, demo editing/reset, audio play/seek, FAQ and 390 px visual check
+  passed. Full public browser download matches the reviewed Windows SHA-256
+  and ZIP integrity. Direct HTTP clients still hit a Hostinger browser check,
+  so live security/cache headers and crawler/social previews remain unverified.
+  No further publishing approval is needed for this already-approved package.
+- Immediate next work: friend trial, onboarding/password recovery,
+  backup storage/retention visibility, file relinking and scanner progress.
+  Full waveform/A-B and deeper multi-track delivery are later priorities.
+- Test-only data/tools/original snapshots live under ignored `.work/` and
+  are never required at runtime. Browser screenshots use synthetic data.
+
+When stopping a local test server, verify its exact data directory/port
+and use its authenticated Settings / Quit action. Do not stop every
+process named ProducerOS: a user's separate instance may be running.
+
+## Historical handoff from 2026-08-10
+
+The material below records the earlier developer's observations and
+diagnoses. Historical CI/branch/platform claims were not refreshed in
+this local review and do not supersede the current snapshot above.
+
 Current state of ProducerOS for whoever works on it next. Keep this
 document updated whenever project state changes materially -- it is
 required to be current (spec `docs/PRODUCT_SPEC.md`, section 33).
@@ -170,9 +225,9 @@ the updater). Test count went 123 -> 127.
     `MsgBox` blocks any silent install/uninstall forever waiting for a
     click nobody can give. This hung CI twice before it was spotted.
 15. **PowerShell `Stop-Job` does not kill the process the job started.**
-    The Windows smoke tests leaked `ProducerOS.exe` instances that then
-    held files the uninstaller needed. Always follow with
-    `Get-Process -Name ProducerOS | Stop-Process -Force`.
+    Earlier Windows smoke tests leaked app instances. Use an authenticated
+    quit against the verified test data directory, or verify the exact
+    process identity/path before targeted cleanup. Never stop by name alone.
 16. **Never set `SO_REUSEADDR` when probing whether a port is free.** On
     Windows it permits binding a port another process is already
     listening on, so the probe calls a busy port free -- see

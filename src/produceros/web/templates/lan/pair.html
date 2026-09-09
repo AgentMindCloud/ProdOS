@@ -4,16 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Pair this device -- ProducerOS</title>
-  <meta name="theme-color" content="#171513">
+  <meta name="theme-color" content="#e5f5ff">
   <link rel="manifest" href="/static/manifest.webmanifest">
   <link rel="icon" href="/static/icons/favicon-32.png" sizes="32x32">
   <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="stylesheet" href="/static/css/layout.css">
 </head>
 <body>
   <div class="login-shell">
     <div class="login-card panel">
-      <div class="text-center" style="margin-bottom: 1.5rem;">
-        <img src="/static/icons/icon-192.png" width="56" height="56" alt="" style="border-radius: 14px;">
+      <div class="layout-5 text-center">
+        <img class="layout-6" src="/static/icons/icon-192.png" width="56" height="56" alt="">
         <h1>Pair this device</h1>
         <p>Enter the code shown on your ProducerOS computer to connect this phone over your home Wi-Fi.</p>
       </div>
@@ -22,12 +23,12 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <div class="field">
           <label for="code">Pairing code</label>
-          <input type="text" id="code" name="code" value="{{ code }}" required autocomplete="one-time-code"
-                 style="text-transform:uppercase; font-size:1.5rem; letter-spacing:0.1em; text-align:center;">
+          <input class="layout-27" type="text" id="code" name="code" value="{{ code }}" required autocomplete="one-time-code"
+                >
         </div>
         <button type="submit" class="btn btn-primary btn-block">Confirm pairing</button>
       </form>
-      <p class="text-faint text-center" style="margin-top:1rem;">Only do this on your own home network.</p>
+      <p class="layout-26 text-faint text-center">Only do this on your own home network.</p>
     </div>
   </div>
 </body>

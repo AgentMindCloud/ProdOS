@@ -4,16 +4,16 @@
 {% block content %}
 <div class="panel">
   <form method="get" action="/search" class="flex gap-1">
-    <input type="search" name="q" value="{{ query }}" placeholder="Search projects, artists, releases&hellip;" style="flex:1;" autofocus>
+    <input class="layout-2" type="search" name="q" value="{{ query }}" placeholder="Search projects, artists, releases&hellip;" autofocus>
     <button type="submit" class="btn btn-primary">
       <svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-search"/></svg> Search
     </button>
   </form>
   {% if query %}
-  <form method="post" action="/search/saved-filters/new" class="flex gap-1" style="margin-top:0.75rem;">
+  <form method="post" action="/search/saved-filters/new" class="layout-41 flex gap-1">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <input type="hidden" name="query" value="{{ query }}">
-    <input type="text" name="name" placeholder="Save this search as&hellip;" style="flex:1;">
+    <input class="layout-2" type="text" name="name" placeholder="Save this search as&hellip;">
     <button type="submit" class="btn btn-sm">Save filter</button>
   </form>
   {% endif %}

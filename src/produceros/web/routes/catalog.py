@@ -5,13 +5,13 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from produceros.models.assets import Asset, AssetVersion
-from produceros.models.catalog import Artist, Project
+from produceros.models.catalog import Artist, Project, ProjectTag, Tag
 from produceros.models.enums import (
     DEFAULT_PROJECT_STATES,
     AssetType,
@@ -29,6 +29,7 @@ from produceros.services import assets as asset_service
 from produceros.services import catalog as catalog_service
 from produceros.services import rights as rights_service
 from produceros.services.audit import log_event
+from produceros.services.media import project_media
 from produceros.web.app import templates
 from produceros.web.context import base_context
 from produceros.web.csrf import get_csrf_token, verify_csrf
@@ -38,9 +39,13 @@ router = APIRouter(tags=["catalog"], dependencies=[Depends(require_login)])
 
 
 def _get_project_or_404(session: Session, project_id: str) -> Project:
-    project = session.get(Project, uuid.UUID(project_id))
+    try:
+        project_uuid = uuid.UUID(project_id)
+    except ValueError as exc:
+        raise HTTPException(404, "Project not found") from exc
+    project = session.get(Project, project_uuid)
     if project is None:
-        raise LookupError("Project not found")
+        raise HTTPException(404, "Project not found")
     return project
 
 
@@ -185,6 +190,15 @@ async def project_detail(
         {
             **base_context(user, "projects"),
             "project": project,
+            "project_tags": list(
+                session.scalars(
+                    select(Tag.name)
+                    .join(ProjectTag)
+                    .where(ProjectTag.project_id == project.id)
+                    .order_by(Tag.created_at, Tag.name)
+                )
+            ),
+            "media": project_media(session, project),
             "artists": artists,
             "contributors": contributors,
             "rights_shares": rights_shares,
@@ -264,7 +278,7 @@ async def edit_project(
         fields["one_stop_clearance_status"] = ClearanceStatus(
             str(form["one_stop_clearance_status"])
         )
-    if "split_confirmed" in form:
+    if "split_confirmed" in form or "split_confirmed_present" in form:
         fields["split_confirmed"] = form.get("split_confirmed") == "on"
     for list_field in ("featured_artists", "alternate_titles", "instruments", "similar_artists"):
         if list_field in form:

@@ -2,7 +2,7 @@
 {% block title %}Calendar -- ProducerOS{% endblock %}
 {% block page_heading %}Release Calendar{% endblock %}
 {% block content %}
-<div class="flex justify-between items-center" style="margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+<div class="layout-10 flex justify-between items-center">
   <button class="btn filter-toggle" data-filter-toggle type="button">
     <svg class="icon" aria-hidden="true"><use href="/static/svg/icons.svg#icon-filter"/></svg> Filters
   </button>
@@ -25,14 +25,14 @@
       <div class="field"><label for="deadline_type">Type</label>
         <select id="deadline_type" name="deadline_type"><option value="">All</option>{% for t in deadline_types %}<option value="{{ t.value }}">{{ t.value.replace("_"," ") }}</option>{% endfor %}</select>
       </div>
-      <div class="field" style="grid-column:1/-1;"><button type="submit" class="btn btn-primary btn-block">Apply</button></div>
+      <div class="layout-11 field"><button type="submit" class="btn btn-primary btn-block">Apply</button></div>
     </form>
   </div>
 </div>
 
 <div class="panel">
   <h2>Add a deadline</h2>
-  <form method="post" action="/calendar/deadlines/new" class="grid grid-cols-4" style="align-items:end;">
+  <form method="post" action="/calendar/deadlines/new" class="layout-1 grid grid-cols-4">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <div class="field"><label for="title">Title</label><input type="text" id="title" name="title" required></div>
     <div class="field"><label for="due_date">Due date</label><input type="date" id="due_date" name="due_date" required></div>
@@ -42,12 +42,12 @@
     <div class="field"><label for="dproject">Project (optional)</label>
       <select id="dproject" name="project_id"><option value="">None</option>{% for p in projects %}<option value="{{ p.id }}">{{ p.working_title }}</option>{% endfor %}</select>
     </div>
-    <div class="field" style="grid-column: 1/-1;"><button type="submit" class="btn btn-primary">Add deadline</button></div>
+    <div class="layout-12 field"><button type="submit" class="btn btn-primary">Add deadline</button></div>
   </form>
 </div>
 
 {% if overdue_items %}
-<div class="panel" style="border-color: var(--blocking);">
+<div class="layout-13 panel">
   <h2>Overdue</h2>
   {% for d in overdue_items %}
   <div class="record-card flex justify-between items-center">

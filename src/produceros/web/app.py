@@ -5,9 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException
 
 from produceros.config import get_settings
 from produceros.logging_config import configure_logging, get_logger
@@ -30,6 +31,28 @@ def create_app() -> FastAPI:
     app = FastAPI(title="ProducerOS", docs_url=None, redoc_url=None, openapi_url=None)
 
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+    @app.exception_handler(HTTPException)
+    async def _http_error(request: Request, exc: HTTPException):
+        if "text/html" not in request.headers.get("accept", ""):
+            return JSONResponse(
+                {"detail": exc.detail}, status_code=exc.status_code, headers=exc.headers
+            )
+        return_path = next(
+            (
+                path
+                for path in ("/analytics", "/backup", "/projects")
+                if request.url.path.startswith(path)
+            ),
+            "/",
+        )
+        return templates.TemplateResponse(
+            request,
+            "error.html",
+            {"status_code": exc.status_code, "detail": exc.detail, "return_path": return_path},
+            status_code=exc.status_code,
+            headers=exc.headers,
+        )
 
     @app.get("/healthz", include_in_schema=False)
     async def healthz() -> dict[str, str]:
@@ -106,6 +129,7 @@ def create_app() -> FastAPI:
     from produceros.web.routes import (
         marketing as marketing_routes,
     )
+    from produceros.web.routes import media as media_routes
     from produceros.web.routes import (
         pwa as pwa_routes,
     )
@@ -129,6 +153,7 @@ def create_app() -> FastAPI:
     app.include_router(scanner_routes.router)
     app.include_router(release_routes.router)
     app.include_router(marketing_routes.router)
+    app.include_router(media_routes.router)
     app.include_router(calendar_routes.router)
     app.include_router(delivery_routes.router)
     app.include_router(analytics_routes.router)

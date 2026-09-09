@@ -6,9 +6,16 @@ from __future__ import annotations
 
 import csv
 import io
+import math
 from dataclasses import dataclass, field
 
 from produceros.analytics.csv_templates import VALID_METRIC_TYPES
+
+MAX_IMPORT_ROWS = 10_000
+
+
+class CSVImportError(ValueError):
+    """The complete import must be rejected rather than partially saved."""
 
 
 @dataclass
@@ -42,6 +49,8 @@ def parse_analytics_csv(content: str) -> ParseResult:
     normalized_fieldnames = {name: name.strip().lower() for name in reader.fieldnames}
 
     for line_number, raw_row in enumerate(reader, start=2):
+        if line_number - 1 > MAX_IMPORT_ROWS:
+            raise CSVImportError(f"CSV imports are limited to {MAX_IMPORT_ROWS:,} data rows.")
         row = {
             normalized_fieldnames[k]: v for k, v in raw_row.items() if k in normalized_fieldnames
         }
@@ -62,6 +71,9 @@ def parse_analytics_csv(content: str) -> ParseResult:
             result.warnings.append(
                 f"Row {line_number}: value '{raw_value}' is not numeric; skipped."
             )
+            continue
+        if not math.isfinite(value):
+            result.warnings.append(f"Row {line_number}: value must be a finite number; skipped.")
             continue
         if value < 0:
             result.warnings.append(

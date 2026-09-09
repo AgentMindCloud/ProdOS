@@ -4,10 +4,12 @@
 // catalog, editing projects, running scans, etc. all require ProducerOS
 // to be running and reachable (desktop mode or LAN mode).
 
-const CACHE_NAME = "produceros-shell-v1";
+const CACHE_NAME = "produceros-shell-v4";
 const SHELL_ASSETS = [
   "/offline.html",
   "/static/css/app.css",
+  "/static/css/layout.css",
+  "/static/js/offline.js",
   "/static/js/app.js",
   "/static/svg/icons.svg",
   "/static/manifest.webmanifest",
@@ -24,7 +26,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
+      Promise.all(keys.filter((key) => key.startsWith("produceros-shell-") && key !== CACHE_NAME).map((key) => caches.delete(key)))
     ).then(() => self.clients.claim())
   );
 });
@@ -34,6 +36,7 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
   const isShellAsset = SHELL_ASSETS.some((path) => url.pathname === path);
 
   if (isShellAsset) {

@@ -6,6 +6,32 @@ once tagged releases begin.
 
 ## [Unreleased]
 
+## [0.2.0 preview] — 2026-09-09
+
+- Reference-led blue glass UI, visual dashboard/library/project detail,
+  mobile asset visibility, accessible filters and locally bundled artwork.
+- Authenticated local audio/raster-artwork previews with approved-root
+  checks, byte-range streaming, native controls and live audio visualization.
+- Fixed tag loss, unchecked split confirmation, project-not-found errors,
+  capped dashboard totals, same-timestamp backup collisions and incomplete
+  restore validation.
+- Bounded CSV import requests and row counts; rejected invalid/nonfinite
+  values. Scanner size limits now apply before hashing.
+- Fixed CSP-blocked backup/analytics/offline controls, safe offline summary
+  rendering/retry, and login redirects leaving the application origin.
+- Windows review: 161 backend + 6 Chromium tests passed, 3 environment
+  skips; lint/format/types/migrations passed. Real Windows portable build
+  smoke-tested. Existing 0.1.0 installer unchanged; this preview uses a
+  portable ZIP, not a new installer.
+- Added review, hosting/storage assessment, monetization hypotheses and
+  current handover notes in `docs/review-2026-09-09/`.
+- Published a separate companion website at https://prodos.tech/ with an
+  interactive synthetic demo, original sample audio, download and setup guide.
+- GitHub preview tag: `preview-0.2.0`. Its Windows ZIP matches the download
+  served by the website; no music, runtime database or credentials are shipped.
+
+### Earlier work included in this preview
+
 ### Added
 
 - The current Windows installer is now committed to `installer/`, so

@@ -2,15 +2,17 @@
 {% block title %}Analytics -- ProducerOS{% endblock %}
 {% block page_heading %}Analytics{% endblock %}
 {% block content %}
+<p class="field-hint">CSV imports: up to 5 MiB and 10,000 rows. Audio and project files stay on your computer.</p>
 <div class="panel">
   <p>All numbers here come from CSVs you export from wherever you track them, or manual entry. ProducerOS never calls any platform API and never predicts hits.</p>
-  <form method="get" action="/analytics" class="flex gap-1" style="align-items:end;">
-    <div class="field mb-0" style="flex:1;"><label for="project_id">Project</label>
-      <select id="project_id" name="project_id" onchange="this.form.submit()">
+  <form method="get" action="/analytics" class="layout-1 flex gap-1">
+    <div class="layout-2 field mb-0"><label for="project_id">Project</label>
+      <select id="project_id" name="project_id">
         <option value="">All projects</option>
         {% for p in projects %}<option value="{{ p.id }}" {% if selected_project_id == p.id|string %}selected{% endif %}>{{ p.working_title }}</option>{% endfor %}
       </select>
     </div>
+    <button type="submit" class="btn">Show analytics</button>
   </form>
 </div>
 
@@ -60,16 +62,16 @@
   <div class="panel">
     <h2>Release summary</h2>
     {% if summary %}
-    <ul style="list-style:none; padding:0;">
-      {% for m in summary %}<li style="display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid var(--border);"><span>{{ m.metric_type.replace("_"," ") }}</span><strong>{{ "%.2f"|format(m.total) }}</strong></li>{% endfor %}
+    <ul class="layout-3">
+      {% for m in summary %}<li class="layout-4"><span>{{ m.metric_type.replace("_"," ") }}</span><strong>{{ "%.2f"|format(m.total) }}</strong></li>{% endfor %}
     </ul>
     {% else %}<p class="empty-state">Select a project to see its summary.</p>{% endif %}
   </div>
   <div class="panel">
     <h2>Channel summary</h2>
     {% if channels %}
-    <ul style="list-style:none; padding:0;">
-      {% for channel, total in channels.items() %}<li style="display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid var(--border);"><span>{{ channel }}</span><strong>{{ "%.2f"|format(total) }}</strong></li>{% endfor %}
+    <ul class="layout-3">
+      {% for channel, total in channels.items() %}<li class="layout-4"><span>{{ channel }}</span><strong>{{ "%.2f"|format(total) }}</strong></li>{% endfor %}
     </ul>
     {% else %}<p class="empty-state">No channel data yet.</p>{% endif %}
   </div>

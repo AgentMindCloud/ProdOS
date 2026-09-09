@@ -59,3 +59,6 @@ config.toml
 .env
 secret.key
 *.pem
+
+# Isolated review data, original snapshots, and local test tools
+.work/

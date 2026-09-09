@@ -53,3 +53,31 @@ def test_scanner_records_finding_for_missing_root_instead_of_crashing(db_session
 
     assert run.status.value == "completed"
     assert any(f.finding_type == FindingType.INVALID_PATH for f in _findings(db_session, run))
+
+
+def test_scanner_honors_configured_size_limit_without_reading_file(
+    db_session, tmp_path, monkeypatch
+):
+    from produceros.config import get_settings
+
+    music = tmp_path / "large-music"
+    music.mkdir()
+    path = music / "large.wav"
+    with path.open("wb") as stream:
+        stream.seek(1024 * 1024)
+        stream.write(b"0")
+    root = ScannerRoot(path=str(music), label="Synthetic test", is_active=True)
+    db_session.add(root)
+    db_session.flush()
+    monkeypatch.setattr(get_settings(), "scanner_max_file_size_mb", 1)
+
+    def must_not_read(_path):
+        raise AssertionError("Oversized file was opened for hashing")
+
+    monkeypatch.setattr("produceros.scanners.engine.hash_file", must_not_read)
+    run = run_scan(db_session, roots=[root], allowed_extensions=[".wav"])
+    assert run.status.value == "completed"
+    findings = _findings(db_session, run)
+    assert len(findings) == 1
+    assert "exceeds the 1 MiB scanner limit" in findings[0].detail
+    assert path.stat().st_size == 1024 * 1024 + 1

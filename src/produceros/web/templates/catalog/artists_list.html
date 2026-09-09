@@ -4,9 +4,9 @@
 {% block content %}
 <div class="panel">
   <div class="panel-title-row"><h2>Add artist</h2></div>
-  <form method="post" action="/artists/new" class="flex gap-1" style="align-items:flex-end;">
+  <form method="post" action="/artists/new" class="layout-14 flex gap-1">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <div class="field mb-0" style="flex:1;">
+    <div class="layout-2 field mb-0">
       <label for="name">Artist name</label>
       <input type="text" id="name" name="name" required>
     </div>
@@ -16,9 +16,9 @@
 <div class="panel">
   <h2>All artists</h2>
   {% if artists %}
-  <ul style="list-style:none; padding:0; margin:0;">
+  <ul class="layout-15">
     {% for artist in artists %}
-    <li style="padding:0.6rem 0; border-bottom:1px solid var(--border);">
+    <li class="layout-16">
       <a href="/projects?artist_id={{ artist.id }}">{{ artist.name }}</a>
     </li>
     {% endfor %}
