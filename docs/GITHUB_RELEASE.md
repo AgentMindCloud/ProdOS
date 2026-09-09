@@ -19,8 +19,8 @@ it does not add a network dependency to the desktop app.
 | ProducerOS-0.2.0-Windows.zip | 28,216,733 | `1e72d6a8f23ff4949d92c8b9be7b3c3e4e80a42c32cd84ed99ce5146af21bb55` |
 | prodos-site-20260909.zip | 30,880,168 | `d7cb464902f8db3d671529efe8b2de6a2e8d49e39668903eb58f1d7e8c2bd584` |
 
-Both SHA-256 sidecars and `WINDOWS_PORTABLE.txt` are also attached. GitHub's
-reported upload digests matched all five local files. An unauthenticated
+Both SHA-256 sidecars and `WINDOWS_PORTABLE.txt` were attached at publication.
+GitHub's reported upload digests matched all five local files. An unauthenticated
 request to the public Windows download returned HTTP 200 and streamed all
 28,216,733 bytes; the computed hash matched the reviewed package above.
 
@@ -30,6 +30,22 @@ accounts, configuration, session keys, logs, local scratch data and real music
 were excluded. Independent bounded source review found no remaining publication
 blocker. The unchanged reviewed Windows bundle retains nonsecret build paths
 inside cached migration bytecode; it was not rebuilt just to alter metadata.
+
+## Download-list cleanup on 2026-09-10
+
+After the owner raised concern about the deployment downloads, the two
+`prodos-site-20260909.zip` / `.zip.sha256` assets were removed from the GitHub
+release and the release notes were corrected. The release now has only the
+Windows ZIP, its checksum and `WINDOWS_PORTABLE.txt`, in addition to GitHub's
+automatic source archives. The Windows ZIP digest is unchanged. The local
+website deployment backup and live Hostinger site were not changed.
+
+The inspected deployment bundle contained 17 allowlisted public website/demo
+files, including the same Windows package. Its hash matched the published asset;
+ZIP integrity passed and no runtime database, configuration or secret-key filename
+was present in the nested Windows archive. The deployment ZIP was unnecessary for
+app users, rather than evidence of a credential or private-music exposure. Website
+source remains public in the repository.
 
 ## Verification from the publication checkout
 
@@ -47,8 +63,7 @@ inside cached migration bytecode; it was not rebuilt just to alter metadata.
   installation/shortcut/launch checks and uninstall smoke test:
   https://github.com/AgentMindCloud/ProdOS/actions/runs/34379663244
   That CI artifact does not replace the reviewed portable preview attached here.
-- GitHub's Ubuntu CI job passed. The Windows CI job was still installing
-  Chromium when this record was prepared, so its final result is not claimed:
+- GitHub's Ubuntu and Windows CI jobs both passed, confirmed on 2026-09-10:
   https://github.com/AgentMindCloud/ProdOS/actions/runs/34379663303
 
 Run app and website browser suites as separate pytest commands, as documented.
