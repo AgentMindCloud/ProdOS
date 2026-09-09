@@ -63,9 +63,12 @@ A complete unauthenticated GitHub download matched the reviewed hash and passed
 ZIP integrity. Only the app ZIP, checksum and portable guide were attached.
 
 The website deployment ZIP contains 17 allowlisted public files; it is not a
-GitHub release asset. Hostinger File Manager returned 403 Forbidden on both old
-and renewed sessions. The new website was not deployed: live prodos.tech still
-shows 0.2.0, pending the owner's manual upload. `HANDOFF.md` records exact steps.
+GitHub release asset. After the owner uploaded it, nested extraction into
+`public_html/public_html` was corrected by copying only the six changed files
+to the live outer directory. HTTPS homepage, release metadata, guide, checksums
+and complete app ZIP all match the build hashes. The ZIP passed integrity;
+live demo title editing/reset passed. The homepage now offers 0.2.1. Existing
+files outside the selected update and nested deployment copies were retained.
 
 ## Limits
 

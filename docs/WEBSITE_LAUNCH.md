@@ -1,5 +1,25 @@
 # prodos.tech launch verification
 
+## 0.2.1 update: verified 2026-09-10
+
+The owner uploaded the reviewed `prodos-site-20260910.zip` and extracted it
+into `public_html/public_html`. The agent corrected placement by copying only
+the six files changed from 0.2.0 into the outer live folder: index.html,
+release.json, the new Windows ZIP/checksum, setup guide and SHA256SUMS.txt.
+Unrelated files, old downloads and the nested deployment copy were retained.
+
+- Live HTTPS homepage displays 0.2.1 with the correct download link.
+- All six updated public files returned HTTP 200 and match their build hashes.
+- Complete Windows download: 28,211,113 bytes, ZIP integrity passed, SHA-256
+  `b2a4eba0421139bd6c4c70b9a8ace2494e4f7e80e89bcda43a28cca8cb224863`.
+- Interactive demo title editing and reset passed in the live browser.
+- Live HTML headers observed: the intended self-only CSP, X-Content-Type-Options
+  nosniff, X-Frame-Options DENY and Cache-Control no-cache.
+- This resolves the earlier deployment blocker; File Manager can still return
+  intermittent 403 responses. No DNS/account setting or app binary changed.
+
+## Historical 0.2.0 launch
+
 Date: 2026-09-09. This file records the public companion site separately from
 the earlier desktop app review. No account credentials or registrant contact
 details belong here or in the deployment archive.

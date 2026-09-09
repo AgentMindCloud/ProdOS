@@ -11,8 +11,9 @@ SHA-256 `b2a4eba0421139bd6c4c70b9a8ace2494e4f7e80e89bcda43a28cca8cb224863`
 to 0.2.1 for the safety changes; old binaries do not update automatically.
 
 The two website deployment ZIP/checksum assets were removed from 0.2.0. The new
-site deployment bundle is local only and awaiting Hostinger upload because
-File Manager returned 403. The public website still displays 0.2.0. See
+bundle was deployed separately to Hostinger after correcting nested extraction.
+The public website now displays 0.2.1; its complete Windows download matches the
+same reviewed hash. No website ZIP is attached to the new GitHub release. See
 [current verification and limits](review-2026-09-10/REVIEW.md) and `HANDOFF.md`.
 
 ## Original publication: 0.2.0
