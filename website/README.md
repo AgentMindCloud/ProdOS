@@ -7,22 +7,23 @@ The interactive sample projects stay in browser memory and reset on reload.
 
 ## Build
 
-From the repository root, first obtain the reviewed Windows ZIP from the
-[preview release](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.0)
-and save it in `release-artifacts/` without renaming it. With GitHub CLI:
+From the repository root, prepare the reviewed Windows preview package at
+`release-artifacts/ProducerOS-0.2.1-Windows.zip`. Keep the complete portable
+app folder in the ZIP, including `_internal`. A future GitHub release is not
+assumed to exist, and the website deploy archive is not a GitHub release asset.
 
-```powershell
-gh release download preview-0.2.0 --repo AgentMindCloud/ProdOS --pattern 'ProducerOS-0.2.0-Windows.zip' --dir release-artifacts
-```
+The 0.2.1 binary passed an isolated Windows package smoke check. Its exact
+SHA-256 is pinned in `scripts/build_website.py`; never reuse an old version's
+hash or silently change a reviewed archive. The builder refuses unknown hashes.
 
-Then build the site (the builder verifies the approved binary hash):
+Then build the site (the builder verifies the pinned binary hash):
 
 ```powershell
 .venv/Scripts/python.exe scripts/build_website.py
 ```
 
 Output: `.work/website-dist/`, with `index.html` at its root.
-Deploy archive: `release-artifacts/prodos-site-20260909.zip`.
+Deploy archive: `release-artifacts/prodos-site-20260910.zip`.
 The sidecar manifest records every public file and checksum.
 
 The builder copies only the three website source files, designated local
@@ -31,12 +32,22 @@ guide/license/checksum, release metadata and hosting configuration. It never
 copies the repository, app database, private configuration, accounts or a
 producer's audio folder. Unrecognized Windows ZIP hashes fail the build.
 
-The reviewed 0.2.0 app package is a build artifact, not a runtime dependency
+The reviewed 0.2.1 app package is a build artifact, not a runtime dependency
 for the desktop app. To produce a new version from source, run
 `scripts/build_windows.ps1`, package the whole `dist/ProducerOS/` folder,
 verify it on Windows and update the reviewed release version/hash in the
 website builder and page together. Do not silently substitute a different
 binary under a reviewed download name.
+
+The builder copies the setup guide from
+`docs/review-2026-09-10/WINDOWS_PORTABLE.txt`. It calculates the displayed
+download size from the actual reviewed ZIP and replaces the single
+`{{APP_DOWNLOAD_SIZE}}` placeholder in `website/index.html`. Serve the built
+output, not the unrendered source. Release metadata records the exact byte
+count, SHA-256 and release date (2026-09-10).
+
+The 0.2.1 release notes focus on file safety: no delete/overwrite operations,
+approved moves/renames, exports into new folders and retained demo files.
 
 ## Local preview and tests
 

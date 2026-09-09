@@ -2,12 +2,12 @@
 
 Send **https://prodos.tech/**. It includes an interactive sample, the current
 Windows preview download and setup instructions. The same reviewed package is
-available on the [GitHub preview release](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.0).
+available on the [GitHub preview release](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.1).
 Neither download requires a GitHub account.
 
 ## What your friend should do
 
-1. Download `ProducerOS-0.2.0-Windows.zip`.
+1. Download `ProducerOS-0.2.1-Windows.zip`.
 2. Choose **Extract All** and keep the whole extracted `ProducerOS` folder,
    including `_internal`.
 3. Run `ProducerOS.exe`, create a local login and start with a test project.
@@ -19,7 +19,7 @@ on a clean recipient computer or with a very large library.
 
 **Code → Download ZIP** on GitHub downloads source code and the legacy
 `installer/ProducerOS-Setup-0.1.0.exe`; that installer has the previous UI.
-Use the explicit 0.2.0 preview link for the current app.
+Use the explicit 0.2.1 preview link for the current app.
 
 ## Why an email attachment can fail
 

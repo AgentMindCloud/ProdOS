@@ -19,6 +19,7 @@
 # regardless (see logging_config.py).
 
 import os
+from pathlib import Path
 
 block_cipher = None
 
@@ -30,9 +31,13 @@ ICON_PATH = os.path.join(SPEC_DIR, "app-icon.ico")
 datas = [
     (os.path.join(SRC_DIR, "produceros", "web", "templates"), os.path.join("produceros", "web", "templates")),
     (os.path.join(SRC_DIR, "produceros", "web", "static"), os.path.join("produceros", "web", "static")),
-    (os.path.join(REPO_ROOT, "migrations"), "migrations"),
     (os.path.join(REPO_ROOT, "alembic.ini"), "."),
 ]
+
+# Bundle reconstructable migration sources, never cached local bytecode.
+for migration in Path(REPO_ROOT, "migrations").rglob("*"):
+    if migration.is_file() and "__pycache__" not in migration.parts and migration.suffix != ".pyc":
+        datas.append((str(migration), str(migration.parent.relative_to(REPO_ROOT))))
 
 hiddenimports = [
     "produceros.web.routes.analytics",

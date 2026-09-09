@@ -1,6 +1,40 @@
 # HANDOFF
 
-## Current snapshot: 2026-09-09, version 0.2.0
+## Current snapshot: 2026-09-10, version 0.2.1
+
+The owner clarified: moving/renaming with approval is acceptable; deleting or
+overwriting user files must never be available. This supersedes the original
+delete-with-approval allowance. See [file safety](docs/FILE_SAFETY.md),
+[ADR 0008](docs/adr/0008-no-user-file-deletion-or-overwrite.md) and
+[verification](docs/review-2026-09-10/REVIEW.md).
+
+- Implemented: DELETE/REPLACE blocked even for old approvals; exclusive copies;
+  native no-replace moves/renames with no copy-delete fallback; new-folder-only
+  delivery exports; demo cleanup retains files; app-storage alias guards;
+  exclusive backup/staging paths and immutable external SQLite validation.
+- Scanning/playback remain available. No new file-operation UI or MCP feature.
+  Own database/settings/log maintenance and confirmed metadata restore remain.
+  These controls are not an OS sandbox or a guarantee against hostile races.
+- Verified locally: 222 backend tests passed / 8 platform skips; 6 app browser
+  checks; 10 website checks; Ruff lint/format and mypy passed. Windows 0.2.1
+  executable passed CLI demo load/cleanup with 7 preserved file hashes,
+  setup/login, 21 routes, project creation, backup validation and shutdown.
+  Independent verification reproduced and confirmed the SQLite sidecar fix.
+- Reviewed portable ZIP: 28,211,113 bytes, 301 entries; SHA-256
+  `b2a4eba0421139bd6c4c70b9a8ace2494e4f7e80e89bcda43a28cca8cb224863`.
+  Publication of this new version is in progress; do not claim the old 0.2.0
+  download contains these changes. Users must explicitly download 0.2.1.
+- Root is a source snapshot without `.git`; publish from the isolated clone
+  `.work/github-publish-20260909`, preserving original history. Test data and
+  artifacts under ignored `.work/` are not needed to reconstruct source/runtime.
+- The website deployment ZIP and checksum were removed from preview-0.2.0.
+  They contained reviewed public website assets, not credentials or user music.
+  Keep the 0.2.1 site ZIP local for Hostinger deployment; GitHub release assets
+  should contain only the app ZIP, its checksum and the portable guide.
+- Recipient-PC installation/upgrade, physical phones and large libraries still
+  need real-world testing. The legacy 0.1.0 installer remains unchanged.
+
+## Previous release: 2026-09-09, version 0.2.0
 
 The reference-led blue visual redesign, local audio/artwork preview and
 review fixes are implemented. Start with
@@ -43,7 +77,7 @@ evidence, remaining work, storage/hosting advice and source links.
   and ZIP integrity. Direct HTTP clients still hit a Hostinger browser check,
   so live security/cache headers and crawler/social previews remain unverified.
   No further publishing approval is needed for this already-approved package.
-- Immediate next work: friend trial, onboarding/password recovery,
+- Subsequent work: friend trial, onboarding/password recovery,
   backup storage/retention visibility, file relinking and scanner progress.
   Full waveform/A-B and deeper multi-track delivery are later priorities.
 - Test-only data/tools/original snapshots live under ignored `.work/` and

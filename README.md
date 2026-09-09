@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://prodos.tech/"><strong>Explore prodos.tech</strong></a>
   &nbsp; · &nbsp;
-  <a href="https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.0"><strong>Download Windows preview</strong></a>
+  <a href="https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.1"><strong>Download Windows preview</strong></a>
   &nbsp; · &nbsp;
   <a href="https://github.com/AgentMindCloud/ProdOS/issues">Feedback &amp; ideas</a>
 </p>
@@ -23,8 +23,9 @@ PWA installation has not been verified in the September 2026 review.
 
 **No API keys. No cloud services. No Docker. No internet after install.**
 Everything runs and stays on your machine; your unreleased music never
-leaves it, and ProducerOS never modifies an audio file without an
-explicitly approved, logged operation.
+leaves it. File deletes and overwrites are blocked. Moving or renaming
+requires explicit approval and a new destination; exports use new folders.
+See the [file safety policy](docs/FILE_SAFETY.md) for the exact scope and limits.
 
 <p align="center">
   <img src="docs/review-2026-09-09/02-dashboard-after.png" width="1100" alt="ProdOS dashboard with project artwork, local audio playback, stages and release preparation. All shown projects are synthetic demo data." />
@@ -43,15 +44,15 @@ explicitly approved, logged operation.
   </tr>
 </table>
 
-## Try ProdOS 0.2.0
+## Try ProdOS 0.2.1
 
 **[Website and interactive demo](https://prodos.tech/)** ·
-**[Windows preview download](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.0)**
+**[Windows preview download](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.1)**
 
-The redesigned UI and bug fixes are included in this source tree. The
-`ProducerOS-0.2.0-Windows.zip` release download includes Python; extract
+The redesigned UI, bug fixes and stronger file safety are included in this source tree. The
+`ProducerOS-0.2.1-Windows.zip` release download includes Python; extract
 the complete folder and run `ProducerOS.exe`.
-Follow [these instructions](docs/review-2026-09-09/WINDOWS_PORTABLE.txt).
+Follow [these instructions](docs/review-2026-09-10/WINDOWS_PORTABLE.txt).
 This is an unsigned portable preview, tested on one Windows machine. It is
 not a new installer or a certified clean-machine upgrade. The bundled
 **0.1.0 installer still contains the previous UI**.
@@ -63,8 +64,8 @@ music upload, cloud account or runtime network dependency was added.
 
 ## Quick start (Windows)
 
-1. Download **`ProducerOS-0.2.0-Windows.zip`** from the
-   [preview release](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.0)
+1. Download **`ProducerOS-0.2.1-Windows.zip`** from the
+   [preview release](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.1)
    or [prodos.tech](https://prodos.tech/#download).
 2. Choose **Extract All**. Keep the complete extracted `ProducerOS` folder
    together, including `_internal`.

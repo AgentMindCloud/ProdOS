@@ -67,8 +67,8 @@ configured per-file size threshold before content hashing.
 
 ### Approved file operations
 
-ProducerOS never deletes, renames, moves, or overwrites a file on disk on
-its own initiative:
+From 0.2.1, DELETE and REPLACE are forbidden even with approval. Approved
+copy/move/rename capabilities must preserve existing destination files:
 
 - The scanner (`scanners/engine.py`) is read-only. It only records
   `ScannerFinding` rows.
@@ -79,13 +79,25 @@ its own initiative:
 - `execute_operation` re-validates the source/destination paths against
   the configured scanner roots (`security.resolve_within_allowed_roots`)
   **even if the operation was somehow already approved**, refuses to
-  overwrite an existing destination file, and refuses `REPLACE` outright
-  -- ProducerOS never overwrites an existing music file, full stop. See
+  overwrite an existing destination file, and refuses `DELETE`/`REPLACE` outright.
+  Copies use exclusive creation. Moves/renames use native no-replace operations
+  on Windows/Linux; unsupported/cross-device moves fail without copy-delete
+  fallback. See
   `tests/security/test_file_operations_security.py`.
 - `resolve_within_allowed_roots` (`security.py`) rejects path traversal
   (`..`) and symlink escapes by resolving the real path and checking it's
   still inside an allowed root -- covered by both unit tests
   (`tests/unit/test_security.py`) and the file-operations security suite.
+- Delivery execution requires a new output directory, validates every manifest
+  destination/source and creates each file exclusively. It never removes partial
+  output as cleanup. Demo cleanup deletes database records only, leaving disk
+  files in place. Demo generation uses a unique run folder and exclusive writes.
+- App storage rejects symlink/junction/reparse aliases and hardlinked writable
+  files. Backups reserve new snapshots exclusively; confirmed app-database restore
+  stages to a unique file and refuses unrelated live database contents.
+- These controls prevent the tested accidental operations; they are not an OS
+  sandbox or a guarantee against hostile local processes racing path changes.
+  See [the complete file-safety rule](FILE_SAFETY.md).
 
 ## Command execution
 

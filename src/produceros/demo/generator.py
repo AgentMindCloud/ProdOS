@@ -4,7 +4,7 @@ Everything here is fictional: no real names, no copyrighted music, no
 private information. Audio is a handful of tiny synthesized sine-wave WAV
 files. Every row this module creates is recorded in a manifest
 (AppSetting key ``demo_manifest``) so ``clean_demo_data`` can remove
-exactly what demo mode added and nothing else.
+its recorded database rows. Demo files are always retained on disk.
 """
 
 from __future__ import annotations
@@ -18,13 +18,14 @@ from typing import Any
 from sqlalchemy import Table, select
 from sqlalchemy.orm import Session
 
-from produceros.config import get_settings
+from produceros.config import get_settings, validate_local_write_path
 from produceros.db.base import Base
 from produceros.delivery.packaging import create_package, generate_manifest
 from produceros.delivery.presets import seed_default_presets
 from produceros.demo.audio_fixtures import generate_sine_wav
 from produceros.marketing.campaigns import create_campaign, create_content_asset
 from produceros.marketing.engine import generate_draft
+from produceros.models.analytics import AnalyticsSource
 from produceros.models.delivery import DeliveryPreset
 from produceros.models.enums import (
     AnalyticsMetricType,
@@ -48,14 +49,15 @@ from produceros.models.enums import (
 )
 from produceros.models.release import Release
 from produceros.models.scanner import ScannerFinding
+from produceros.scanners.engine import run_scan
 from produceros.services import assets as asset_service
 from produceros.services import catalog as catalog_service
 from produceros.services import rights as rights_service
 from produceros.services import settings as settings_service
-from produceros.services.analytics import add_manual_metric, get_or_create_source
+from produceros.services.analytics import add_manual_metric
 from produceros.services.calendar import create_deadline
 from produceros.services.checklist import evaluate_release
-from produceros.services.scanner import add_root, trigger_scan
+from produceros.services.scanner import add_root
 
 DEMO_MANIFEST_KEY = "demo_manifest"
 
@@ -76,8 +78,18 @@ def _demo_audio_dir() -> Path:
 
 
 def load_demo_data(session: Session) -> dict:
+    if settings_service.get_setting(session, DEMO_MANIFEST_KEY, default=None):
+        raise ValueError(
+            "Demo records are already loaded. Clean the demo records before loading again; "
+            "existing demo files will remain on disk."
+        )
     manifest = _Manifest()
-    audio_dir = _demo_audio_dir()
+    run_name = f"run-{uuid.uuid4().hex}"
+    audio_dir = _demo_audio_dir() / run_name
+    # Reserve a brand-new run directory before creating database rows. A
+    # collision fails closed; previous demo or user files are never reused.
+    validate_local_write_path(audio_dir)
+    audio_dir.mkdir(parents=True, exist_ok=False)
 
     # --- Artists -----------------------------------------------------
     artist_a = catalog_service.create_artist(session, name="Aurora Fields")
@@ -362,7 +374,7 @@ def load_demo_data(session: Session) -> dict:
     )
     if client_preset is None:  # seed_default_presets always creates it
         raise RuntimeError("Default client delivery preset missing.")
-    output_dir = get_settings().data_dir / "demo_deliveries" / projects[0].internal_code
+    output_dir = get_settings().data_dir / "demo_deliveries" / run_name / projects[0].internal_code
     package = create_package(
         session,
         project=projects[0],
@@ -376,7 +388,14 @@ def load_demo_data(session: Session) -> dict:
         manifest.track(item)
 
     # --- Analytics -----------------------------------------------------
-    source = get_or_create_source(session, "Demo Streaming Report", AnalyticsSourceType.STREAMING)
+    # Labels are not ownership: a user may already have a source with this
+    # name. Always create a demo-owned source instead of reusing their row.
+    source = AnalyticsSource(
+        name=f"Demo Streaming Report ({run_name[-8:]})",
+        source_type=AnalyticsSourceType.STREAMING,
+    )
+    session.add(source)
+    session.flush()
     manifest.track(source)
     period_start = date.today() - timedelta(days=30)
     period_end = date.today()
@@ -401,7 +420,7 @@ def load_demo_data(session: Session) -> dict:
         manifest.track_ref("analytics_imports", metric.import_id)
         manifest.track(metric)
 
-    # --- Scanner: point a root at the demo audio dir and run a real scan ---
+    # --- Scanner: inspect only this run's new synthetic fixture directory ---
     generate_sine_wav(
         audio_dir / "Aurora Fields_Glass Horizon_MIX_v02_2026-06-01.wav",
         seconds=1.0,
@@ -409,7 +428,12 @@ def load_demo_data(session: Session) -> dict:
     )
     root = add_root(session, path=str(audio_dir), label="Demo audio folder")
     manifest.track(root)
-    run = trigger_scan(session, triggered_by=ScannerTrigger.MANUAL)
+    run = run_scan(
+        session,
+        roots=[root],
+        allowed_extensions=get_settings().scanner_allowed_extensions,
+        triggered_by=ScannerTrigger.MANUAL,
+    )
     manifest.track(run)
     for finding in session.scalars(select(ScannerFinding).where(ScannerFinding.run_id == run.id)):
         manifest.track(finding)
@@ -445,8 +469,11 @@ def _table_to_model_map() -> dict[str, type]:
 
 
 def clean_demo_data(session: Session) -> int:
-    """Remove exactly what ``load_demo_data`` created, in reverse order
-    so foreign-key dependents are deleted before their parents."""
+    """Remove recorded demo database rows in reverse dependency order.
+
+    No files or directories are removed, even when they were generated by
+    demo mode. Users may have placed their own content in those folders.
+    """
     raw = settings_service.get_setting(session, DEMO_MANIFEST_KEY, default=None)
     if not raw:
         return 0
@@ -469,14 +496,5 @@ def clean_demo_data(session: Session) -> int:
             removed += 1
 
     settings_service.delete_setting(session, DEMO_MANIFEST_KEY)
-
-    import shutil
-
-    demo_audio = _demo_audio_dir()
-    if demo_audio.exists():
-        shutil.rmtree(demo_audio, ignore_errors=True)
-    demo_deliveries = get_settings().data_dir / "demo_deliveries"
-    if demo_deliveries.exists():
-        shutil.rmtree(demo_deliveries, ignore_errors=True)
 
     return removed

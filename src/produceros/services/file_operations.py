@@ -1,19 +1,20 @@
 """Approved, audited file operations (spec sections 2 and 9).
 
-ProducerOS never deletes, renames, moves, or replaces a file on disk on
-its own initiative. Every operation is proposed as a dry run, requires an
-explicit approval, and is logged before and after execution.
+ProducerOS never deletes or overwrites user files, even with approval.
+Copies and same-filesystem moves/renames require an explicit approval and
+are logged before and after execution. Proposals remain dry-run records.
 """
 
 from __future__ import annotations
 
-import shutil
+import os
 import uuid
 from datetime import UTC, datetime
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 from sqlalchemy.orm import Session
 
+from produceros.filesystem import copy_file_exclusive, rename_file_noreplace
 from produceros.models.enums import FileOperationStatus, FileOperationType
 from produceros.models.scanner import ApprovedFileOperation
 from produceros.security import PathSecurityError, resolve_within_allowed_roots
@@ -55,6 +56,9 @@ def propose_operation(
 def approve_operation(
     session: Session, operation: ApprovedFileOperation, *, approved_by: uuid.UUID
 ) -> ApprovedFileOperation:
+    _refuse_forbidden_type(operation.operation_type)
+    if operation.status != FileOperationStatus.PENDING_APPROVAL:
+        raise ValueError("Only a pending dry-run proposal may be approved.")
     operation.status = FileOperationStatus.APPROVED
     operation.approved_by = approved_by
     operation.approved_at = datetime.now(UTC)
@@ -79,56 +83,47 @@ def execute_operation(
 ) -> ApprovedFileOperation:
     """Perform the approved, non-dry-run operation on disk.
 
-    Requires ``status == APPROVED``. Refuses to overwrite an existing
-    destination file and refuses any path outside the configured scanner
-    roots, even if it was somehow approved.
+    Requires ``status == APPROVED``. DELETE and REPLACE are permanently
+    forbidden, including historical approvals. Every supported operation
+    refuses existing destinations at the native filesystem operation.
     """
     if operation.status != FileOperationStatus.APPROVED:
         raise ValueError("Only an approved operation may be executed.")
 
     try:
-        source = resolve_within_allowed_roots(operation.source_path, allowed_roots)
+        _refuse_forbidden_type(operation.operation_type)
+        if operation.operation_type not in (
+            FileOperationType.MOVE,
+            FileOperationType.RENAME,
+            FileOperationType.COPY,
+        ):
+            raise ValueError("Unsupported file operation.")
+
+        source_path = Path(operation.source_path)
+        _validate_file_path(source_path)
+        if source_path.is_symlink():
+            raise PathSecurityError("Source links are not supported; select the ordinary file.")
+        source = resolve_within_allowed_roots(source_path, allowed_roots)
+        if not operation.destination_path:
+            raise ValueError("Operation requires a destination path but none was set.")
+
+        destination_path = Path(operation.destination_path)
+        _validate_file_path(destination_path)
+        # Validate the full path, but resolve only its parent for execution:
+        # resolving the final component could follow a dangling destination
+        # link and create its target instead of refusing the existing link.
+        resolve_within_allowed_roots(destination_path, allowed_roots)
         destination = (
-            resolve_within_allowed_roots(operation.destination_path, allowed_roots)
-            if operation.destination_path
-            else None
+            resolve_within_allowed_roots(destination_path.parent, allowed_roots)
+            / destination_path.name
         )
-    except PathSecurityError as exc:
-        operation.status = FileOperationStatus.FAILED
-        operation.result_detail = str(exc)
-        session.flush()
-        raise
+        _refuse_overwrite(destination)
 
-    needs_destination = operation.operation_type in (
-        FileOperationType.MOVE,
-        FileOperationType.RENAME,
-        FileOperationType.COPY,
-    )
-    if needs_destination and destination is None:
-        operation.status = FileOperationStatus.FAILED
-        operation.result_detail = "Operation requires a destination path but none was set."
-        session.flush()
-        raise ValueError(operation.result_detail)
-
-    try:
-        if operation.operation_type == FileOperationType.DELETE:
-            source.unlink()
-        elif operation.operation_type == FileOperationType.MOVE:
-            dest = _require_destination(destination)
-            _refuse_overwrite(dest)
-            shutil.move(str(source), str(dest))
-        elif operation.operation_type == FileOperationType.RENAME:
-            dest = _require_destination(destination)
-            _refuse_overwrite(dest)
-            source.rename(dest)
-        elif operation.operation_type == FileOperationType.COPY:
-            dest = _require_destination(destination)
-            _refuse_overwrite(dest)
-            shutil.copy2(str(source), str(dest))
-        elif operation.operation_type == FileOperationType.REPLACE:
-            raise ValueError(
-                "REPLACE is not permitted: ProducerOS never overwrites existing music files."
-            )
+        operation.dry_run = False
+        if operation.operation_type == FileOperationType.COPY:
+            copy_file_exclusive(source, destination)
+        else:
+            rename_file_noreplace(source, destination)
 
         operation.status = FileOperationStatus.EXECUTED
         operation.executed_at = datetime.now(UTC)
@@ -159,14 +154,26 @@ def execute_operation(
     return operation
 
 
-def _require_destination(destination: Path | None) -> Path:
-    """Runtime (not assert-based, so it survives ``python -O``) guarantee
-    that a destination-taking operation actually has one."""
-    if destination is None:
-        raise ValueError("Operation requires a destination path but none was set.")
-    return destination
-
-
 def _refuse_overwrite(destination: Path) -> None:
-    if destination.exists():
+    if os.path.lexists(destination):
         raise FileExistsError(f"Refusing to overwrite existing file: {destination}")
+
+
+def _refuse_forbidden_type(operation_type: FileOperationType) -> None:
+    if operation_type == FileOperationType.DELETE:
+        raise ValueError("DELETE is not permitted: ProducerOS never deletes user files.")
+    if operation_type == FileOperationType.REPLACE:
+        raise ValueError(
+            "REPLACE is not permitted: ProducerOS never overwrites existing music files."
+        )
+
+
+def _validate_file_path(path: Path) -> None:
+    if os.name == "nt" and any(
+        ":" in part or part.endswith((".", " ")) or PureWindowsPath(part).is_reserved()
+        for part in path.parts
+        if part != path.anchor
+    ):
+        raise PathSecurityError(
+            "Windows device names, alternate streams, and ambiguous paths are refused."
+        )

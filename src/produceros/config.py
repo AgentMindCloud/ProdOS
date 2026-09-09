@@ -16,6 +16,7 @@ from __future__ import annotations
 import contextlib
 import os
 import secrets
+import stat
 import sys
 import tomllib
 from functools import lru_cache
@@ -29,6 +30,25 @@ DEFAULT_PORT = 8420
 DEFAULT_MCP_PORT = 8421
 SECRET_KEY_FILENAME = "secret.key"  # nosec B105 - a filename constant, not a credential
 CONFIG_FILENAME = "config.toml"
+
+
+def validate_local_write_path(path: Path) -> None:
+    """Reject aliases before writing app-owned files; never follow a linked folder.
+
+    This is an application guard against accidental path redirection, not an
+    OS sandbox against a hostile process swapping parent directories concurrently.
+    """
+    absolute = Path(os.path.abspath(path))
+    for entry in (absolute, *absolute.parents):
+        try:
+            details = entry.lstat()
+        except FileNotFoundError:
+            continue
+        if stat.S_ISLNK(details.st_mode) or getattr(details, "st_file_attributes", 0) & 0x400:
+            raise ValueError(f"Refusing a linked app storage path: {entry}")
+        if stat.S_ISREG(details.st_mode) and details.st_nlink > 1:
+            raise ValueError(f"Refusing a hard-linked app storage file: {entry}")
+
 
 ALLOWED_SCANNER_EXTENSIONS: tuple[str, ...] = (
     ".flp",
@@ -163,8 +183,31 @@ class Settings(BaseSettings):
         return self.data_dir / "audio_cache"
 
     def ensure_directories(self) -> None:
+        owned_files = [self.database_path, self.secret_key_path]
+        owned_files.extend(
+            Path(str(self.database_path) + suffix) for suffix in ("-wal", "-shm", "-journal")
+        )
+        owned_files.extend(
+            self.logs_dir / f"produceros.log{suffix}"
+            for suffix in ("", ".1", ".2", ".3", ".4", ".5")
+        )
+        for path in (
+            self.data_dir,
+            self.logs_dir,
+            self.backups_dir,
+            self.audio_cache_dir,
+            *owned_files,
+        ):
+            self.validate_owned_path(path)
         for path in (self.data_dir, self.logs_dir, self.backups_dir, self.audio_cache_dir):
             path.mkdir(parents=True, exist_ok=True)
+
+    def validate_owned_path(self, path: Path) -> None:
+        root = Path(os.path.abspath(self.data_dir))
+        candidate = Path(os.path.abspath(path))
+        if not candidate.is_relative_to(root):
+            raise ValueError("Refusing to write outside the app data directory.")
+        validate_local_write_path(candidate)
 
     def load_or_create_secret_key(self) -> str:
         """Return the local session-signing secret, generating it on first run.
@@ -176,7 +219,9 @@ class Settings(BaseSettings):
         if self.secret_key_path.exists():
             return self.secret_key_path.read_text(encoding="utf-8").strip()
         key = secrets.token_urlsafe(48)
-        self.secret_key_path.write_text(key, encoding="utf-8")
+        # A concurrent startup or unexpected file must not be overwritten.
+        with self.secret_key_path.open("x", encoding="utf-8") as destination:
+            destination.write(key)
         # Best-effort on platforms without POSIX permissions (Windows).
         with contextlib.suppress(OSError):
             os.chmod(self.secret_key_path, 0o600)

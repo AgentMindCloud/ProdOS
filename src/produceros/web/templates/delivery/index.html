@@ -13,7 +13,7 @@
       <select id="preset_id" name="preset_id" required>{% for pr in presets %}<option value="{{ pr.id }}">{{ pr.name }}</option>{% endfor %}</select>
     </div>
     <div class="field"><label for="name">Package name (optional)</label><input type="text" id="name" name="name"></div>
-    <div class="field"><label for="output_directory">Output folder</label><input type="text" id="output_directory" name="output_directory" placeholder="D:\Music\Deliveries\ClientX" required></div>
+    <div class="field"><label for="output_directory">New output folder</label><input type="text" id="output_directory" name="output_directory" placeholder="D:\Deliveries\ClientX-v1" aria-describedby="output-folder-help" required><small id="output-folder-help">Use a new folder name for each export. Existing folders and files are never replaced; your source music stays unchanged.</small></div>
     <div class="layout-11 field"><button type="submit" class="btn btn-primary">Create package (draft)</button></div>
   </form>
 </div>

@@ -1,0 +1,37 @@
+ProdOS 0.2.1 - Windows preview with stronger file safety
+
+1. Download ProducerOS-0.2.1-Windows.zip from the current GitHub preview or
+   prodos.tech. Right-click and choose Extract All.
+2. If an older copy is running, back up its metadata and quit through Settings.
+3. Open the new extracted ProducerOS folder and run ProducerOS.exe. Keep its
+   _internal folder beside the EXE. Python does not need to be installed.
+4. Your browser opens http://127.0.0.1:8420/. Create a local account on first use.
+   Existing app data uses the same separate local data directory.
+5. Add a project and register local assets. Set the project root or an active
+   Scanner root to allow local audio/artwork previews.
+6. Use Settings / Quit to close the app. Closing the browser alone does not
+   stop the background process.
+
+FILE SAFETY IN 0.2.1
+
+Scanning/playback read your files. Delete and replace file operations are
+disabled even with approval. Existing files are never export destinations.
+Internal approved moves/renames require a new destination and a supported
+same-filesystem operation; this update adds no new file-management buttons.
+Delivery exports require a new output folder. If that folder already exists,
+choose another name. Partial exports are kept, never deleted as cleanup.
+Demo cleanup removes demo database records only and keeps all disk files.
+
+The app still updates its own database, settings, logs and metadata backups
+under %LOCALAPPDATA%\ProducerOS. Confirmed restore replaces its own metadata
+database. Keep this data directory separate from your music folders.
+App metadata backups do NOT contain music: back up your audio separately.
+
+The old 0.2.0 and 0.1.0 downloads do not gain these changes automatically.
+This app is not an operating-system sandbox or an absolute guarantee against
+compromised software or every future defect. See docs/FILE_SAFETY.md in source.
+
+This is an unsigned portable Windows preview, not a new installer. A recipient
+PC, interactive upgrade/uninstall and SmartScreen behavior need separate testing.
+No macOS/Linux binary is included. Optional LAN access stays on your home network;
+never forward the app port through your router. No music is uploaded to the site.

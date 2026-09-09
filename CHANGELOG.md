@@ -6,6 +6,20 @@ once tagged releases begin.
 
 ## [Unreleased]
 
+## [0.2.1 preview] — 2026-09-10
+
+- Delete and replace file operations are forbidden, even if already approved.
+- Approved moves/renames use native no-replace operations; unsafe or cross-device
+  moves are refused. Copies and delivery exports create new files exclusively.
+- Delivery exports validate source ownership, destination containment and linked
+  paths; an existing output folder is no longer reused.
+- Demo cleanup leaves disk files untouched. Demo generation uses unique files,
+  scans only demo fixtures and preserves preexisting user analytics records.
+- App storage rejects linked writable paths; backup/restore and key creation
+  avoid overwriting unrelated files through filename collisions.
+- Removed website deployment ZIP/checksum from the public app release downloads.
+  The live website and public website source remain separate from the local app.
+
 ## [0.2.0 preview] — 2026-09-09
 
 - Reference-led blue glass UI, visual dashboard/library/project detail,

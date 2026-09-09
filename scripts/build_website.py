@@ -20,9 +20,12 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-APP_NAME = "ProducerOS-0.2.0-Windows.zip"
+APP_VERSION = "0.2.1"
+RELEASE_DATE = "2026-09-10"
+APP_NAME = f"ProducerOS-{APP_VERSION}-Windows.zip"
 DOMAIN = "https://prodos.tech"
-EXPECTED_APP_SHA256 = "1e72d6a8f23ff4949d92c8b9be7b3c3e4e80a42c32cd84ed99ce5146af21bb55"
+# Reviewed packaged Windows smoke and ZIP integrity passed on 2026-09-10.
+EXPECTED_APP_SHA256: str | None = "b2a4eba0421139bd6c4c70b9a8ace2494e4f7e80e89bcda43a28cca8cb224863"
 
 
 def sha256(path: Path) -> str:
@@ -31,6 +34,11 @@ def sha256(path: Path) -> str:
 
 
 def validate_app_archive(path: Path) -> None:
+    if EXPECTED_APP_SHA256 is None:
+        raise ValueError(
+            f"The reviewed {APP_VERSION} Windows ZIP hash is pending. "
+            "Verify the new package and pin its SHA-256 before building the public website."
+        )
     if not path.is_file():
         raise ValueError(
             f"Missing reviewed Windows package: {path}. Build with scripts/build_windows.ps1, "
@@ -38,7 +46,7 @@ def validate_app_archive(path: Path) -> None:
         )
     if sha256(path) != EXPECTED_APP_SHA256:
         raise ValueError(
-            "Windows ZIP differs from the reviewed 0.2.0 package; review before publishing."
+            f"Windows ZIP differs from the reviewed {APP_VERSION} package; review before publishing."
         )
     with zipfile.ZipFile(path) as package:
         if "ProducerOS/ProducerOS.exe" not in package.namelist():
@@ -146,7 +154,12 @@ def build(output: Path, archive: Path, app_zip: Path) -> dict:
         destination.write_text(content, encoding="utf-8")
         public_files.append(destination)
 
-    for filename in ("index.html", "site.css", "site.js"):
+    index = (source / "index.html").read_text(encoding="utf-8")
+    size_token = "{{APP_DOWNLOAD_SIZE}}"
+    if index.count(size_token) != 1:
+        raise ValueError("The website source must contain exactly one download-size placeholder.")
+    write("index.html", index.replace(size_token, f"{app_zip.stat().st_size / 1_000_000:.1f} MB"))
+    for filename in ("site.css", "site.js"):
         copy(source / filename, filename)
     copy(ROOT / "src/produceros/web/static/artwork/studio-disc.png", "assets/studio-disc.png")
     copy(ROOT / "src/produceros/web/static/icons/icon-192.png", "assets/app-icon.png")
@@ -158,15 +171,15 @@ def build(output: Path, archive: Path, app_zip: Path) -> dict:
     copy(app_zip, f"downloads/{APP_NAME}")
     write(f"downloads/{APP_NAME}.sha256", f"{EXPECTED_APP_SHA256}  {APP_NAME}\n")
     write("downloads/SHA256SUMS.txt", f"{EXPECTED_APP_SHA256}  {APP_NAME}\n")
-    copy(ROOT / "docs/review-2026-09-09/WINDOWS_PORTABLE.txt", "downloads/READ-ME-FIRST.txt")
+    copy(ROOT / "docs/review-2026-09-10/WINDOWS_PORTABLE.txt", "downloads/READ-ME-FIRST.txt")
     copy(ROOT / "LICENSE", "downloads/LICENSE.txt")
     release_info = {
         "product": "ProducerOS",
-        "version": "0.2.0",
+        "version": APP_VERSION,
         "channel": "preview",
         "platform": "Windows",
         "format": "portable-zip",
-        "date": "2026-09-09",
+        "date": RELEASE_DATE,
         "url": f"downloads/{APP_NAME}",
         "bytes": app_zip.stat().st_size,
         "sha256": EXPECTED_APP_SHA256,
@@ -231,7 +244,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / ".work/website-dist")
     parser.add_argument(
-        "--archive", type=Path, default=ROOT / "release-artifacts/prodos-site-20260909.zip"
+        "--archive", type=Path, default=ROOT / "release-artifacts/prodos-site-20260910.zip"
     )
     parser.add_argument("--app-zip", type=Path, default=ROOT / "release-artifacts" / APP_NAME)
     args = parser.parse_args()

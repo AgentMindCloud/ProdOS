@@ -21,7 +21,7 @@ from pathlib import Path
 from sqlalchemy import inspect, select
 from sqlalchemy.orm import Session
 
-from produceros.config import Settings
+from produceros.config import Settings, validate_local_write_path
 from produceros.models import Base
 from produceros.models.assets import AssetVersion
 from produceros.models.enums import BackupType
@@ -29,6 +29,41 @@ from produceros.models.system import BackupRecord
 from produceros.services.audit import log_event
 
 CHUNK_SIZE = 1024 * 1024
+
+
+def _has_pending_wal(path: Path) -> bool:
+    wal = Path(str(path) + "-wal")
+    return wal.exists() and (not wal.is_file() or wal.stat().st_size > 0)
+
+
+def _open_standalone_snapshot(path: Path) -> sqlite3.Connection:
+    # mode=ro alone can create/overwrite WAL sidecars beside a user-selected DB.
+    # Immutable mode reads a closed, standalone snapshot without sidecar writes.
+    if _has_pending_wal(path):
+        raise ValueError("Use a standalone backup without pending write-ahead-log data.")
+    return sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro&immutable=1", uri=True)
+
+
+def _new_snapshot_path(settings: Settings, prefix: str) -> Path:
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    return settings.backups_dir / f"{prefix}_{timestamp}_{uuid.uuid4().hex}.db"
+
+
+def _write_snapshot(settings: Settings, destination: Path) -> None:
+    settings.validate_owned_path(settings.database_path)
+    settings.validate_owned_path(destination)
+    # Reserve with exclusive creation even if a filename collision occurs.
+    with destination.open("xb"):
+        pass
+    source_conn = sqlite3.connect(f"{settings.database_path.resolve().as_uri()}?mode=ro", uri=True)
+    try:
+        dest_conn = sqlite3.connect(str(destination))
+        try:
+            source_conn.backup(dest_conn)
+        finally:
+            dest_conn.close()
+    finally:
+        source_conn.close()
 
 
 def _sha256_of_file(path: Path) -> str:
@@ -46,21 +81,11 @@ def create_backup(
     backup_type: BackupType = BackupType.MANUAL,
     user_id: uuid.UUID | None = None,
 ) -> BackupRecord:
-    settings.backups_dir.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    settings.ensure_directories()
     # A double click (or overlapping automated/manual backups) can happen
     # within one clock tick. Every history record needs its own snapshot.
-    destination = settings.backups_dir / f"produceros_{timestamp}_{uuid.uuid4().hex}.db"
-
-    source_conn = sqlite3.connect(str(settings.database_path))
-    try:
-        dest_conn = sqlite3.connect(str(destination))
-        try:
-            source_conn.backup(dest_conn)
-        finally:
-            dest_conn.close()
-    finally:
-        source_conn.close()
+    destination = _new_snapshot_path(settings, "produceros")
+    _write_snapshot(settings, destination)
 
     checksum = _sha256_of_file(destination)
     record = BackupRecord(
@@ -87,12 +112,12 @@ def verify_backup(
     session: Session, record: BackupRecord, *, user_id: uuid.UUID | None = None
 ) -> bool:
     path = Path(record.file_path)
-    ok = path.exists()
+    ok = path.is_file() and not _has_pending_wal(path)
     if ok:
         current_checksum = _sha256_of_file(path)
         ok = current_checksum == record.checksum_sha256
         if ok:
-            conn = sqlite3.connect(str(path))
+            conn = _open_standalone_snapshot(path)
             try:
                 result = conn.execute("PRAGMA integrity_check").fetchone()
                 ok = result is not None and result[0] == "ok"
@@ -136,7 +161,14 @@ def restore_dry_run(backup_path: str | Path) -> RestoreDryRunResult:
             warnings=[f"'{path}' is not an existing database file."],
         )
 
-    conn = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+    if _has_pending_wal(path):
+        return RestoreDryRunResult(
+            ok=False,
+            integrity_check="backup has pending WAL data",
+            table_counts={},
+            warnings=["Use a standalone backup without pending write-ahead-log data."],
+        )
+    conn = _open_standalone_snapshot(path)
     try:
         try:
             integrity = conn.execute("PRAGMA integrity_check").fetchone()
@@ -194,6 +226,8 @@ def restore_backup(
     if not confirmed:
         raise ValueError("Restore requires explicit confirmation.")
 
+    settings.ensure_directories()
+
     dry_run = restore_dry_run(backup_path)
     if not dry_run.ok:
         detail = "; ".join(dry_run.warnings) or dry_run.integrity_check
@@ -201,24 +235,20 @@ def restore_backup(
 
     from produceros.db.session import reset_engine_cache
 
-    settings.backups_dir.mkdir(parents=True, exist_ok=True)
     if settings.database_path.exists():
-        timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-        pre_restore_path = settings.backups_dir / f"pre_restore_{timestamp}_{uuid.uuid4().hex}.db"
-        source_conn = sqlite3.connect(str(settings.database_path))
-        try:
-            dest_conn = sqlite3.connect(str(pre_restore_path))
-            try:
-                source_conn.backup(dest_conn)
-            finally:
-                dest_conn.close()
-        finally:
-            source_conn.close()
+        pre_restore_path = _new_snapshot_path(settings, "pre_restore")
+        _write_snapshot(settings, pre_restore_path)
+        # Validate the closed copy so live WAL transactions remain represented.
+        if not restore_dry_run(pre_restore_path).ok:
+            raise ValueError(
+                "Refusing to replace a live file that is not a compatible app database."
+            )
 
     reset_engine_cache()
     _swap_in_database(Path(backup_path), settings.database_path)
     for suffix in ("-wal", "-shm"):
         stale = Path(str(settings.database_path) + suffix)
+        settings.validate_owned_path(stale)
         if stale.exists():
             stale.unlink()
 
@@ -238,12 +268,16 @@ def _swap_in_database(source: Path, destination: Path, *, attempts: int = 10) ->
     connection being torn down by ``reset_engine_cache`` may need a moment
     to actually release its handle.
     """
-    staged = destination.with_name(destination.name + ".restore-staged")
-    shutil.copy2(source, staged)
+    validate_local_write_path(destination)
+    staged = destination.with_name(destination.name + f".{uuid.uuid4().hex}.restore-staged")
+    # Never use the old predictable name: it may belong to an unrelated file.
+    with staged.open("xb") as target, source.open("rb") as current:
+        shutil.copyfileobj(current, target, CHUNK_SIZE)
     try:
         last_error: OSError | None = None
         for attempt in range(attempts):
             try:
+                validate_local_write_path(destination)
                 os.replace(staged, destination)
                 return
             except PermissionError as exc:  # pragma: no cover - Windows-only path
@@ -255,6 +289,7 @@ def _swap_in_database(source: Path, destination: Path, *, attempts: int = 10) ->
         ) from last_error
     finally:
         if staged.exists():
+            validate_local_write_path(staged)
             staged.unlink()
 
 

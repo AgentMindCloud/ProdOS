@@ -15,6 +15,8 @@ import re
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
+from produceros.config import validate_local_write_path
+
 _REDACT_PATTERNS = [
     re.compile(r"(password\"?\s*[:=]\s*\"?)([^\",\s]+)", re.IGNORECASE),
     re.compile(r"(authorization\"?\s*[:=]\s*\"?)(bearer\s+[^\",\s]+)", re.IGNORECASE),
@@ -74,6 +76,8 @@ def configure_logging(logs_dir: Path | None, level: str = "INFO") -> None:
     logger.addHandler(console_handler)
 
     if logs_dir is not None:
+        for suffix in ("", ".1", ".2", ".3", ".4", ".5"):
+            validate_local_write_path(logs_dir / f"produceros.log{suffix}")
         logs_dir.mkdir(parents=True, exist_ok=True)
         file_handler = RotatingFileHandler(
             logs_dir / "produceros.log", maxBytes=5_000_000, backupCount=5, encoding="utf-8"

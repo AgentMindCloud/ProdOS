@@ -8,6 +8,7 @@
 <div class="panel">
   <p>Status: <span class="badge badge-neutral">{{ package.status.value.replace("_"," ") }}</span></p>
   <p>Output folder: <code>{{ package.output_directory }}</code></p>
+  <p class="text-sm text-muted">This must be a new folder. Files are copied without overwriting or deleting your source music.</p>
 
   <h3>Completeness check ({{ preset.name }})</h3>
   <ul class="layout-3">

@@ -34,7 +34,9 @@ workflow stages, real tiny synthetic audio files, rights shares, a
 release with an evaluated checklist, marketing drafts, calendar
 deadlines, and a scanner run against real generated files. Remove it
 later with `demo-clean` (`.\scripts\clean_demo.ps1`) -- it removes
-exactly what was loaded, nothing you've created yourself.
+the demo database records and keeps generated files on disk. It never deletes
+files from demo folders. Each new run uses a separate folder, so retained demo
+files can accumulate; any manual file cleanup is your decision.
 
 ## Dashboard
 
@@ -119,8 +121,11 @@ app via the Export link.
 `/delivery`: pick a project and a preset (client, sync licensing, or
 distributor), then generate a manifest -- a **dry-run** listing of every
 file that would be copied and where, with checksums. Review it, approve
-it, then execute it. Execution refuses to overwrite an existing output
-directory, so re-running a delivery never silently clobbers a prior one.
+it, then execute it. Choose an absolute path to a **new folder that does not yet
+exist**, including a new name for every run. Existing empty folders are refused
+too. Every file is created without overwriting anything, and source music is
+unchanged. Failed partial exports remain available for inspection; the app does
+not delete them as cleanup. See [file safety](FILE_SAFETY.md).
 
 ## Analytics
 

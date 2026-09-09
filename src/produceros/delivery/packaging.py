@@ -5,19 +5,158 @@ directory, always dry-run first, always audited (spec section 15)."""
 from __future__ import annotations
 
 import json
-import shutil
+import stat
 import uuid
 from datetime import UTC, datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from produceros.delivery.manifest import current_version_for_type
+from produceros.filesystem import copy_file_exclusive
+from produceros.models.assets import AssetVersion
 from produceros.models.catalog import Project
 from produceros.models.delivery import DeliveryManifestItem, DeliveryPackage, DeliveryPreset
 from produceros.models.enums import AssetType, DeliveryPackageStatus
 from produceros.scanners.hashing import hash_file
 from produceros.services.audit import log_event
+
+
+def _validate_components(parts: tuple[str, ...]) -> None:
+    """Reject path aliases that can collide or escape on Windows."""
+    for part in parts:
+        stem = part.split(".", 1)[0].upper()
+        reserved = stem in {"CON", "PRN", "AUX", "NUL"} or (
+            len(stem) == 4 and stem[:3] in {"COM", "LPT"} and stem[-1] in "123456789¹²³"
+        )
+        if (
+            part in {"", ".", ".."}
+            or part.endswith((" ", "."))
+            or any(ord(char) < 32 or char in '<>:"|?*' for char in part)
+            or reserved
+        ):
+            raise ValueError("Delivery paths contain an unsafe or ambiguous filename.")
+
+
+def _absolute_local_path(raw: str) -> Path:
+    path = Path(raw)
+    if not path.is_absolute() or PureWindowsPath(raw).drive.startswith("\\\\"):
+        raise ValueError("Delivery paths must be absolute paths on a local drive.")
+    _validate_components(path.parts[1:])
+    return path
+
+
+def _relative_destination(raw: str) -> Path:
+    # Validate both grammars even on POSIX: a manifest may have been imported
+    # from Windows. Never let a drive, rooted path, or ADS be treated as a name.
+    windows = PureWindowsPath(raw)
+    portable = PurePosixPath(raw.replace("\\", "/"))
+    if windows.drive or windows.root or portable.is_absolute() or not portable.parts:
+        raise ValueError("Every delivery destination must be a relative file path.")
+    _validate_components(portable.parts)
+    if portable.parts[0].casefold() == "manifest.json":
+        raise ValueError("manifest.json is reserved for the delivery manifest.")
+    return Path(*portable.parts)
+
+
+def _assert_no_links(path: Path) -> None:
+    """Reject symlinks, junctions and other Windows reparse points in a path."""
+    for component in (path, *path.parents):
+        try:
+            info = component.lstat()
+        except FileNotFoundError:
+            continue
+        if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & 0x400:
+            raise ValueError("Delivery paths cannot pass through symlinks or junctions.")
+
+
+def _directory_identity(path: Path) -> tuple[int, int]:
+    _assert_no_links(path)
+    info = path.stat()
+    if not stat.S_ISDIR(info.st_mode):
+        raise ValueError("A delivery parent path is not a directory.")
+    return info.st_dev, info.st_ino
+
+
+def _check_directories(identities: dict[Path, tuple[int, int]]) -> None:
+    for path, identity in identities.items():
+        if _directory_identity(path) != identity:
+            raise ValueError("A delivery directory changed during export. Choose a new folder.")
+
+
+def _create_directories(path: Path, identities: dict[Path, tuple[int, int]]) -> None:
+    """Exclusively create each missing directory; never adopt a racing folder."""
+    missing = []
+    current = path
+    while current not in identities:
+        if current == current.parent:
+            raise ValueError("The delivery drive is unavailable.")
+        missing.append(current)
+        current = current.parent
+    for directory in reversed(missing):
+        _check_directories(identities)
+        directory.mkdir(exist_ok=False)
+        identities[directory] = _directory_identity(directory)
+
+
+def _prepare_export(
+    session: Session, package: DeliveryPackage
+) -> tuple[
+    Path, Project, list[tuple[DeliveryManifestItem, Path, Path]], dict[Path, tuple[int, int]]
+]:
+    if not package.output_directory:
+        raise ValueError("Delivery package has no output directory set.")
+    output = _absolute_local_path(package.output_directory)
+    _assert_no_links(output)
+    if output.exists():
+        raise FileExistsError("The output path already exists. Choose a new delivery folder.")
+    project = session.get(Project, package.project_id)
+    if project is None:
+        raise ValueError("Delivery package references a project that no longer exists.")
+
+    plan = []
+    destinations: set[tuple[str, ...]] = set()
+    items = session.scalars(
+        select(DeliveryManifestItem).where(DeliveryManifestItem.package_id == package.id)
+    )
+    for item in items:
+        relative = _relative_destination(item.destination_relative_path)
+        key = tuple(part.casefold() for part in relative.parts)
+        if any(
+            key[: len(existing)] == existing or existing[: len(key)] == key
+            for existing in destinations
+        ):
+            raise ValueError("Delivery manifest destinations conflict with each other.")
+        destinations.add(key)
+        version = (
+            session.get(AssetVersion, item.asset_version_id) if item.asset_version_id else None
+        )
+        if (
+            version is None
+            or version.asset is None
+            or version.asset.project_id != package.project_id
+        ):
+            raise ValueError("A delivery source no longer belongs to this project's assets.")
+        source = _absolute_local_path(item.source_path)
+        registered_source = _absolute_local_path(version.full_path)
+        _assert_no_links(source)
+        _assert_no_links(registered_source)
+        if source != registered_source or not source.is_file():
+            raise ValueError("A delivery source is missing or differs from its registered asset.")
+        destination = output / relative
+        if not destination.is_relative_to(output) or source == destination:
+            raise ValueError("A delivery destination is outside its folder or equals its source.")
+        _assert_no_links(destination)
+        plan.append((item, source, destination))
+
+    identities = {}
+    for parent in reversed(output.parents):
+        if parent.exists():
+            identities[parent] = _directory_identity(parent)
+    if not identities:
+        raise ValueError("The delivery drive is unavailable.")
+    return output, project, plan, identities
 
 
 def create_package(
@@ -82,8 +221,12 @@ def generate_manifest(
         )
 
     package.status = DeliveryPackageStatus.DRY_RUN
+    package.approved_by = None
+    package.approved_at = None
+    package.completed_at = None
     package.manifest_generated_at = datetime.now(UTC)
     session.flush()
+    session.expire(package, ["items"])
     log_event(
         session,
         event_type="delivery.manifest_generated",
@@ -118,34 +261,28 @@ def approve_package(
 def execute_package(
     session: Session, package: DeliveryPackage, *, executed_by: uuid.UUID | None = None
 ) -> DeliveryPackage:
-    """Copy every manifest item into the output directory, computing a
-    checksum for each. Refuses to run if the output directory already
-    exists and is non-empty (never overwrite an existing package)."""
+    """Copy an approved manifest into a new, exclusively created directory.
+
+    Validate all paths before creating anything, and exclusively create every
+    copied file and manifest. An existing empty folder is refused too. Failed
+    exports are retained for human inspection: cleanup never deletes files.
+    """
     if package.status != DeliveryPackageStatus.APPROVED:
         raise ValueError("Only an approved package may be executed.")
 
-    if not package.output_directory:
-        raise ValueError("Delivery package has no output directory set.")
-    output_dir = Path(package.output_directory)
-    if output_dir.exists() and any(output_dir.iterdir()):
-        package.status = DeliveryPackageStatus.FAILED
-        session.flush()
-        raise FileExistsError(f"Output directory '{output_dir}' already exists and is not empty.")
-
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    project = session.get(Project, package.project_id)
-    if project is None:
-        raise ValueError("Delivery package references a project that no longer exists.")
-    items = list(package.items)
     manifest_records = []
 
     try:
-        for item in items:
-            source = Path(item.source_path)
-            destination = output_dir / item.destination_relative_path
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, destination)
+        output_dir, project, plan, identities = _prepare_export(session, package)
+        _create_directories(output_dir, identities)
+        for item, source, destination in plan:
+            _create_directories(destination.parent, identities)
+            _check_directories(identities)
+            _assert_no_links(source)
+            _assert_no_links(destination)
+            copy_file_exclusive(source, destination)
+            _check_directories(identities)
+            _assert_no_links(destination)
             checksum = hash_file(destination)
             item.checksum_sha256 = checksum
             item.copied = True
@@ -166,9 +303,9 @@ def execute_package(
             "items": manifest_records,
             "revision_notes": project.revision_notes or "",
         }
-        (output_dir / "manifest.json").write_text(
-            json.dumps(manifest_payload, indent=2), encoding="utf-8"
-        )
+        _check_directories(identities)
+        with (output_dir / "manifest.json").open("x", encoding="utf-8") as manifest_file:
+            json.dump(manifest_payload, manifest_file, indent=2)
 
         package.status = DeliveryPackageStatus.COMPLETED
         package.completed_at = datetime.now(UTC)
@@ -183,6 +320,11 @@ def execute_package(
             entity_type="DeliveryPackage",
             entity_id=package.id,
         )
+        if isinstance(exc, OSError) and not isinstance(exc, FileExistsError):
+            raise ValueError(
+                "Delivery export could not finish. Any partial new files were kept; "
+                "review them and choose a new output folder before retrying."
+            ) from exc
         raise
 
     session.flush()

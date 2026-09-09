@@ -15,14 +15,19 @@ Docker, and no internet access after install**. Every runtime web asset
 these, even optionally, without treating it as a significant scope change
 that needs explicit sign-off.
 
-## Never touch music files without explicit approval
+## Never delete or overwrite user files
 
-ProducerOS must never delete, rename, move, or overwrite a music file on
-disk on its own initiative. Every file-management action starts as a
-dry run and requires an explicit approval step before it touches disk
-(`services/file_operations.py`). The scanner (`scanners/engine.py`) is
-read-only, full stop -- it only ever produces `ScannerFinding` rows, never
-mutates a file. See `docs/SECURITY_MODEL.md`.
+Owner clarification, 2026-09-10: deleting or overwriting music/user files is
+forbidden even with approval. Do not implement a force/replace/delete bypass.
+Moving and renaming remain possible only after a dry run and explicit approval,
+with an atomic refusal if the destination exists. If the filesystem cannot
+provide that safely, refuse the operation; never fall back to copy-and-delete.
+Copies and delivery exports create new files exclusively. Demo cleanup must
+not delete files or directories, including untracked content in demo folders.
+The scanner is read-only: it produces database findings and never mutates files.
+The app may update its own database/settings/logs and restore its own metadata
+after confirmation; this exception never grants write access to music files.
+See `docs/FILE_SAFETY.md` and `docs/SECURITY_MODEL.md`.
 
 Never interpret or reverse-engineer `.flp` (FL Studio project) file
 internals -- ProducerOS only records metadata *about* a project file's

@@ -1,4 +1,4 @@
-ProducerOS 0.2.0 - Windows preview
+ProducerOS 0.2.1 - Windows preview
 =================================
 
 ProducerOS helps organize music projects, versions, rights and releases.
@@ -7,9 +7,9 @@ Your music stays on your computer. The app works offline after setup.
 DOWNLOAD
 --------
 Visit https://prodos.tech/ or the GitHub preview release:
-https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.0
+https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.1
 
-Download ProducerOS-0.2.0-Windows.zip. No GitHub account is needed.
+Download ProducerOS-0.2.1-Windows.zip. No GitHub account is needed.
 Use the release download, not GitHub's Code > Download ZIP button.
 The installer bundled in the source tree is the older 0.1.0 version.
 

@@ -1,11 +1,11 @@
 # Installing ProducerOS on Windows
 
-> **Current 0.2.0 preview:** Download the portable ZIP from
-> [the preview release](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.0)
+> **Current 0.2.1 preview:** Download the portable ZIP from
+> [the preview release](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.1)
 > or [prodos.tech](https://prodos.tech/), extract the complete folder, then run
 > `ProducerOS.exe`. See [START-HERE.txt](../START-HERE.txt). The installer workflow
 > below describes the older 0.1.0 installer; no new installer or clean-machine
-> upgrade is claimed for 0.2.0.
+> upgrade is claimed for 0.2.1.
 
 ## The easy way (this is what most people want)
 
