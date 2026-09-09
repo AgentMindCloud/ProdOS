@@ -24,10 +24,14 @@ evidence, remaining work, storage/hosting advice and source links.
   data directory, require login and stream ranges without copying music.
 - The owner-approved companion website and Windows preview download are live
   at **https://prodos.tech/** on existing Hostinger Business hosting; see
-  [launch evidence](docs/WEBSITE_LAUNCH.md). The owner also authorized publishing
-  this source and the reviewed preview to the existing public repository,
-  `AgentMindCloud/ProdOS`. GitHub publication is being prepared from an isolated
-  clone because the original downloaded source snapshot has no `.git`.
+  [launch evidence](docs/WEBSITE_LAUNCH.md). Updated source is now public on
+  `AgentMindCloud/ProdOS` main, with the reviewed downloads under
+  [preview-0.2.0](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.0).
+  The tag targets `5333005eefa42a10a10ac7e107f20edc8fdaf122`. An unauthenticated
+  full GitHub app download matched the reviewed SHA-256. See
+  [publication evidence](docs/GITHUB_RELEASE.md). The original source snapshot
+  has no `.git`; publication used `.work/github-publish-20260909`, an isolated
+  clone with the original Git history, so continue future Git work there.
 - Website: 10 checks passed, including demo edits/audio/reset, responsive
   controls, no-JS paths and the complete app download hash. Preview is at
   `http://127.0.0.1:8427/`; deploy ZIP is

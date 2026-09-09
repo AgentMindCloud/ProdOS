@@ -22,7 +22,9 @@ Read directly from the user-opened hPanel session:
 - The public GitHub repository and its Issues page are accessible. No issue
   was submitted. After the website launch, the owner separately authorized
   publishing the updated source and reviewed Windows preview to
-  `AgentMindCloud/ProdOS`; that publication is being prepared separately.
+  `AgentMindCloud/ProdOS`. It is now public under
+  [preview-0.2.0](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.0);
+  see [GitHub publication evidence](GITHUB_RELEASE.md).
 
 ## Authorized local preparation
 
