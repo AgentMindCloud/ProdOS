@@ -44,15 +44,28 @@ a neighboring `-shm` file. The final immutable-backup checks preserved valid
 and invalid backup candidates and all their sibling files byte for byte.
 All test inputs were synthetic, in isolated temporary directories.
 
+GitHub's [Windows Build](https://github.com/AgentMindCloud/ProdOS/actions/runs/34384269847)
+and [Security](https://github.com/AgentMindCloud/ProdOS/actions/runs/34384269860)
+passed on the release commit. The additional [CI workflow](https://github.com/AgentMindCloud/ProdOS/actions/runs/34384269886)
+was still incomplete at handoff: Ubuntu stopped before app tests because the
+external Google apt repository returned a hash mismatch; Windows was still
+installing Chromium. No remote full-suite or Linux result is claimed.
+
 ## Reviewed download
 
 `ProducerOS-0.2.1-Windows.zip`: **28,211,113 bytes**.
 
 SHA-256: `b2a4eba0421139bd6c4c70b9a8ace2494e4f7e80e89bcda43a28cca8cb224863`.
 
-The website deployment ZIP contains 17 allowlisted public files and stays local;
-it is not a GitHub release asset. Source and hosting publication status is in
-`HANDOFF.md`; an old binary does not change when new source is published.
+The [0.2.1 release](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.1)
+is public at source commit `37e5eb4c0de7ffd3d2cf1b112d246ce74c7eae28`.
+A complete unauthenticated GitHub download matched the reviewed hash and passed
+ZIP integrity. Only the app ZIP, checksum and portable guide were attached.
+
+The website deployment ZIP contains 17 allowlisted public files; it is not a
+GitHub release asset. Hostinger File Manager returned 403 Forbidden on both old
+and renewed sessions. The new website was not deployed: live prodos.tech still
+shows 0.2.0, pending the owner's manual upload. `HANDOFF.md` records exact steps.
 
 ## Limits
 

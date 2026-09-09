@@ -20,10 +20,28 @@ delete-with-approval allowance. See [file safety](docs/FILE_SAFETY.md),
   executable passed CLI demo load/cleanup with 7 preserved file hashes,
   setup/login, 21 routes, project creation, backup validation and shutdown.
   Independent verification reproduced and confirmed the SQLite sidecar fix.
+- Remote checks on the release commit: [Windows Build](https://github.com/AgentMindCloud/ProdOS/actions/runs/34384269847)
+  and [Security](https://github.com/AgentMindCloud/ProdOS/actions/runs/34384269860)
+  passed. [CI](https://github.com/AgentMindCloud/ProdOS/actions/runs/34384269886)
+  remains incomplete: Ubuntu failed during browser dependency setup with an
+  external Google apt checksum mismatch before app tests; Windows was still
+  installing Chromium at the last check. A retry of the completed Linux job was
+  refused while the workflow remained active. Do not claim this CI suite passed.
 - Reviewed portable ZIP: 28,211,113 bytes, 301 entries; SHA-256
   `b2a4eba0421139bd6c4c70b9a8ace2494e4f7e80e89bcda43a28cca8cb224863`.
-  Publication of this new version is in progress; do not claim the old 0.2.0
-  download contains these changes. Users must explicitly download 0.2.1.
+  Published at [preview-0.2.1](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.1),
+  targeting `37e5eb4c0de7ffd3d2cf1b112d246ce74c7eae28`. A complete public download
+  without authentication matched that SHA-256 and passed ZIP integrity.
+  Users must explicitly download 0.2.1; old downloads are unchanged.
+- Hostinger update is blocked: old and freshly minted File Manager sessions
+  returned 403 Forbidden for public_html. The site still displays 0.2.0.
+  Ready local deployment: `release-artifacts/prodos-site-20260910.zip`
+  (30,874,578 bytes; SHA-256
+  `ffee8c29ca5b7618597b58890f772423a75925434276150cebca5f648b194376`).
+  Owner should upload/extract its flat contents into the existing public_html,
+  replacing matching website files while keeping unrelated files. Then verify
+  live 0.2.1 copy and the complete download hash. Exact local instructions are
+  alongside the archive in `UPLOAD-WEBSITE-0.2.1.txt`.
 - Root is a source snapshot without `.git`; publish from the isolated clone
   `.work/github-publish-20260909`, preserving original history. Test data and
   artifacts under ignored `.work/` are not needed to reconstruct source/runtime.

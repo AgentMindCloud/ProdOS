@@ -1,5 +1,22 @@
 # GitHub publication evidence
 
+## Update: 0.2.1 file safety preview, 2026-09-10
+
+[preview-0.2.1](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.1)
+is published at `37e5eb4c0de7ffd3d2cf1b112d246ce74c7eae28`. The app ZIP,
+checksum and portable guide are the only attached assets. GitHub's generated
+source ZIP/tar archives are separate. The complete public app download matched
+SHA-256 `b2a4eba0421139bd6c4c70b9a8ace2494e4f7e80e89bcda43a28cca8cb224863`
+(28,211,113 bytes) and passed ZIP integrity. Older release notes direct users
+to 0.2.1 for the safety changes; old binaries do not update automatically.
+
+The two website deployment ZIP/checksum assets were removed from 0.2.0. The new
+site deployment bundle is local only and awaiting Hostinger upload because
+File Manager returned 403. The public website still displays 0.2.0. See
+[current verification and limits](review-2026-09-10/REVIEW.md) and `HANDOFF.md`.
+
+## Original publication: 0.2.0
+
 Published with the owner's explicit authorization on 2026-09-09 at
 16:55:23 UTC. This publishes the existing reviewed app and companion site;
 it does not add a network dependency to the desktop app.
