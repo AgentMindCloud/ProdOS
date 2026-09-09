@@ -1,4 +1,18 @@
-# ProducerOS
+<p align="center">
+  <a href="https://prodos.tech/">
+    <img src="docs/images/prodos-readme.svg" width="1280" alt="ProdOS · prodos.tech — Projects, versions, rights and release preparation. One local workspace for your next finished track." />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://prodos.tech/"><strong>Explore prodos.tech</strong></a>
+  &nbsp; · &nbsp;
+  <a href="https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.0"><strong>Download Windows preview</strong></a>
+  &nbsp; · &nbsp;
+  <a href="https://github.com/AgentMindCloud/ProdOS/issues">Feedback &amp; ideas</a>
+</p>
+
+## Your studio, in focus
 
 Local-first music production management for a producer using FL Studio on
 Windows. Projects, versions, audio assets, contributors, rights, releases,
@@ -12,9 +26,24 @@ Everything runs and stays on your machine; your unreleased music never
 leaves it, and ProducerOS never modifies an audio file without an
 explicitly approved, logged operation.
 
-![Dashboard with synthetic demo data](docs/review-2026-09-09/02-dashboard-after.png)
+<p align="center">
+  <img src="docs/review-2026-09-09/02-dashboard-after.png" width="1100" alt="ProdOS dashboard with project artwork, local audio playback, stages and release preparation. All shown projects are synthetic demo data." />
+  <br />
+  <sub>The workspace at a glance · synthetic demo projects</sub>
+</p>
 
-## Try ProducerOS 0.2.0
+<table>
+  <tr>
+    <td width="50%"><img src="docs/review-2026-09-09/03-projects-after.png" alt="Project library with stage filters and visual project cards" /></td>
+    <td width="50%"><img src="docs/review-2026-09-09/04-project-detail-after.png" alt="Project detail with local audio playback, metadata, assets and rights" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Keep your projects in view</sub></td>
+    <td align="center"><sub>Bring the details together</sub></td>
+  </tr>
+</table>
+
+## Try ProdOS 0.2.0
 
 **[Website and interactive demo](https://prodos.tech/)** ·
 **[Windows preview download](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.0)**
