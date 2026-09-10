@@ -30,9 +30,14 @@ Fresh verification in a restored Git worktree:
   edit/reset and a 390 px footer visual/overflow check passed in Chromium.
   The download button retains the existing 0.2.1 target. No certificate warning
   was bypassed. Physical phones and mailbox delivery remain untested.
+- GitHub main includes the contact update at `8fea778af29762aee40b340810371db50efd8bea`.
+  The rendered public README mailto link and retained blue banner were inspected.
 - Direct HTTP verification in this session receives Hostinger's 403 browser
   challenge. A fresh live byte-hash/header result is therefore **not** claimed;
   the complete live hash/header checks below belong to the earlier deployment.
+  The live download-tool attempt did not yield a retrievable file and a later
+  browser download-event wait timed out. This limits fresh live download evidence;
+  the local full download/hash test passed and no hosted app ZIP was changed.
 
 Uploaded homepage: 18,526 bytes; SHA-256
 `3685db4461eee784bf5463d55aeac97417af53ca13b98863334801bfee386ce6`.

@@ -5,6 +5,8 @@
 - Added `mailto:contact@prodos.tech` to the public website footer and README's
   existing link row. Blue visuals and the 0.2.1 app/version are unchanged.
   No form, mail backend, tracking or test email. Mailbox delivery is unverified.
+- Contact source/documentation published to GitHub main at `8fea778af29762aee40b340810371db50efd8bea`.
+  The rendered public README contact link and preserved blue banner were checked.
 - Published only the built `index.html` to the outer live `public_html` through
   the existing site-specific Hostinger File Manager. Existing files/downloads
   and earlier archives remain. Live HTTPS footer shows the correct mailto link;
@@ -25,9 +27,13 @@
   and the existing release ZIP have now been recreated/downloaded as needed.
   Preserve the separately installed portable app and all user app data.
 - Community/connectors are an assessment only. Start with a small opt-in
-  showcase using producer-owned external clips; consider moderated website
-  comments after evidence of repeat use. No community, uploads, OAuth app,
-  account, paid service or desktop network dependency has been created.
+  showcase built around links to producer-owned external clips, with selective
+  permitted embeds; consider moderated website comments after repeat use.
+  SoundCloud widget aggregation restrictions and Spotify API eligibility are
+  material constraints. See [the ranked assessment](docs/COMMUNITY_FEASIBILITY.md)
+  for current primary sources, hosting, cost estimates and minimum controls.
+  No community, uploads, OAuth app, account, paid service or desktop network
+  dependency has been created.
 
 ## Current snapshot: 2026-09-10, version 0.2.1
 
