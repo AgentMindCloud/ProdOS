@@ -1,5 +1,34 @@
 # HANDOFF
 
+## Contact update and community assessment: 2026-09-10
+
+- Added `mailto:contact@prodos.tech` to the public website footer and README's
+  existing link row. Blue visuals and the 0.2.1 app/version are unchanged.
+  No form, mail backend, tracking or test email. Mailbox delivery is unverified.
+- Published only the built `index.html` to the outer live `public_html` through
+  the existing site-specific Hostinger File Manager. Existing files/downloads
+  and earlier archives remain. Live HTTPS footer shows the correct mailto link;
+  live demo title editing/reset and 390 px contact layout were verified.
+- Fresh local website suite: **10 passed** using a new worktree-local Python
+  environment and Chromium. Covers demo isolation/reset, audio play/seek,
+  360/390/768/1440 px layouts, no-JS guidance, archive allowlist and complete
+  browser download/hash. Desktop and 390 px local footer visually reviewed.
+  No desktop build or backend/remote CI suite was rerun for this HTML change.
+- Reused the existing GitHub 0.2.1 ZIP; builder verified its pinned SHA-256 and
+  ZIP integrity. Direct live HTTP clients currently get Hostinger's 403 browser
+  challenge; do not mistake its headers for the site's or reuse old live hash/
+  header evidence as fresh verification. Details: [website launch](docs/WEBSITE_LAUNCH.md).
+- Environment corrected: source was restored from the public repository at
+  `fd895037b03606d9823edcddc054b89f91890680`; this is a normal Git worktree with
+  the original history. Use normal Git here. The old `.work` publishing clone,
+  virtual environment and release artifacts were lost; local website tooling
+  and the existing release ZIP have now been recreated/downloaded as needed.
+  Preserve the separately installed portable app and all user app data.
+- Community/connectors are an assessment only. Start with a small opt-in
+  showcase using producer-owned external clips; consider moderated website
+  comments after evidence of repeat use. No community, uploads, OAuth app,
+  account, paid service or desktop network dependency has been created.
+
 ## Current snapshot: 2026-09-10, version 0.2.1
 
 The owner clarified: moving/renaming with approval is acceptable; deleting or
@@ -46,9 +75,9 @@ delete-with-approval allowance. See [file safety](docs/FILE_SAFETY.md),
   `ffee8c29ca5b7618597b58890f772423a75925434276150cebca5f648b194376`).
   Future updates should extract directly into the outer public_html. No further
   owner upload is needed for 0.2.1.
-- Root is a source snapshot without `.git`; publish from the isolated clone
-  `.work/github-publish-20260909`, preserving original history. Test data and
-  artifacts under ignored `.work/` are not needed to reconstruct source/runtime.
+- The earlier release used a source snapshot and isolated publishing clone.
+  That environment is gone; the normal Git worktree described above supersedes
+  it. Ignored test data/artifacts are not needed to reconstruct source/runtime.
 - The website deployment ZIP and checksum were removed from preview-0.2.0.
   They contained reviewed public website assets, not credentials or user music.
   Keep the 0.2.1 site ZIP local for Hostinger deployment; GitHub release assets
@@ -85,9 +114,9 @@ evidence, remaining work, storage/hosting advice and source links.
   [preview-0.2.0](https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.0).
   The tag targets `5333005eefa42a10a10ac7e107f20edc8fdaf122`. An unauthenticated
   full GitHub app download matched the reviewed SHA-256. See
-  [publication evidence](docs/GITHUB_RELEASE.md). The original source snapshot
-  has no `.git`; publication used `.work/github-publish-20260909`, an isolated
-  clone with the original Git history, so continue future Git work there.
+  [publication evidence](docs/GITHUB_RELEASE.md). Historically, publication used
+  `.work/github-publish-20260909` because the old source snapshot had no `.git`.
+  Do not use that obsolete path; continue in the current normal Git checkout.
 - Website: 10 checks passed, including demo edits/audio/reset, responsive
   controls, no-JS paths and the complete app download hash. Preview is at
   `http://127.0.0.1:8427/`; deploy ZIP is

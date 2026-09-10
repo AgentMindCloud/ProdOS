@@ -9,8 +9,16 @@ The interactive sample projects stay in browser memory and reset on reload.
 
 From the repository root, prepare the reviewed Windows preview package at
 `release-artifacts/ProducerOS-0.2.1-Windows.zip`. Keep the complete portable
-app folder in the ZIP, including `_internal`. A future GitHub release is not
-assumed to exist, and the website deploy archive is not a GitHub release asset.
+app folder in the ZIP, including `_internal`. The reviewed 0.2.1 package is
+already public on GitHub and can be reused without rebuilding the desktop app:
+
+```powershell
+gh release download preview-0.2.1 --repo AgentMindCloud/ProdOS --pattern ProducerOS-0.2.1-Windows.zip --dir release-artifacts
+```
+
+The website deploy archive is not a GitHub release asset. Use a fresh clone or
+Git worktree normally; the old source snapshot and ignored publishing clone are
+no longer the development environment.
 
 The 0.2.1 binary passed an isolated Windows package smoke check. Its exact
 SHA-256 is pinned in `scripts/build_website.py`; never reuse an old version's
@@ -80,7 +88,10 @@ SHA-256. Confirm server headers instead of assuming `.htaccess` was applied.
 
 No app-to-website background connection, tracking, newsletter service,
 account system, payment or file-upload feature is implemented. Feedback uses
-a user-initiated link to the public GitHub Issues page. Hostinger may retain
+a user-initiated link to the public GitHub Issues page or the footer's
+`mailto:contact@prodos.tech` link. The contact link opens the visitor's mail app;
+there is no contact form or mail backend, and mailbox delivery is not verified.
+Hostinger may retain
 normal server access logs; the page does not add analytics scripts.
 
 Public release is an explicit final operation after the user reviews the

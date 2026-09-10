@@ -10,6 +10,8 @@
   <a href="https://github.com/AgentMindCloud/ProdOS/releases/tag/preview-0.2.1"><strong>Download Windows preview</strong></a>
   &nbsp; · &nbsp;
   <a href="https://github.com/AgentMindCloud/ProdOS/issues">Feedback &amp; ideas</a>
+  &nbsp; · &nbsp;
+  <a href="mailto:contact@prodos.tech">contact@prodos.tech</a>
 </p>
 
 ## Your studio, in focus
@@ -106,7 +108,7 @@ Try it with realistic synthetic sample data:
 
 ```bash
 python -m produceros.cli demo-load    # 2 artists, 6 projects, releases, deadlines...
-python -m produceros.cli demo-clean   # removes exactly what demo-load created
+python -m produceros.cli demo-clean   # clears demo catalog records; keeps files on disk
 ```
 
 ## Running the tests

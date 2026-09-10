@@ -1,5 +1,44 @@
 # prodos.tech launch verification
 
+## Contact addition: verified 2026-09-10
+
+The owner requested `contact@prodos.tech` on the public page and authorized
+publication to the existing website and repository. A mailto link was added
+beside the footer links and in the README link row. No form, mail backend,
+tracking, test email, app binary/version, DNS or account setting changed.
+Mailbox delivery was not tested.
+
+Fresh verification in a restored Git worktree:
+
+- Existing GitHub 0.2.1 app ZIP downloaded and verified by the unchanged builder:
+  28,211,113 bytes, SHA-256
+  `b2a4eba0421139bd6c4c70b9a8ace2494e4f7e80e89bcda43a28cca8cb224863`.
+- Existing `tests/website` suite: **10 passed**, including demo edits/reset,
+  audio playback/seeking, 360/390/768/1440 px layouts, no-JS guidance and full
+  local browser download/hash. Run with `--confcutdir=tests/website`, a fresh
+  worktree-local `--basetemp` and `PLAYWRIGHT_BROWSERS_PATH=.playwright-cache`.
+  Test setup initially hit sandbox process restrictions, a missing Chromium
+  runtime and an inaccessible shared temp directory; those setup issues were
+  resolved before the passing run. No test/source suppression was added.
+- Desktop and 390 px local footer visually inspected; the rendered link is
+  exactly `mailto:contact@prodos.tech`. No stylesheet change was necessary.
+- Uploaded only `.work/website-dist/index.html` to the outer `public_html`.
+  The File Manager replacement dialog identified only `/public_html/index.html`;
+  the resulting listing showed the updated 18.09 KiB file. All other files and
+  earlier deployment archives were retained.
+- The public HTTPS homepage renders the new mailto link. Live demo title
+  edit/reset and a 390 px footer visual/overflow check passed in Chromium.
+  The download button retains the existing 0.2.1 target. No certificate warning
+  was bypassed. Physical phones and mailbox delivery remain untested.
+- Direct HTTP verification in this session receives Hostinger's 403 browser
+  challenge. A fresh live byte-hash/header result is therefore **not** claimed;
+  the complete live hash/header checks below belong to the earlier deployment.
+
+Uploaded homepage: 18,526 bytes; SHA-256
+`3685db4461eee784bf5463d55aeac97417af53ca13b98863334801bfee386ce6`.
+The full local build still contains 17 allowlisted files, but only the homepage
+was deployed. The new local archive was not uploaded to a GitHub release.
+
 ## 0.2.1 update: verified 2026-09-10
 
 The owner uploaded the reviewed `prodos-site-20260910.zip` and extracted it
