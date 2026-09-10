@@ -1,8 +1,11 @@
 # Producer showcase and music connections
 
-Assessed 2026-09-10. **Proposal only: none of these community features or
-connections is implemented or approved for launch.** The shipped website has
-a synthetic demo, downloads, GitHub feedback and a contact email.
+Assessed 2026-09-10. The owner subsequently authorized the first curated-link
+stage and requested generated rap/trap examples until real producer clips are
+available. See [the showcase workflow](SHOWCASE_WORKFLOW.md) for that implementation
+and [the launch record](WEBSITE_LAUNCH.md) for verification/publication status.
+Accounts, public website comments, uploads and authenticated music-service
+connections remain proposals; their later stages are not authorized to launch.
 
 ## Recommendation
 
@@ -191,5 +194,6 @@ Request abuse, development and human moderation can dominate the storage cost.
 
 The main launch blockers are platform permission, repeat producer participation
 and ownership of moderation. APIs and cheap disk do not solve those problems.
-No paid service, account, connector, upload facility or community was created
-as part of this assessment.
+No paid service, account, connector or upload facility was created as part of
+this assessment. The later curated showcase uses static listings and manual
+email intake; generated examples are clearly distinguished from real submissions.

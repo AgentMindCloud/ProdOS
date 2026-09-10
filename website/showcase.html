@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#e8f5ff">
+  <meta name="description" content="A small producer showcase for short clips and useful feedback. Share a public link and one question about your work in progress.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Producer showcase — ProducerOS">
+  <meta property="og:description" content="Share a moment from your music. Ask one question. Find your next move.">
+  <meta property="og:url" content="https://prodos.tech/showcase.html">
+  <meta property="og:image" content="https://prodos.tech/assets/share-card.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://prodos.tech/showcase.html">
+  <link rel="icon" type="image/png" href="assets/app-icon.png">
+  <link rel="stylesheet" href="site.css">
+  <link rel="stylesheet" href="showcase.css">
+  <script src="showcase.js" defer></script>
+  <title>Producer showcase — ProducerOS</title>
+</head>
+<body class="showcase-page">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header wrap">
+    <a class="brand" href="./" aria-label="ProducerOS home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>Producer<span>OS</span></a>
+    <nav aria-label="Main navigation"><a href="#listen" aria-current="page">Showcase</a><a href="#take-part">Take part</a><a href="./#demo">App demo</a></nav>
+    <a class="button button-small button-outline" href="#take-part">Share a clip <span aria-hidden="true">↗</span></a>
+  </header>
+  <main id="main">
+    <section class="showcase-hero wrap" aria-labelledby="showcase-title">
+      <div>
+        <p class="eyebrow">PRODUCER SHOWCASE · FIRST LISTENING GROUP</p>
+        <h1 id="showcase-title">Work in progress.<br><span>Worth a listen.</span></h1>
+        <p class="showcase-lead">A fresh pair of ears can help you find the next move.</p>
+        <p>Share a short clip and one question about it. We’re starting a small, curated group where producers can listen closely and give useful feedback.</p>
+        <p>Try the generated beats below while the first producer listings take shape.</p>
+        <div class="hero-actions"><a class="button button-primary" href="#take-part">Put your clip forward <span aria-hidden="true">↗</span></a><a class="button button-glass" href="#listen">Explore the showcase <span aria-hidden="true">↓</span></a></div>
+        <p class="showcase-note">One clip per producer · 30–60 seconds · Hosted on your own music page</p>
+      </div>
+      <aside class="listening-brief" aria-labelledby="brief-title">
+        <div class="brief-art"><img src="assets/studio-disc.png" alt="" width="1024" height="1024"><span>SHARE A MOMENT.<br>FIND YOUR NEXT MOVE.</span></div>
+        <div class="brief-copy"><p class="eyebrow">THE LISTENING BRIEF</p><h2 id="brief-title">One idea in focus.</h2><ol><li><span>01</span> Pick the part you’re working on.</li><li><span>02</span> Ask one specific question.</li><li><span>03</span> Give another producer a thoughtful listen.</li></ol></div>
+      </aside>
+    </section>
+    <section class="section wrap showcase-list" id="listen" aria-labelledby="demo-beats-heading">
+      <div class="section-heading"><div><p class="eyebrow">PRESS PLAY · TRY THE LISTENING EXPERIENCE</p><h2 id="demo-beats-heading">Three beats. A first listen.</h2></div><p>Original synthesized instrumentals.<br>All artist names below are fictional.</p></div>
+      {{DEMO_CONTENT}}
+      <p class="showcase-note">These locally generated rap/trap demos contain no vocals or sampled recordings. They are examples, not real producer submissions. Playback starts only when you choose it.</p>
+      <noscript><p class="showcase-note">Without JavaScript, stop one player before starting another. Audio controls, clip links and email drafts still work.</p></noscript>
+    </section>
+    <section class="section wrap showcase-list" id="producer-clips" aria-labelledby="listen-heading">
+      <div class="section-heading"><div><p class="eyebrow">MADE BY PRODUCERS. SHARED WITH PERMISSION.</p><h2 id="listen-heading">On the listening desk.</h2></div><p>{{PUBLISHED_COUNT}}<br>Listen on the producer’s original page.</p></div>
+      {{SHOWCASE_CONTENT}}
+      <p class="showcase-note">External links open another site, whose privacy and playback rules apply. Feedback can be left there where comments are enabled, or emailed to us. Public comments on this website are not available yet.</p>
+    </section>
+    <section class="section wrap take-part" id="take-part" aria-labelledby="take-part-heading">
+      <div><p class="eyebrow">A SMALL START. ROOM TO SHAPE IT.</p><h2 id="take-part-heading">Bring one clip.<br>Ask one question.</h2><p>We’re aiming for 5–10 producers in the first group. You don’t need the desktop app or a website account to take part.</p><a class="button button-primary" id="submission-link" href="{{SUBMISSION_URL}}">Email your clip link <span aria-hidden="true">↗</span></a><p class="showcase-note">Opens a draft in your email app. Review it and send it yourself. If no draft opens, email <a href="mailto:contact@prodos.tech">contact@prodos.tech</a> with the details alongside.</p></div>
+      <div class="submission-brief"><h3>Include these details</h3><ol><li>Your producer name and track title.</li><li>A public link to a 30–60 second clip on SoundCloud, Bandcamp, Spotify or YouTube. Send a link, not an attachment.</li><li>One specific feedback question. Genre and BPM are optional.</li><li>Your explicit permission to feature the link, name, title and question here, and confirmation that you have the necessary rights and collaborator permissions.</li></ol><p>Submissions are reviewed before listing. Your email address stays out of the public listing. Inclusion isn’t guaranteed; a listing doesn’t transfer music ownership or grant permission to download, sample or reuse it.</p></div>
+    </section>
+    <section class="section wrap showcase-guidelines" aria-labelledby="guidelines-heading"><div><p class="eyebrow">MAKE THE NEXT LISTEN COUNT</p><h2 id="guidelines-heading">Useful feedback.<br>Human decisions.</h2></div><div class="guidelines-copy"><h3>Be specific. Be constructive.</h3><p>Answer the producer’s question. Point to a moment in the clip, explain what you heard, and offer one thing they could try. No spam, personal attacks or promotional links.</p><h3>Keep control of your listing.</h3><p>For a correction, removal from the showcase or a rights concern, email the page link and details. We can change or unlist the entry here; your original music stays on its hosting platform.</p><a class="text-link" href="{{REPORT_URL}}">Request a correction or report a concern <span aria-hidden="true">↗</span></a><p class="showcase-note">This website collects no submissions automatically and adds no analytics. Details you choose to email are used to review and manage your entry; don’t include private project files or passwords.</p></div></section>
+  </main>
+  <footer class="site-footer wrap"><a class="brand" href="./"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>Producer<span>OS</span></a><p>Your studio, in focus.</p><div><a href="./#download">Download</a><a href="./#faq">FAQs</a><a href="mailto:contact@prodos.tech">contact@prodos.tech</a></div><small>Local music. Human decisions.</small></footer>
+</body>
+</html>

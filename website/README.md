@@ -34,8 +34,8 @@ Output: `.work/website-dist/`, with `index.html` at its root.
 Deploy archive: `release-artifacts/prodos-site-20260910.zip`.
 The sidecar manifest records every public file and checksum.
 
-The builder copies only the three website source files, designated local
-graphics, generated sample audio, the reviewed Windows package, its setup
+The builder copies only the allowlisted homepage/showcase HTML, CSS and JavaScript,
+designated local graphics, generated sample audio, the reviewed Windows package, its setup
 guide/license/checksum, release metadata and hosting configuration. It never
 copies the repository, app database, private configuration, accounts or a
 producer's audio folder. Unrecognized Windows ZIP hashes fail the build.
@@ -87,7 +87,11 @@ page headline, demo interactions, mobile layout and the full Windows download
 SHA-256. Confirm server headers instead of assuming `.htaccess` was applied.
 
 No app-to-website background connection, tracking, newsletter service,
-account system, payment or file-upload feature is implemented. Feedback uses
+account system, payment or file-upload feature is implemented. The curated
+[showcase](../docs/SHOWCASE_WORKFLOW.md) provides three generated rap/trap demos
+under explicitly fictional names, a separate empty producer catalog, and manual
+email intake. Real clip links are added only after permission and review; public
+website comments and external embeds are not implemented. General app feedback uses
 a user-initiated link to the public GitHub Issues page or the footer's
 `mailto:contact@prodos.tech` link. The contact link opens the visitor's mail app;
 there is no contact form or mail backend, and mailbox delivery is not verified.

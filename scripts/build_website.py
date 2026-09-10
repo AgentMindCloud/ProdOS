@@ -10,14 +10,23 @@ from __future__ import annotations
 import argparse
 import array
 import hashlib
+import html
 import json
 import math
 import random
+import re
 import shutil
 import sys
 import wave
 import zipfile
 from pathlib import Path
+from urllib.parse import parse_qs, quote, urlsplit
+
+if __package__:
+    from .generate_showcase_audio import DEMO_TRACKS, generate_demos
+else:
+    # The documented direct-script command uses the same module without a package.
+    from generate_showcase_audio import DEMO_TRACKS, generate_demos  # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[1]
 APP_VERSION = "0.2.1"
@@ -26,6 +35,170 @@ APP_NAME = f"ProducerOS-{APP_VERSION}-Windows.zip"
 DOMAIN = "https://prodos.tech"
 # Reviewed packaged Windows smoke and ZIP integrity passed on 2026-09-10.
 EXPECTED_APP_SHA256: str | None = "b2a4eba0421139bd6c4c70b9a8ace2494e4f7e80e89bcda43a28cca8cb224863"
+
+
+def mailto(subject: str, body: str) -> str:
+    return (
+        "mailto:contact@prodos.tech?subject="
+        + quote(subject, safe="")
+        + "&body="
+        + quote(body, safe="")
+    )
+
+
+def clip_platform(url: str) -> str:
+    """Accept direct public music-page links only; never fetch remote content."""
+    if not isinstance(url, str) or len(url) > 400 or any(c.isspace() for c in url):
+        raise ValueError("Clip URL must be a short public HTTPS music-page link.")
+    parts = urlsplit(url)
+    if parts.scheme != "https" or parts.username or parts.password or parts.port or parts.fragment:
+        raise ValueError("Clip URL must use HTTPS with no credentials, port or fragment.")
+    host = parts.netloc.lower()
+    if (
+        host in {"soundcloud.com", "www.soundcloud.com"}
+        and not parts.query
+        and re.fullmatch(r"/[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+/?", parts.path)
+    ):
+        return "SoundCloud"
+    if (
+        re.fullmatch(r"[a-z0-9-]+\.bandcamp\.com", host)
+        and not parts.query
+        and re.fullmatch(r"/track/[a-zA-Z0-9_-]+/?", parts.path)
+    ):
+        return "Bandcamp"
+    if (
+        host == "open.spotify.com"
+        and not parts.query
+        and re.fullmatch(r"/track/[a-zA-Z0-9]{22}", parts.path)
+    ):
+        return "Spotify"
+    if host == "youtu.be" and not parts.query and re.fullmatch(r"/[a-zA-Z0-9_-]{11}", parts.path):
+        return "YouTube"
+    if host in {"youtube.com", "www.youtube.com"} and parts.path == "/watch":
+        query = parse_qs(parts.query, keep_blank_values=True)
+        if (
+            set(query) == {"v"}
+            and len(query["v"]) == 1
+            and re.fullmatch(r"[a-zA-Z0-9_-]{11}", query["v"][0])
+        ):
+            return "YouTube"
+    raise ValueError(
+        "Use a direct SoundCloud, Bandcamp track, Spotify track or YouTube video URL without tracking parameters."
+    )
+
+
+def render_showcase(template: str, catalog: dict) -> str:
+    if not isinstance(catalog, dict) or set(catalog) != {"entries"}:
+        raise ValueError("Showcase catalog must contain only entries.")
+    entries = catalog["entries"]
+    if not isinstance(entries, list) or len(entries) > 10:
+        raise ValueError("The first showcase accepts at most 10 reviewed producer entries.")
+    cards, ids, producers = [], set(), set()
+    required = {
+        "id",
+        "producer",
+        "title",
+        "url",
+        "feedback_question",
+        "duration_seconds",
+        "publication_approved",
+        "producer_permission_confirmed",
+    }
+    for entry in entries:
+        if (
+            not isinstance(entry, dict)
+            or not required <= set(entry)
+            or set(entry) - required - {"genre", "bpm"}
+        ):
+            raise ValueError(
+                "Showcase entry has missing or unknown fields. Do not put private intake data here."
+            )
+        if (
+            entry["publication_approved"] is not True
+            or entry["producer_permission_confirmed"] is not True
+        ):
+            raise ValueError(
+                "Every entry needs explicit producer permission and publication review."
+            )
+        for field, limit in (
+            ("id", 60),
+            ("producer", 60),
+            ("title", 90),
+            ("feedback_question", 240),
+            ("genre", 40),
+        ):
+            value = entry.get(field, "")
+            if (
+                not isinstance(value, str)
+                or (field != "genre" and not value.strip())
+                or len(value) > limit
+                or any(ord(c) < 32 for c in value)
+            ):
+                raise ValueError(f"Invalid showcase field: {field}")
+        identifier = entry["id"]
+        if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", identifier) or identifier in ids:
+            raise ValueError("Showcase IDs must be unique lowercase slugs.")
+        producer = entry["producer"].strip().casefold()
+        if producer in producers:
+            raise ValueError("The first group allows one clip per producer.")
+        ids.add(identifier)
+        producers.add(producer)
+        duration = entry["duration_seconds"]
+        if type(duration) is not int or not 30 <= duration <= 60:
+            raise ValueError("Review a 30–60 second clip before listing it.")
+        bpm = entry.get("bpm")
+        if bpm is not None and (type(bpm) is not int or not 1 <= bpm <= 400):
+            raise ValueError("BPM must be a supplied number or omitted.")
+        platform = clip_platform(entry["url"])
+        title, name, question = (
+            html.escape(entry[field]) for field in ("title", "producer", "feedback_question")
+        )
+        meta = f"<span>{duration} sec</span>"
+        if entry.get("genre"):
+            meta += f"<span>{html.escape(entry['genre'])}</span>"
+        if bpm is not None:
+            meta += f"<span>{bpm} BPM</span>"
+        feedback = mailto(
+            f"Showcase feedback: {entry['title']}",
+            f"Listing: {DOMAIN}/showcase.html#clip-{identifier}\n\nMy feedback:\n\nMay this feedback be shared with the producer? [yes/no]\n",
+        )
+        cards.append(
+            f'<article class="clip-card" id="clip-{identifier}"><p class="eyebrow">PRODUCER SUBMISSION · {platform.upper()}</p><h3>{title}</h3><p class="clip-producer">By {name}</p><div class="clip-meta">{meta}</div><div class="clip-question"><p class="micro-label">THE PRODUCER ASKS</p><p>{question}</p></div><div class="clip-actions"><a class="button button-primary" href="{html.escape(entry["url"], quote=True)}" target="_blank" rel="noopener noreferrer">Listen on {platform} <span aria-hidden="true">↗</span><span class="sr-only">: {title}</span></a><a class="text-link" href="{html.escape(feedback, quote=True)}">Email feedback<span class="sr-only">: {title}</span></a></div></article>'
+        )
+    content = (
+        '<div class="showcase-grid">' + "".join(cards) + "</div>"
+        if cards
+        else '<div class="showcase-empty"><div><h3>The first producers start here.</h3><p>No producer clips are published yet. Put a link forward for review and help shape the first listening group.</p></div><a class="button button-outline" href="#take-part">Be part of the first group <span aria-hidden="true">↗</span></a></div>'
+    )
+    demos = []
+    for track in DEMO_TRACKS:
+        title = html.escape(track["title"])
+        demos.append(
+            f'<article class="clip-card demo-beat" id="demo-{track["id"]}"><div class="demo-beat-cover" aria-hidden="true"><span>{html.escape(track["artist"])}</span><strong>{title}</strong></div><p class="eyebrow">GENERATED DEMO · FICTIONAL ARTIST</p><h3>{title}</h3><p class="clip-producer">{html.escape(track["artist"])}</p><div class="clip-meta"><span>{track["genre"]}</span><span>{track["bpm"]} BPM</span><span>{track["key"]}</span></div><audio controls preload="none" aria-label="Play {title} by {html.escape(track["artist"])}"><source src="assets/showcase/{track["id"]}.wav" type="audio/wav">Your browser cannot play this audio. <a href="assets/showcase/{track["id"]}.wav">Open {title} audio</a>.</audio><div class="clip-question"><p class="micro-label">A QUESTION TO TRY</p><p>{html.escape(track["question"])}</p></div></article>'
+        )
+    submission = mailto(
+        "Producer showcase submission",
+        "Producer name:\nTrack title:\nPublic 30–60 second clip URL (no attachments):\nGenre / BPM (optional):\nOne feedback question:\n\nPublication permission (required): [Please explicitly state whether ProducerOS may feature your link, producer name, track title and question publicly.]\n\nRights confirmation (required): [Please confirm you have the necessary rights and collaborator permissions to share this clip.]\n",
+    )
+    replacements = {
+        "SHOWCASE_CONTENT": content,
+        "DEMO_CONTENT": '<div class="showcase-grid demo-beats">' + "".join(demos) + "</div>",
+        "PUBLISHED_COUNT": f"{len(entries)} producer clip{'s' if len(entries) != 1 else ''} published",
+        "SUBMISSION_URL": html.escape(submission, quote=True),
+        "REPORT_URL": html.escape(
+            mailto(
+                "Showcase correction or concern",
+                "Listing URL:\nRequested correction, unlisting or concern:\nDetails:\n",
+            ),
+            quote=True,
+        ),
+    }
+    for token in replacements:
+        if "{{" + token + "}}" not in template:
+            raise ValueError(f"Missing showcase template token: {token}")
+    return re.sub(
+        r"\{\{(" + "|".join(replacements) + r")\}\}", lambda match: replacements[match[1]], template
+    )
 
 
 def sha256(path: Path) -> str:
@@ -136,7 +309,15 @@ def build(output: Path, archive: Path, app_zip: Path) -> dict:
         raise ValueError("Deployment archive must be in this repository's release-artifacts/.")
     validate_app_archive(app_zip)
     source = ROOT / "website"
-    for filename in ("index.html", "site.css", "site.js"):
+    for filename in (
+        "index.html",
+        "site.css",
+        "site.js",
+        "showcase.html",
+        "showcase.css",
+        "showcase.js",
+        "showcase.json",
+    ):
         if not (source / filename).is_file():
             raise ValueError(f"Missing website source: {filename}")
     output.mkdir(parents=True, exist_ok=True)
@@ -159,7 +340,14 @@ def build(output: Path, archive: Path, app_zip: Path) -> dict:
     if index.count(size_token) != 1:
         raise ValueError("The website source must contain exactly one download-size placeholder.")
     write("index.html", index.replace(size_token, f"{app_zip.stat().st_size / 1_000_000:.1f} MB"))
-    for filename in ("site.css", "site.js"):
+    write(
+        "showcase.html",
+        render_showcase(
+            (source / "showcase.html").read_text(encoding="utf-8"),
+            json.loads((source / "showcase.json").read_text(encoding="utf-8")),
+        ),
+    )
+    for filename in ("site.css", "site.js", "showcase.css", "showcase.js"):
         copy(source / filename, filename)
     copy(ROOT / "src/produceros/web/static/artwork/studio-disc.png", "assets/studio-disc.png")
     copy(ROOT / "src/produceros/web/static/icons/icon-192.png", "assets/app-icon.png")
@@ -168,6 +356,7 @@ def build(output: Path, archive: Path, app_zip: Path) -> dict:
     demo = output / "assets/demo-loop.wav"
     generate_demo_loop(demo)
     public_files.append(demo)
+    public_files.extend(generate_demos(output / "assets/showcase"))
     copy(app_zip, f"downloads/{APP_NAME}")
     write(f"downloads/{APP_NAME}.sha256", f"{EXPECTED_APP_SHA256}  {APP_NAME}\n")
     write("downloads/SHA256SUMS.txt", f"{EXPECTED_APP_SHA256}  {APP_NAME}\n")
@@ -190,7 +379,8 @@ def build(output: Path, archive: Path, app_zip: Path) -> dict:
     write(
         "sitemap.xml",
         '<?xml version="1.0" encoding="UTF-8"?>\n'
-        f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>{DOMAIN}/</loc></url></urlset>\n',
+        f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>{DOMAIN}/</loc></url>'
+        f"<url><loc>{DOMAIN}/showcase.html</loc></url></urlset>\n",
     )
     write(
         ".htaccess",

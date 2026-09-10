@@ -1,6 +1,33 @@
 # HANDOFF
 
-## Contact update and community assessment: 2026-09-10
+## Curated showcase and original demo beats: 2026-09-10
+
+- Owner authorized the first curated-link stage, then requested rap/trap demos
+  with fictional names because real producer clips will be supplied later.
+- Implemented `/showcase.html`, homepage/README navigation, three synthesized
+  instrumentals, native audio controls with one-at-a-time playback, clear demo
+  labels and an empty real-producer section. Hoodie Monstah, Deid Gravic and
+  Lowkey Circuit are fictional aliases, not participants or endorsements.
+- Public clip submission, feedback and correction links open manual email
+  drafts. No mail was sent, no mailbox delivery was tested, and no producer
+  invitations, accounts, uploads, public comments or external embeds were made.
+- Future approved metadata lives in `website/showcase.json`; strict build-time
+  validation rejects unapproved/private/unsafe entries and escapes public text.
+  See [the operating guide](docs/SHOWCASE_WORKFLOW.md). Keep correspondence out
+  of this public repository. No real entries have been added.
+- Fresh checks: **46 website tests passed**, including three real local audio
+  play/seek/switch checks, signal/duration checks, 360/390/768/1440 px layouts,
+  manual email draft contents, no-JS access, bad URLs/permissions/private-field
+  rejection and the existing demo/download regression suite. Focused Ruff
+  lint/format and mypy passed. Desktop and narrow layouts visually inspected.
+- Demo audio is generated deterministically from oscillators/noise with the
+  standard library. Existing differing audio is refused rather than replaced.
+  No desktop source/binary/version, music folder or installed app was changed.
+- Publication status and exact files: [website launch record](docs/WEBSITE_LAUNCH.md).
+  Full desktop/backend/remote CI, mailbox delivery, physical phones and owner
+  musical acceptance were not verified in this change.
+
+## Earlier contact update and initial community assessment: 2026-09-10
 
 - Added `mailto:contact@prodos.tech` to the public website footer and README's
   existing link row. Blue visuals and the 0.2.1 app/version are unchanged.
@@ -26,14 +53,15 @@
   virtual environment and release artifacts were lost; local website tooling
   and the existing release ZIP have now been recreated/downloaded as needed.
   Preserve the separately installed portable app and all user app data.
-- Community/connectors are an assessment only. Start with a small opt-in
+- At that stage community/connectors were an assessment only. The recommendation
+  was a small opt-in
   showcase built around links to producer-owned external clips, with selective
   permitted embeds; consider moderated website comments after repeat use.
   SoundCloud widget aggregation restrictions and Spotify API eligibility are
   material constraints. See [the ranked assessment](docs/COMMUNITY_FEASIBILITY.md)
   for current primary sources, hosting, cost estimates and minimum controls.
-  No community, uploads, OAuth app, account, paid service or desktop network
-  dependency has been created.
+  The later authorized curated showcase is described above. Uploads, OAuth
+  apps, accounts, paid services and desktop network dependencies remain absent.
 
 ## Current snapshot: 2026-09-10, version 0.2.1
 

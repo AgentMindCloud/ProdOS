@@ -1,5 +1,61 @@
 # prodos.tech launch verification
 
+## Curated showcase: published and verified 2026-09-10
+
+The owner authorized the first curated showcase, then requested generated
+rap/trap beats under fictional aliases until real clips can be supplied.
+`https://prodos.tech/showcase.html` is live, linked from the homepage and README.
+It contains three clearly labelled generated demos and zero producer submissions.
+See [the workflow](SHOWCASE_WORKFLOW.md) for catalog intake and later review.
+
+Verification on this change:
+
+- **46 website tests passed in 19.03 seconds**, covering the original demo and
+  complete local Windows download/hash, new 360/390/768/1440 px layouts,
+  no-JavaScript use, email draft contents, all three audio files playing/seeking
+  with exclusive playback, non-silent/non-clipping PCM signals and 30–60 second
+  durations. Unsafe links, missing permissions, private fields, duplicate
+  producers, catalog limits and injected markup are rejected or safely rendered.
+- Focused Ruff lint/format and mypy passed for the changed builder, audio
+  generator and website tests. The exact tested build has 23 allowlisted files.
+  Its 35,424,414-byte local ZIP has SHA-256
+  `f07f8849fc076ce7173b3612d33c971d4137e49e53d2671b0487600061a375d6`.
+- The three new demo files regenerated identically on repeated local builds. The new
+  generator refused a differing existing audio file in its focused safety test.
+- Local desktop and narrow layouts were visually inspected. The deployed page
+  retains the blue visual design, clear fictional-artist labels and native
+  audio controls. Live HTTPS playback progressed for Night Shift (34.285714 s)
+  and Side Street (41.739138 s); Blue Hour's live player reached the end of its
+  37.5-second duration. Switching players paused the
+  previous player. No certificate warning or provider challenge was bypassed.
+- The live homepage links to `showcase.html` and retains
+  `downloads/ProducerOS-0.2.1-Windows.zip`. The live submission link retains the
+  intended email recipient and consent/rights prompts. No email was sent.
+- Hostinger File Manager showed a new empty `assets/showcase` directory before
+  the three new audio uploads, followed by the expected files/sizes. Added
+  showcase HTML/CSS/JS, then replaced only `/public_html/index.html` and
+  `/public_html/sitemap.xml` through the per-file review dialog. Other assets,
+  app downloads, nested copies, prior archives and hosting configuration remain.
+- No desktop/backend suite, app build, full remote CI, physical-phone test,
+  mailbox-delivery test or owner musical acceptance is claimed. This is a
+  working curated showcase with generated examples, not an established community.
+  Fresh live file checksums/headers were not retrieved in this deployment;
+  the SHA-256 values below identify the reviewed local upload payloads.
+
+| Uploaded relative path | Bytes | Local payload SHA-256 |
+| --- | ---: | --- |
+| `index.html` | 19,553 | `1f520e4785cf2762e0370ef4ca5ec5a2426c6b0f2becfdc42b7a0b31ff542330` |
+| `showcase.html` | 11,233 | `9263d1f01922e6d73abfc82ccce19a6243a5ee54d100c4467b36132f247992de` |
+| `showcase.css` | 6,091 | `16c219459e2d77a22aba2ff73433bfb55d8ff7e7b070e2617029f3d09e09eaf5` |
+| `showcase.js` | 320 | `686da3c0f2a201fc481ca267c81b22b8be966724f2856fe23b66626e5bb74431` |
+| `sitemap.xml` | 208 | `5ad3d4006937f9cd8dadf6a232d1eaefc35a74004bc505194ebb62904e85db6e` |
+| `assets/showcase/hoodie-monstah-night-shift.wav` | 1,512,044 | `6c8c2c91b0c97610c67c12867fb5eb282360d1afc66a84f54b49c51bb457a6de` |
+| `assets/showcase/deid-gravic-side-street.wav` | 1,840,740 | `e09e337208f34a456f0b458666e4516e0483a6adfbd4bcbf2998a3d0c5d9997f` |
+| `assets/showcase/lowkey-circuit-blue-hour.wav` | 1,653,794 | `5d8db66d7a7b2e31aa06cfa4099722e98835991e2d19cfdcb75a8ec420cfe337` |
+
+Only those eight files were deployed; the full site ZIP remains local and was
+not attached to a GitHub release. The reviewed Windows app remains 0.2.1.
+
 ## Contact addition: verified 2026-09-10
 
 The owner requested `contact@prodos.tech` on the public page and authorized

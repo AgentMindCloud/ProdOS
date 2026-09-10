@@ -11,10 +11,18 @@
   &nbsp; · &nbsp;
   <a href="https://github.com/AgentMindCloud/ProdOS/issues">Feedback &amp; ideas</a>
   &nbsp; · &nbsp;
+  <a href="https://prodos.tech/showcase.html">Producer showcase</a>
+  &nbsp; · &nbsp;
   <a href="mailto:contact@prodos.tech">contact@prodos.tech</a>
 </p>
 
 ## Your studio, in focus
+
+The separate [producer showcase](https://prodos.tech/showcase.html) has three
+generated rap/trap demos under clearly fictional names and accepts public clip
+links by email for review. Real producer listings require permission; website
+accounts, uploads and public comments are not implemented. See the
+[showcase workflow](docs/SHOWCASE_WORKFLOW.md) for adding approved clips later.
 
 Local-first music production management for a producer using FL Studio on
 Windows. Projects, versions, audio assets, contributors, rights, releases,
